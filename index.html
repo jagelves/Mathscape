@@ -173,6 +173,13 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 @keyframes waveR{from{transform:rotate(-10deg)}to{transform:rotate(-70deg)}}
 .g-bounce{transform-box:fill-box;transform-origin:50% 100%;animation:gbounce .5s ease-in-out infinite}
 @keyframes gbounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+/* MAP DECORATIONS */
+.map-dragon{transform-box:fill-box;transform-origin:50% 100%;animation:mapHop 2.6s ease-in-out infinite}
+@keyframes mapHop{0%,70%,100%{transform:translateY(0)}80%{transform:translateY(-8px)}90%{transform:translateY(0)}}
+.smoke{transform-box:fill-box;transform-origin:center;animation:smokeUp 2.7s ease-out infinite;opacity:0}
+@keyframes smokeUp{0%{transform:translateY(0) scale(.5);opacity:0}20%{opacity:.85}100%{transform:translateY(-46px) scale(1.4);opacity:0}}
+.lava-glow{animation:lavaGlow 1.6s ease-in-out infinite alternate}
+@keyframes lavaGlow{from{opacity:.4}to{opacity:1}}
 /* EGG SHELL PROGRESS */
 .shell-wrap{display:flex;align-items:center;gap:8px;background:#fff;border:4px solid var(--ink);border-radius:30px;padding:2px 16px 2px 8px;box-shadow:0 4px 0 var(--ink);font-size:24px;font-weight:700}
 .shell-egg{width:54px;height:68px;display:block}
@@ -266,7 +273,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
     <div class="buddy" id="buddy"><div class="bubble" id="bubble">Let's count!</div></div>
     <div class="choices" id="choices"></div>
   </div>
-  <div class="hint">Tap each dragon to count it, then tap the matching number. Count carefully — a wrong answer brings new dragons!</div>
+  <div class="hint">Tap each dragon to zap it with your magic wand and count it, then tap the matching number. Count carefully — a wrong answer brings new dragons!</div>
 </section>
 
 <!-- LEVEL 2: BALANCE BRIDGE -->
@@ -308,6 +315,20 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
   <div class="eq" id="eq5"></div>
   <div class="scene" id="pscene"></div>
   <div class="hint">Tap a piece to lift it with your wand, then tap the spot that matches its number.</div>
+</section>
+
+<!-- LEVEL 5: MELT THE CHOCOLATE GOLEM -->
+<section id="s-melt" class="screen">
+  <div class="topbar">
+    <button class="icon-btn" id="melt-back" aria-label="Back to map">🗺️</button>
+    <div class="shell-wrap" id="mprogress"></div>
+    <button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button>
+  </div>
+  <div class="game-title">Melt the Chocolate Golem!</div>
+  <div class="eq" id="eq6"></div>
+  <div class="scene" id="mscene"></div>
+  <div class="drop-row"><button class="btn go" id="btn-fire">🔥 Fire!</button></div>
+  <div class="hint">Tap torches to light them with your wand. Light the answer, then tap Fire!</div>
 </section>
 
 <div id="modal" class="modal hidden"><div class="modal-card" id="modal-card"></div></div>
@@ -422,10 +443,11 @@ let eggN=0;
 const EGG_TYPES={
   gold:{name:'golden',Name:'Golden',c:['#fff6c2','#ffd23f','#d99a00']},
   sapphire:{name:'sapphire',Name:'Sapphire',c:['#e3f0ff','#4fa8ff','#1d4fae']},
-  emerald:{name:'emerald',Name:'Emerald',c:['#e3ffe9','#2ecc71','#117a42']}
+  emerald:{name:'emerald',Name:'Emerald',c:['#e3ffe9','#2ecc71','#117a42']},
+  ruby:{name:'ruby',Name:'Ruby',c:['#ffe3e6','#ff4757','#a3122a']}
 };
-const EGG_ORDER=['gold','sapphire','emerald'];
-const LEVEL_EGG={'easy-1':'gold','easy-2':'sapphire','easy-3':'sapphire','easy-4':'emerald','easy-5':'emerald'};
+const EGG_ORDER=['gold','sapphire','emerald','ruby'];
+const LEVEL_EGG={'easy-1':'gold','easy-2':'sapphire','easy-3':'sapphire','easy-4':'emerald','easy-5':'ruby'};
 function egg(cls,attrs,type){
   const id='eg'+(eggN++),c=(EGG_TYPES[type]||EGG_TYPES.gold).c;
   return `<svg class="${cls||'egg'}" ${attrs||''} viewBox="0 0 120 150" aria-hidden="true"><defs><radialGradient id="${id}" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="${c[0]}"/><stop offset=".45" stop-color="${c[1]}"/><stop offset="1" stop-color="${c[2]}"/></radialGradient></defs>
@@ -577,13 +599,13 @@ const WORLDS=[{id:'easy',name:'Easy · Dragon Meadow',color:'#9be07a',tile:'#5cc
               {id:'medium',name:'Medium · Crystal Caves',color:'#b9a6f2',tile:'#8e6ee0',y:310,xs:[840,660,480,300,120]},
               {id:'hard',name:'Hard · Volcano Peak',color:'#ffab8a',tile:'#ff6b4a',y:120,xs:[120,300,480,660,840]}];
 const LEVELS=[];WORLDS.forEach(w=>w.xs.forEach((x,i)=>LEVELS.push({id:w.id+'-'+(i+1),world:w,n:i+1,x,y:w.y})));
-const BUILT={'easy-1':true,'easy-2':true,'easy-3':true,'easy-4':true};
+const BUILT={'easy-1':true,'easy-2':true,'easy-3':true,'easy-4':true,'easy-5':true};
 const PREREQ={}; // optional: level id -> the level that must be finished first
 const REQ={ // eggs needed to open a level (the level before must be finished too)
   'easy-2':{gold:3},
-  'easy-3':{gold:5,sapphire:5},
-  'easy-4':{gold:5,sapphire:10},
-  'easy-5':{gold:5,sapphire:10,emerald:5}
+  'easy-3':{gold:3,sapphire:3},
+  'easy-4':{gold:3,sapphire:6},
+  'easy-5':{gold:3,sapphire:6,emerald:3}
 };
 const prereqOf=id=>{const i=LEVELS.findIndex(l=>l.id===id);return PREREQ[id]||(i>0?LEVELS[i-1].id:null)};
 const gems=()=>state.progress.gems;
@@ -592,7 +614,7 @@ const unlocked=id=>{const i=LEVELS.findIndex(l=>l.id===id);if(i===0)return true;
 const openSet=()=>LEVELS.filter(l=>unlocked(l.id)).map(l=>l.id);
 function awardEgg(id){const before=openSet();state.progress.done[id]=true;const t=LEVEL_EGG[id]||'gold';state.progress.gems[t]++;save();return openSet().filter(x=>!before.includes(x))}
 function goal(){const g=LEVELS.find(l=>REQ[l.id]&&!unlocked(l.id));if(!g)return null;const miss=missingFor(g.id);return{id:g.id,n:g.n,miss,met:miss.length===0,prevDone:!!state.progress.done[prereqOf(g.id)]}}
-const EGG_FROM={gold:'Level 1',sapphire:'Levels 2 and 3',emerald:'Level 4'};
+const EGG_FROM={gold:'Level 1',sapphire:'Levels 2 and 3',emerald:'Level 4',ruby:'Level 5'};
 function listJoin(a){return a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1]}
 function goalLine(){
   const g=goal();
@@ -615,17 +637,8 @@ function renderMap(){
   const pts=LEVELS.map(l=>[l.x,l.y]);
   let d='M'+pts[0].join(' ');for(let i=1;i<pts.length;i++)d+=' L'+pts[i].join(' ');
   const bands=WORLDS.map((w,i)=>{const top=[400,210,0][i],h=[200,190,210][i];return `<rect x="0" y="${top}" width="960" height="${h}" fill="${w.color}"/>
-    <text x="22" y="${top+34}" font-family="Fredoka, sans-serif" font-weight="700" font-size="26" fill="#2b2b2b" stroke="#fff" stroke-width="6" paint-order="stroke">${w.name}</text>`}).join('');
-  const deco=`
-   <g stroke="#2b2b2b" stroke-width="3">
-    <rect x="203" y="560" width="10" height="24" fill="#8b5a2b"/><circle cx="208" cy="548" r="22" fill="#3fae4f"/>
-    <rect x="573" y="560" width="10" height="24" fill="#8b5a2b"/><circle cx="578" cy="550" r="18" fill="#3fae4f"/>
-    <circle cx="390" cy="575" r="8" fill="#ff7eb6"/><circle cx="760" cy="572" r="8" fill="#ffd23f"/><circle cx="930" cy="430" r="8" fill="#ff7eb6"/>
-    <path d="M200 390 L214 350 L228 390Z" fill="#7fe3ff"/><path d="M560 392 L572 362 L584 392Z" fill="#ff9be0"/><path d="M890 260 L904 226 L918 260Z" fill="#7fe3ff"/>
-    <path d="M760 205 L860 40 L960 205Z" fill="#8a5a44"/><path d="M836 80 L860 40 L884 80 Q872 92 860 80 Q848 92 836 80Z" fill="#ff6b4a"/>
-    <circle cx="230" cy="190" r="10" fill="#ffd23f"/><circle cx="560" cy="40" r="8" fill="#ff6b4a"/>
-   </g>
-   <circle cx="900" cy="22" r="0"/>`;
+    <text x="${w.id==='medium'?480:22}" y="${top+34}" text-anchor="${w.id==='medium'?'middle':'start'}" font-family="Fredoka, sans-serif" font-weight="700" font-size="26" fill="#2b2b2b" stroke="#fff" stroke-width="6" paint-order="stroke">${w.name}</text>`}).join('');
+  const deco=mapDeco();
   const tiles=LEVELS.map(l=>{
     const un=unlocked(l.id),done=!!state.progress.done[l.id],gg=goal(),next=(un&&!done)||(un&&BUILT[l.id]&&gg&&!gg.met&&gg.miss.some(m=>LEVEL_EGG[l.id]===m.t));
     const fill=un?l.world.tile:'#cfcfcf';
@@ -634,7 +647,8 @@ function renderMap(){
       <ellipse cx="${l.x}" cy="${l.y+10}" rx="48" ry="44" fill="#2b2b2b"/>
       <circle class="tile-face" cx="${l.x}" cy="${l.y}" r="46" fill="${fill}" stroke="#2b2b2b" stroke-width="5"/>
       <circle cx="${l.x}" cy="${l.y}" r="34" fill="#fff" opacity=".25"/>
-      ${un?`<text x="${l.x}" y="${l.y+16}" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="46" fill="#fff" stroke="#2b2b2b" stroke-width="5" paint-order="stroke">${l.n}</text>`
+      ${!BUILT[l.id]?`<text x="${l.x}" y="${l.y-3}" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="19" fill="${un?'#fff':'#6b6b6b'}" stroke="${un?'#2b2b2b':'none'}" stroke-width="4" paint-order="stroke">Coming</text><text x="${l.x}" y="${l.y+18}" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="19" fill="${un?'#fff':'#6b6b6b'}" stroke="${un?'#2b2b2b':'none'}" stroke-width="4" paint-order="stroke">soon</text>`
+        :un?`<text x="${l.x}" y="${l.y+16}" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="46" fill="#fff" stroke="#2b2b2b" stroke-width="5" paint-order="stroke">${l.n}</text>`
           :`<g transform="translate(${l.x-16},${l.y-18})"><rect x="0" y="14" width="32" height="24" rx="5" fill="#8a8a8a" stroke="#2b2b2b" stroke-width="3"/><path d="M7 14 V8 a9 9 0 0 1 18 0 V14" fill="none" stroke="#2b2b2b" stroke-width="4"/></g>`}
       ${!un&&REQ[l.id]?reqBadge(l):''}
       ${done?egg('',`x="${l.x+20}" y="${l.y-62}" width="34" height="42"`,LEVEL_EGG[l.id]):''}
@@ -658,6 +672,44 @@ function reqBadge(l){
   return `<rect x="${x0}" y="${l.y+36}" width="${w}" height="30" rx="15" fill="#fff" stroke="#2b2b2b" stroke-width="3"/>`+
     items.map((t,i)=>{const x=x0+6+i*58;return egg('',`x="${x}" y="${l.y+38}" width="20" height="26"`,t)+`<text x="${x+22}" y="${l.y+59}" font-family="Fredoka, sans-serif" font-weight="700" font-size="18" fill="#2b2b2b">×${REQ[l.id][t]}</text>`}).join('');
 }
+
+/* ---------- map decorations for each world ---------- */
+function mapDeco(){
+  const o='stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"';
+  const tree=(x,y,r,c)=>`<rect x="${x-5}" y="${y}" width="10" height="${r}" fill="#8b5a2b" ${o}/><circle cx="${x}" cy="${y-r*.3}" r="${r}" fill="${c||'#3fae4f'}" ${o}/><circle cx="${x-r*.35}" cy="${y-r*.55}" r="${r*.3}" fill="#fff" opacity=".25"/>`;
+  const pine=(x,y,h)=>`<rect x="${x-4}" y="${y-6}" width="8" height="12" fill="#8b5a2b" ${o}/><path d="M${x} ${y-h} L${x+h*.45} ${y-4} H${x-h*.45}Z" fill="#2e9e4a" ${o}/>`;
+  const flower=(x,y,c)=>`<circle cx="${x}" cy="${y}" r="7" fill="${c}" ${o}/><circle cx="${x}" cy="${y}" r="2.5" fill="#ffd23f"/>`;
+  const dr=(x,y,size,i,flip)=>`<g transform="translate(${x} ${y})${flip?' scale(-1 1)':''}"><g class="map-dragon" style="animation-delay:${(i*.37).toFixed(2)}s">${dragon(i).replace('<svg ',`<svg x="${-size/2}" y="${-size}" width="${size}" height="${size}" `)}</g></g>`;
+  const gem=(x,y,s,c)=>`<g transform="translate(${x} ${y}) scale(${s})"><polygon points="0,-16 11,-6 7,12 -7,12 -11,-6" fill="${c}" ${o}/><path d="M-11 -6 H11 M0 -16 L-4 -6 L0 12 M0 -16 L4 -6" fill="none" stroke="#2b2b2b" stroke-width="1.5" opacity=".5"/><path d="M-5 -10 L-2 -6" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></g>`;
+  const crys=(x,y,c)=>`<path d="M${x-14} ${y} L${x-10} ${y-26} L${x-4} ${y}Z M${x-5} ${y} L${x} ${y-40} L${x+6} ${y}Z M${x+4} ${y} L${x+11} ${y-22} L${x+15} ${y}Z" fill="${c}" ${o}/>`;
+  const tite=(x,len,w)=>`<path d="M${x-w} 210 Q${x-w*.3} ${210+len*.6} ${x} ${210+len} Q${x+w*.3} ${210+len*.6} ${x+w} 210Z" fill="#7d6bbd" ${o}/>`;
+  const mite=(x,len,w)=>`<path d="M${x-w} 400 Q${x-w*.3} ${400-len*.6} ${x} ${400-len} Q${x+w*.3} ${400-len*.6} ${x+w} 400Z" fill="#8f7fd0" ${o}/>`;
+  const lava=(x,y,rx)=>`<ellipse cx="${x}" cy="${y}" rx="${rx+6}" ry="${rx*.32+4}" fill="#5a3a30" ${o}/><ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${rx*.32}" fill="#ff7b29"/><ellipse class="lava-glow" cx="${x-rx*.25}" cy="${y-1}" rx="${rx*.4}" ry="${rx*.12}" fill="#ffd23f"/>`;
+  const smoke=(x,y,n,big)=>{let h='';for(let i=0;i<n;i++)h+=`<circle class="smoke" cx="${x+(i%2?6:-6)}" cy="${y}" r="${big?16:9}" fill="#d5d0d8" stroke="#2b2b2b" stroke-width="2" style="animation-delay:${(i*.9).toFixed(1)}s"/>`;return h};
+  return `
+  <g>
+    ${tree(30,560,20)}${tree(208,570,22)}${tree(250,585,14,'#5cc96b')}${tree(395,590,16)}${tree(578,578,19)}${tree(760,590,15,'#5cc96b')}${tree(940,585,18)}
+    ${pine(560,460,46)}${pine(595,470,36)}${pine(930,500,40)}
+    ${flower(150,585,'#ff7eb6')}${flower(450,560,'#ffd23f')}${flower(690,572,'#a06cd5')}${flower(880,560,'#ff7eb6')}${flower(940,425,'#ffd23f')}
+    ${dr(390,550,44,2)}${dr(488,598,38,3,true)}${dr(750,470,44,0)}${dr(915,470,40,4,true)}${dr(420,470,36,1)}
+  </g>
+  <g>
+    ${tite(30,34,14)}${tite(64,22,9)}${tite(240,40,15)}${tite(275,24,9)}${tite(690,36,14)}${tite(722,22,8)}${tite(905,42,15)}${tite(940,26,10)}
+    ${mite(28,36,14)}${mite(390,30,13)}${mite(425,20,8)}${mite(744,34,13)}${mite(950,28,12)}
+    ${crys(215,392,'#7fe3ff')}${crys(578,392,'#ff9be0')}${crys(905,268,'#7fe3ff')}
+    ${gem(560,340,1,'#ff7eb6')}${gem(200,330,.9,'#4fa8ff')}${gem(395,355,.8,'#2ecc71')}${gem(760,345,.9,'#a06cd5')}${gem(60,320,.8,'#ffd23f')}
+  </g>
+  <g>
+    <path d="M760 205 L860 40 L960 205Z" fill="#8a5a44" ${o}/>
+    <path d="M846 64 Q842 100 826 130 Q812 160 800 205 L826 205 Q836 160 852 120 Q862 90 860 64Z" fill="#ff7b29" ${o}/>
+    <path d="M872 64 Q884 110 902 150 Q912 178 924 205 L944 205 Q928 170 914 135 Q900 98 880 64Z" fill="#ff7b29" ${o}/>
+    <path d="M836 80 L860 40 L884 80 Q872 92 860 80 Q848 92 836 80Z" fill="#ff6b4a" ${o}/>
+    ${smoke(860,36,3,true)}
+    ${lava(210,185,40)}${lava(392,190,34)}${lava(575,184,42)}${lava(30,175,24)}
+    ${smoke(205,178,2)}${smoke(580,176,2)}
+    <circle cx="240" cy="70" r="7" fill="#6b4a3a" ${o}/><circle cx="560" cy="60" r="9" fill="#6b4a3a" ${o}/><circle cx="700" cy="180" r="8" fill="#6b4a3a" ${o}/>
+  </g>`;
+}
 function moveToken(l){$('#token').style.transform=`translate(${l.x-38}px,${l.y-122}px)`}
 function tileClick(t){
   const l=LEVELS.find(x=>x.id===t.dataset.id);
@@ -668,7 +720,7 @@ function tileClick(t){
     else speak('That space is locked. Finish the space before it first!');return}
   sfx.step();state.pos=l.id;save();moveToken(l);
   setTimeout(()=>{
-    if(BUILT[l.id]){({'easy-1':startGame,'easy-2':startBridge,'easy-3':startLava,'easy-4':startPuzzle})[l.id]()}
+    if(BUILT[l.id]){({'easy-1':startGame,'easy-2':startBridge,'easy-3':startLava,'easy-4':startPuzzle,'easy-5':startMelt})[l.id]()}
     else{
       const golem=l.id==='easy-5';
       modal(`<div class="rays">${egg('big-egg','',LEVEL_EGG[l.id])}</div><h2>${l.world.id[0].toUpperCase()+l.world.id.slice(1)} Level ${l.n}</h2>
@@ -690,9 +742,9 @@ const ROUNDS=[[1,5],[2,8],[4,12],[7,16],[10,20]];
 const G={round:0,answer:0,counted:0,locked:false,wrong:0};
 function startGame(){
   G.round=0;G.answer=0;
-  $('#buddy').innerHTML=`<div class="bubble" id="bubble">Let's count!</div>`+avatar(me());
+  $('#buddy').innerHTML=`<div class="bubble" id="bubble">Let's count!</div>`+avatarWithWand(me());
   renderProgress();show('game');nextRound();
-  speak('Count the baby dragons, then tap the number!');
+  speak('Zap the baby dragons with your magic wand to count them, then tap the number!');
 }
 function renderProgress(){renderShell('#progress',G.round,false,'gold')}
 function nextRound(){
@@ -714,9 +766,26 @@ function nextRound(){
   $('#choices').innerHTML=shuffle([...set]).map((v,i)=>`<button class="num" data-v="${v}" style="background:${colors[i]};animation-delay:${.2+i*.08}s">${v}</button>`).join('');
   $$('#choices .num').forEach(b=>b.addEventListener('click',()=>answer(b)));
 }
+/* wand spark from the explorer card (HTML screens) to any element */
+function domZap(toEl){
+  try{
+    const sv=$('#buddy svg');if(!sv)return;
+    const r=sv.getBoundingClientRect(),[tx,ty]=wandTip(99,117);
+    const sx=r.left+(tx+6)/162*r.width,sy=r.top+ty/150*r.height;
+    const t=toEl.getBoundingClientRect(),ex=t.left+t.width/2,ey=t.top+t.height/2;
+    const d=document.createElement('div');d.className='shard';d.style.width='34px';d.style.height='34px';d.style.transition='transform .35s ease-out, opacity .35s';
+    d.innerHTML=`<svg viewBox="-17 -17 34 34"><polygon points="${star(0,0,15,6)}" fill="${WANDS[me().wand].spark}" stroke="#2b2b2b" stroke-width="2" stroke-linejoin="round"/></svg>`;
+    d.style.left=(sx-17)+'px';d.style.top=(sy-17)+'px';document.body.appendChild(d);d.getBoundingClientRect();
+    d.style.transform=`translate(${ex-sx}px,${ey-sy}px) rotate(200deg) scale(1.2)`;
+    setTimeout(()=>{d.style.opacity=0},300);setTimeout(()=>d.remove(),700);
+    const w=sv.querySelector('.wand-sw');if(w){w.classList.remove('zap');void w.getBBox();w.classList.add('zap')}
+  }catch(e){}
+}
 function countDragon(d){
   if(d.classList.contains('counted'))return;
+  domZap(d);tone([900,1300],.08,'triangle',.05);
   G.counted++;d.classList.add('counted');
+  const sp=WANDS[me().wand].spark,ds=d.querySelector('svg');if(ds)ds.style.filter=`drop-shadow(0 0 7px ${sp}) drop-shadow(0 0 3px ${sp})`;
   d.insertAdjacentHTML('beforeend',`<span class="badge">${G.counted}</span>`);
   $('#counter').textContent='Counted: '+G.counted;
   sfx.pop();speak(String(G.counted));
@@ -726,7 +795,7 @@ function answer(b){
   if(G.locked)return;
   const v=+b.dataset.v;
   if(v===G.answer){
-    G.locked=true;b.classList.add('right');sfx.yay();confetti(30);
+    G.locked=true;domZap(b);b.classList.add('right');sfx.yay();confetti(30);
     $('#dragons').classList.add('dance');
     const bd=$('#buddy');bd.classList.remove('jump');void bd.offsetWidth;bd.classList.add('jump');
     setBubble(['Yay!','Awesome!','You did it!','Super!','Wow!'][rand(0,4)]);
@@ -1369,6 +1438,167 @@ function winPuzzle(){
   $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
 $('#puzzle-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
+
+/* ---------- LEVEL 5: Melt the Chocolate Golem (adding & taking away up to 10) ---------- */
+const MR=[['add',2,5],['sub',2,6],['add',3,8],['sub',3,9],['mix',4,10]];
+const M={round:0,stage:0,q:null,busy:false};
+const GX=640,GY=96,GC=[790,240]; // golem svg position and body centre
+function makeMQ(r,prev){
+  let [t,lo,hi]=MR[r];if(t==='mix')t=Math.random()<.5?'add':'sub';
+  let a,b,ans,tries=0;
+  do{ans=rand(lo,hi);if(t==='sub')ans=Math.min(ans,9);
+    if(t==='add'){a=rand(1,ans-1);b=ans-a}else{a=rand(ans+1,Math.min(10,ans+5));b=a-ans}
+  }while(prev&&ans===prev.ans&&++tries<20);
+  return{t,a,b,ans,txt:t==='add'?`${a} + ${b}`:`${a} − ${b}`,say:t==='add'?`${a} plus ${b}`:`${a} take away ${b}`};
+}
+const TX=i=>175+i*46;
+function torchMarkup(i){
+  const x=TX(i),o='stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"';
+  return `<g class="torch" data-i="${i}">
+    <rect x="${x-4}" y="332" width="8" height="68" fill="#7b4a26" ${o}/>
+    <path d="M${x-18} 320 h36 l-6 15 h-24 Z" fill="#8a8298" ${o}/>
+    <g class="tflame" style="opacity:0;transition:opacity .2s">
+      <circle cx="${x}" cy="304" r="26" fill="#ffd23f" opacity=".25"/>
+      <path class="flame" d="M${x} 274 Q${x+18} 298 ${x+11} 316 Q${x} 324 ${x-11} 316 Q${x-18} 298 ${x} 274Z" fill="#ff7b29" ${o}/>
+      <path class="flame" d="M${x} 292 Q${x+8} 304 ${x+5} 314 Q${x} 318 ${x-5} 314 Q${x-8} 304 ${x} 292Z" fill="#ffd23f"/>
+    </g>
+    <rect x="${x-22}" y="268" width="44" height="134" fill="transparent"/>
+  </g>`;
+}
+const DRIPS=[[96,240],[204,240],[120,236],[180,236],[150,240],[100,118],[200,118],[130,120],[170,120],[60,210],[240,210],[112,180],[188,180],[150,122],[80,150]];
+function dripPath([x,y]){return `<path d="M${x} ${y} q-7 16 0 24 q7 -8 0 -24Z" fill="#6b3d1e" stroke="#2b2b2b" stroke-width="2.5"/>`}
+function startMelt(){
+  clearB();M.round=0;M.stage=0;M.q=null;M.busy=false;show('melt');buildMelt();renderShell('#mprogress',0,false,'ruby');
+  newMeltRound(true);
+}
+function buildMelt(){
+  const a=avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,'');
+  let torches='';for(let i=0;i<10;i++)torches+=torchMarkup(i);
+  $('#mscene').innerHTML=`<svg viewBox="0 0 1000 560" xmlns="${NS}">
+  <rect width="1000" height="560" fill="#3f3560"/>${castleBricks()}
+  <path d="M60 0 V36 Q120 66 180 36 Q240 66 300 36 V0" fill="#e74c3c" stroke="#2b2b2b" stroke-width="3" opacity=".85"/>
+  <path d="M640 0 V36 Q700 66 760 36 Q820 66 880 36 V0" fill="#e74c3c" stroke="#2b2b2b" stroke-width="3" opacity=".85"/>
+  <rect x="0" y="400" width="1000" height="160" fill="#6b6178"/><line x1="0" y1="400" x2="1000" y2="400" stroke="#2b2b2b" stroke-width="4"/>
+  <path d="M0 470 H1000 M120 400 V470 M300 400 V470 M480 400 V470 M660 400 V470 M840 400 V470" stroke="#2f2747" stroke-width="3"/>
+  <svg x="${GX}" y="${GY}" width="300" height="300" viewBox="0 0 300 300" overflow="visible">
+    <ellipse id="gm-puddle" cx="150" cy="294" rx="70" ry="12" fill="#6b3d1e" stroke="#2b2b2b" stroke-width="4" style="transition:rx 1s, ry 1s"/>
+    <g id="gm-face" style="opacity:0;transition:opacity .8s">
+      <circle cx="128" cy="286" r="9" fill="#fff" stroke="#2b2b2b" stroke-width="3"/><circle cx="172" cy="286" r="9" fill="#fff" stroke="#2b2b2b" stroke-width="3"/>
+      <circle cx="130" cy="288" r="4" fill="#2b2b2b"/><circle cx="170" cy="288" r="4" fill="#2b2b2b"/>
+      <path d="M138 302 Q150 310 162 302" fill="none" stroke="#2b2b2b" stroke-width="3" stroke-linecap="round"/>
+      <path d="M150 262 Q154 248 166 244" fill="none" stroke="#2b2b2b" stroke-width="3"/><circle cx="150" cy="266" r="10" fill="#e74c3c" stroke="#2b2b2b" stroke-width="3"/>
+    </g>
+    <g id="gm-body" style="transform-box:fill-box;transform-origin:50% 100%;transition:transform 1.1s cubic-bezier(.4,0,.2,1), opacity .9s .4s">${golemArt(true)}<g id="gm-drips"></g></g>
+  </svg>
+  <g id="torches">${torches}</g>
+  <svg x="0" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg>
+  ${wandG(me().wand,91,369,'wand6')}
+  <g id="fx6"></g>
+  </svg>`;
+  $('#torches').addEventListener('click',onTorchTap);
+  setMelt(0,true);
+}
+function setMelt(s,instant){
+  const b=$('#gm-body');if(instant)b.style.transition='none';
+  b.style.transform=s>=5?'scale(1.5,0.02)':`scale(${1+s*.07},${1-s*.16})`;
+  if(instant){b.getBoundingClientRect();b.style.transition=''}
+  const p=$('#gm-puddle');p.setAttribute('rx',70+s*22);p.setAttribute('ry',12+s*5);b.style.opacity=s>=5?0:1;
+  $('#gm-drips').innerHTML=DRIPS.slice(0,s*3).map(dripPath).join('');
+  $('#gm-face').style.opacity=s>=5?1:0;
+}
+const litTorches=()=>$$('#torches .torch.lit');
+function setLit(g,on){g.classList.toggle('lit',on);g.querySelector('.tflame').style.opacity=on?1:0}
+function updateEq6(res){
+  const m=litTorches().length,q=M.q;
+  let h=`<span class="eqb r">${q.txt}</span><span class="op">=</span>`;
+  if(res){const ok=M.m===q.ans;h+=`<span class="eqb ${ok?'ok':'bad'}">🔥 ${M.m}</span>`+(ok?'<span class="op">🎉</span>':`<span class="op">≠</span><span class="eqb g">${q.ans}</span>`)}
+  else h+=`<span class="eqb p">🔥 ${m||'?'}</span>`;
+  $('#eq6').innerHTML=h;
+}
+function newMeltRound(first){
+  M.q=makeMQ(M.round,M.q);M.busy=false;M.m=0;
+  litTorches().forEach(g=>setLit(g,false));
+  updateEq6();$('#btn-fire').disabled=false;
+  const intro=first?'The chocolate golem is in the castle! Light torches with your wand, then tap fire to melt him! ':'';
+  speak(`${intro}${M.q.say}. How many torches?`);
+}
+function onTorchTap(e){
+  const g=e.target.closest('.torch');if(!g||M.busy)return;
+  const on=!g.classList.contains('lit');setLit(g,on);
+  const x=TX(+g.dataset.i),m=litTorches().length;
+  if(on){zapAt('wand6','fx6',91,369,x,300);tone([500,900],.12,'sawtooth',.05);speak(String(m))}
+  else{tone([420,300],.1,'sine',.07);speak(m?String(m):'zero')}
+  updateEq6();
+}
+function puff(x,y,col,n,up){
+  for(let i=0;i<(n||5);i++){const c=document.createElementNS(NS,'circle'),cx=x+rand(-20,20),cy=y+rand(-10,10);
+    c.setAttribute('cx',cx);c.setAttribute('cy',cy);c.setAttribute('r',rand(8,16));c.setAttribute('fill',col);c.setAttribute('stroke','#2b2b2b');c.setAttribute('stroke-width','2');
+    $('#fx6').appendChild(c);
+    c.animate([{transform:'scale(.3)',opacity:.95,transformOrigin:`${cx}px ${cy}px`},{transform:`translate(${rand(-20,20)}px,${-(up||60)}px) scale(1.4)`,opacity:0,transformOrigin:`${cx}px ${cy}px`}],{duration:1000,delay:rand(0,200),easing:'ease-out',fill:'forwards'}).onfinish=()=>c.remove();}
+}
+function fireball(x0,y0,x1,y1,delay,bounce){
+  const g=document.createElementNS(NS,'g');
+  g.innerHTML='<circle r="14" fill="#ff7b29" stroke="#2b2b2b" stroke-width="3"/><circle r="7" fill="#ffd23f"/>';
+  g.style.opacity=0;$('#fx6').appendChild(g);
+  const f=arcFrames(x0,y0,x1,y1,90,0,360,16);f[0].opacity=1;f.forEach(k=>k.opacity=1);
+  const an=g.animate(f,{duration:700,delay,easing:'linear',fill:'forwards'});
+  an.onfinish=()=>{
+    if(bounce){const ex=x1-rand(120,260),b=g.animate(arcFrames(x1,y1,ex,392,60,360,720,12).map(k=>({...k,opacity:1})),{duration:600,easing:'linear',fill:'forwards'});
+      b.onfinish=()=>{puff(ex,392,'#9a9a9a',2,30);g.remove()}}
+    else{g.remove();puff(x1,y1,'#fff4e0',2,50)}
+  };
+}
+function stomp(){
+  tone([110,80,60],.35,'sawtooth',.12);
+  $('#mscene').animate([{transform:'translate(0,0)'},{transform:'translate(-7px,4px)'},{transform:'translate(7px,-4px)'},{transform:'translate(0,0)'}],{duration:280,iterations:3});
+  $('#gm-body').animate([{transform:$('#gm-body').style.transform},{transform:$('#gm-body').style.transform+' translateY(-14px)'},{transform:$('#gm-body').style.transform}],{duration:420,iterations:2});
+}
+function fireTorches(){
+  if(M.busy)return;
+  const lit=litTorches();
+  if(!lit.length){speak('Tap the torches to light them with your wand!');sfx.oops();return}
+  M.busy=true;M.m=lit.length;$('#btn-fire').disabled=true;
+  const q=M.q,ok=M.m===q.ans,tooMany=M.m>q.ans;
+  tone([200,300,450],.15,'sawtooth',.06);
+  lit.forEach((g,i)=>{const x=TX(+g.dataset.i);later(()=>setLit(g,false),i*150);
+    fireball(x,300,GC[0]+rand(-50,50),GC[1]+rand(-60,40),i*150,!ok&&tooMany)});
+  later(()=>evaluateMelt(ok,tooMany),700+lit.length*150+200);
+}
+function evaluateMelt(ok,tooMany){
+  const q=M.q;updateEq6(true);
+  if(ok){
+    sfx.yay();tone([900,600,300],.3,'sine',.05);puff(GC[0],GC[1]-40,'#ffffff',8,90);
+    M.stage++;setMelt(M.stage);M.round++;
+    const done=M.round>=MR.length;
+    speak(`${q.say} is ${q.ans}! Sizzle! `+(done?'The golem melted into a chocolate puddle!':'The golem is melting!'));
+    later(()=>{flyShell($('#gm-puddle'),'#mprogress',M.round)},1300);
+    later(()=>{if(done)meltWin();else newMeltRound()},done?3600:3000);
+  }else{
+    sfx.oops();
+    const said=`${q.say} is ${q.ans}, but we lit ${M.m}.`;
+    if(tooMany)speak(`Too much fire! ${said} It bounced right off him!`);
+    else{puff(GC[0],GC[1],'#9a9a9a',5,40);speak(`Not hot enough! ${said} The fire fizzled!`)}
+    later(stomp,900);
+    later(()=>speak('Roar! Let\'s try again!'),2600);
+    later(()=>newMeltRound(),4200);
+  }
+}
+function meltWin(){
+  confetti(60);sfx.win();
+  later(()=>{
+    const opened=awardEgg('easy-5');state.pos='easy-5';save();
+    sfx.win();confetti(80);
+    const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
+    modal(`<div class="rays">${egg('big-egg','','ruby')}</div>
+      <h2>You melted the Chocolate Golem!</h2>
+      <p>He's a yummy chocolate puddle now! You finished <b>Dragon Meadow</b> and built a <b>Ruby Egg</b>! ${txt}</p>
+      <button class="btn go" id="m-ok">🗺️ To the map</button>`);
+    speak(`Hooray ${me().name}! You melted the chocolate golem! You finished Dragon Meadow and got a ruby egg!`);
+    $('#m-ok').onclick=()=>toMapAfterWin(opened);
+  },1400);
+}
+$('#btn-fire').addEventListener('click',fireTorches);
+$('#melt-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
 
 /* confetti */
 function confetti(n){
