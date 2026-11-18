@@ -131,6 +131,15 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 .drop-row{display:flex;gap:16px;align-items:center;margin-top:18px}
 .btn:disabled{opacity:.5;pointer-events:none}
 
+/* EGG SHELL PROGRESS */
+.shell-wrap{display:flex;align-items:center;gap:8px;background:#fff;border:4px solid var(--ink);border-radius:30px;padding:2px 16px 2px 8px;box-shadow:0 4px 0 var(--ink);font-size:24px;font-weight:700}
+.shell-egg{width:54px;height:68px;display:block}
+.shell-new{transform-box:fill-box;transform-origin:center;animation:shellPop .6s cubic-bezier(.3,1.6,.6,1)}
+@keyframes shellPop{0%{transform:scale(1.6);opacity:0}100%{transform:scale(1);opacity:1}}
+.shell-wrap.complete .shell-egg{animation:eggWobble .8s ease-in-out infinite;filter:drop-shadow(0 0 10px #ffd23f)}
+.shard{position:fixed;width:44px;height:34px;z-index:70;pointer-events:none;transition:transform .8s cubic-bezier(.5,-.3,.5,1)}
+.shard svg{width:100%;height:100%}
+
 /* MODAL */
 .modal{position:fixed;inset:0;background:rgba(30,30,50,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .modal.hidden{display:none}
@@ -142,181 +151,6 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 .rays{position:relative;display:inline-block}
 .rays::before{content:'';position:absolute;inset:-40px;background:repeating-conic-gradient(#ffe680 0 12deg,transparent 12deg 24deg);border-radius:50%;animation:spin 8s linear infinite;z-index:-1;opacity:.8;-webkit-mask:radial-gradient(circle,#000 30%,transparent 70%);mask:radial-gradient(circle,#000 30%,transparent 70%)}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* ---------- LEVEL 2: Balance Bridge (addition) ---------- */
-const BR=[[3,4],[4,6],[5,7],[6,9],[7,10]];
-const B={round:0,total:0,pre:0,dr:[],angle:0,busy:false,seq:0,timers:[]};
-const later=(f,ms)=>B.timers.push(setTimeout(f,ms));
-const clearB=()=>{B.timers.forEach(clearTimeout);B.timers=[]};
-const NS='http://www.w3.org/2000/svg';
-const rockIcon='<svg viewBox="0 0 40 34"><path d="M4 30 Q0 16 10 8 Q20 0 30 6 Q40 12 36 30Z" fill="#a3a9b0" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/></svg>';
-const byState=s=>B.dr.filter(d=>d.state===s).sort((a,b)=>a.order-b.order);
-const countS=s=>B.dr.filter(d=>d.state===s).length;
-const angleFor=w=>Math.max(-1,Math.min(1,(B.total-w)/B.total))*16;
-function rot(x,y,a){const r=a*Math.PI/180,c=Math.cos(r),s=Math.sin(r);return[500+(x-500)*c-(y-400)*s,400+(x-500)*s+(y-400)*c]}
-function star(cx,cy,R,r){let p=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r:R;p.push((cx+q*Math.cos(a)).toFixed(1)+','+(cy+q*Math.sin(a)).toFixed(1))}return p.join(' ')}
-
-function startBridge(){
-  clearB();B.round=0;B.total=0;show('bridge');buildScene();renderBProgress();newBridgeRound(true);
-}
-function renderBProgress(){$('#bprogress').innerHTML=BR.map((_,i)=>`<span class="dot ${i<B.round?'on':''}">${egg('')}</span>`).join('');$$('#bprogress .dot svg').forEach(s=>{s.style.width='100%';s.style.height='100%'})}
-function buildScene(){
-  const a=avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,'');
-  let waves='';for(let x=300;x<700;x+=40)waves+=`<path d="M${x} 515 q10 -8 20 0 t20 0" fill="none" stroke="#fff" stroke-width="3" opacity=".7"/>`;
-  let boards='';for(let x=330;x<700;x+=34)boards+=`<line x1="${x}" y1="394" x2="${x}" y2="406" stroke="#2b2b2b" stroke-width="2" opacity=".35"/>`;
-  $('#scene').innerHTML=`<svg viewBox="0 0 1000 560" xmlns="${NS}">
-  <defs><clipPath id="archclip"><path d="M850 400 V352 Q880 318 910 352 V400 Z"/></clipPath>
-  <linearGradient id="skyg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd3f4"/><stop offset="1" stop-color="#e8fbff"/></linearGradient></defs>
-  <rect width="1000" height="560" fill="url(#skyg)"/>
-  <path d="M0 330 Q150 262 300 318 Q450 256 600 306 Q800 244 1000 318 V560 H0Z" fill="#c4ecb0"/>
-  <rect x="280" y="488" width="440" height="80" fill="#4fa8ff"/>${waves}
-  <g stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round">
-    <path d="M-10 400 H290 V570 H-10Z" fill="#c68a52"/><path d="M-10 400 H290 V416 H-10Z" fill="#7ccf5b"/>
-    <path d="M710 400 H1010 V570 H710Z" fill="#c68a52"/><path d="M710 400 H1010 V416 H710Z" fill="#7ccf5b"/>
-    <rect x="484" y="436" width="32" height="130" fill="#9aa0a6"/><path d="M500 408 L476 440 L524 440Z" fill="#7d838a"/>
-  </g>
-  <g stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round">
-    <rect x="770" y="250" width="60" height="150" fill="#d9d0f0"/><rect x="930" y="250" width="60" height="150" fill="#d9d0f0"/>
-    <rect x="806" y="296" width="148" height="104" fill="#ebe5fa"/>
-    <path d="M806 296 v-14 h16 v14 h14 v-14 h16 v14 h14 v-14 h16 v14 h14 v-14 h16 v14 h14 v-14 h16 v14" fill="#ebe5fa"/>
-    <path d="M764 252 L800 186 L836 252Z" fill="#ff7eb6"/><path d="M924 252 L960 186 L996 252Z" fill="#4fa8ff"/>
-    <line x1="800" y1="186" x2="800" y2="160"/><path d="M800 160 L824 168 L800 176Z" fill="#ffd23f"/>
-    <line x1="960" y1="186" x2="960" y2="160"/><path d="M960 160 L984 168 L960 176Z" fill="#ffd23f"/>
-    <path d="M790 300 v-16 a10 10 0 0 1 20 0 v16Z" fill="#5a3b2a"/><path d="M950 300 v-16 a10 10 0 0 1 20 0 v16Z" fill="#5a3b2a"/>
-    <path d="M850 400 V352 Q880 318 910 352 V400 Z" fill="#3a2618"/>
-  </g>
-  <g clip-path="url(#archclip)"><g id="gate" style="transition:transform 1s ease">
-    <rect x="846" y="316" width="68" height="86" fill="#8b5a2b" stroke="#2b2b2b" stroke-width="3"/>
-    <path d="M858 316 V402 M870 316 V402 M882 316 V402 M894 316 V402 M906 316 V402 M846 340 H914 M846 364 H914 M846 388 H914" stroke="#2b2b2b" stroke-width="3"/>
-  </g></g>
-  <path d="M850 400 V352 Q880 318 910 352 V400" fill="none" stroke="#2b2b2b" stroke-width="4"/>
-  <g id="plank" style="transform-origin:500px 400px;transition:transform 1s cubic-bezier(.4,0,.2,1)">
-    <rect x="296" y="392" width="408" height="16" rx="5" fill="#c58b4f" stroke="#2b2b2b" stroke-width="4"/>${boards}
-    <path d="M566 392 Q552 346 582 316 Q612 296 642 312 Q670 330 662 364 Q658 388 644 392Z" fill="#a3a9b0" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"/>
-    <circle cx="586" cy="330" r="5" fill="#8a9097"/><circle cx="648" cy="372" r="4" fill="#8a9097"/>
-    <text id="bnum" x="612" y="374" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="54" fill="#fff" stroke="#2b2b2b" stroke-width="6" paint-order="stroke">0</text>
-  </g>
-  <ellipse cx="390" cy="205" rx="124" ry="98" fill="#a06cd5" opacity=".12" stroke="#a06cd5" stroke-width="3" stroke-dasharray="8 8"/>
-  <svg x="0" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg>
-  <g class="wand" id="wand"><line x1="91" y1="369" x2="120" y2="324" stroke="#2b2b2b" stroke-width="6" stroke-linecap="round"/><polygon points="${star(122,316,15,7)}" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/></g>
-  <g id="dlayer" style="transition:opacity .4s"></g>
-  <g id="fx"></g>
-  </svg>`;
-  $('#dlayer').addEventListener('click',onDragonTap);
-}
-function addDragon(state,slot,ci){
-  const g=document.createElementNS(NS,'g');g.setAttribute('class','bd');g.dataset.i=B.dr.length;
-  g.innerHTML=`<g class="bd-in"><ellipse class="aura" cx="0" cy="-3" rx="30" ry="9" fill="#c9a6ff"/>${dragon(ci).replace('<svg ','<svg x="-25" y="-50" width="50" height="50" ')}</g>`;
-  $('#dlayer').appendChild(g);
-  const d={el:g,state,slot,order:B.seq++,pre:false};B.dr.push(d);return d;
-}
-function setT(d,x,y,a,k,dur,ease){
-  d.tx=x;d.ty=y;
-  d.el.style.transition=dur?`transform ${dur}s ${ease||'cubic-bezier(.4,0,.2,1)'}, opacity .4s`:'none';
-  d.el.style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotate(${a.toFixed(2)}deg) scale(${k})`;
-}
-function layout(dur=.6){
-  B.dr.forEach(d=>d.el.classList.toggle('floating',d.state==='float'));
-  B.dr.filter(d=>d.state==='bank').forEach(d=>{const c=d.slot%3,r=Math.floor(d.slot/3);setT(d,152+c*54+(r%2?12:0),400-r*50,0,1.15,dur)});
-  byState('float').forEach((d,i)=>{const c=i%4,r=Math.floor(i/4);setT(d,318+c*48,268-r*48,0,1,dur)});
-  byState('plank').forEach((d,i)=>{const c=i%4,r=Math.floor(i/4);const [x,y]=rot(322+c*42,392-r*42,B.angle);setT(d,x,y,B.angle,1,dur)});
-}
-function setPlank(instant){
-  const p=$('#plank');
-  if(instant){p.style.transition='none';p.style.transform=`rotate(${B.angle}deg)`;p.getBoundingClientRect();p.style.transition=''}
-  else p.style.transform=`rotate(${B.angle}deg)`;
-}
-function updateEq(result){
-  const f=countS('float'),w=countS('plank'),add=w-B.pre;
-  const g=dragon(0).replace('<svg ','<svg width="34" height="34" '),pu=dragon(1).replace('<svg ','<svg width="34" height="34" ');
-  let h=`<span class="eqb g">${g}${B.pre}</span><span class="op">+</span>`;
-  if(result){
-    const ok=w===B.total;
-    h+=`<span class="eqb p">${pu}${add}</span><span class="op">=</span><span class="eqb ${ok?'ok':'bad'}">${w}</span>`;
-    h+=ok?`<span class="op">🎉</span>`:`<span class="op">≠</span><span class="eqb r">${rockIcon}${B.total}</span>`;
-  }else{
-    h+=`<span class="eqb p">${pu}${f||'?'}</span><span class="op">⚖️</span><span class="eqb r">${rockIcon}${B.total}</span>`;
-  }
-  $('#eq').innerHTML=h;
-}
-function newBridgeRound(first){
-  const [a,b]=BR[B.round];let t;do{t=rand(a,b)}while(t===B.total&&a!==b);
-  B.total=t;B.pre=rand(1,Math.max(1,Math.floor(t/2)));
-  const avail=(t-B.pre)+rand(2,3);
-  $('#dlayer').innerHTML='';B.dr=[];B.seq=0;
-  const c0=rand(0,5);
-  for(let i=0;i<B.pre;i++){addDragon('plank',0,c0+i).pre=true}
-  for(let s=avail-1;s>=0;s--)addDragon('bank',s,c0+B.pre+s);
-  $('#bnum').textContent=t;$('#gate').style.transform='';
-  B.angle=angleFor(B.pre);setPlank(true);layout(0);
-  $('#dlayer').style.opacity=1;
-  updateEq();B.busy=false;$('#btn-drop').disabled=false;
-  const intro=first?'Balance the bridge so the baby dragons can get to the castle! ':'';
-  speak(`${intro}The boulder is ${t}. ${B.pre} dragon${B.pre>1?'s are':' is'} on the bridge. How many more do we need?`);
-}
-function zap(d){
-  const w=$('#wand');w.classList.remove('zap');void w.getBBox();w.classList.add('zap');
-  const sp=document.createElementNS(NS,'polygon');sp.setAttribute('points',star(0,0,12,5));sp.setAttribute('fill','#ffd23f');sp.setAttribute('stroke','#2b2b2b');sp.setAttribute('stroke-width','2');
-  sp.style.transform='translate(122px,316px)';sp.style.transition='transform .45s ease-out, opacity .45s';
-  $('#fx').appendChild(sp);sp.getBoundingClientRect();
-  sp.style.transform=`translate(${d.tx}px,${d.ty-20}px) rotate(180deg)`;sp.style.opacity=0;
-  setTimeout(()=>sp.remove(),500);
-}
-function onDragonTap(e){
-  const g=e.target.closest('.bd');if(!g||B.busy)return;
-  const d=B.dr[+g.dataset.i];
-  if(d.state==='bank'){
-    if(countS('float')>=12)return;
-    d.state='float';d.order=++B.seq;layout();zap(d);
-    tone([520,780],.12,'triangle',.07);speak(String(countS('float')));
-  }else if(d.state==='float'){
-    d.state='bank';layout();tone([420,300],.1,'sine',.07);
-    const f=countS('float');speak(f?String(f):'zero');
-  }else return;
-  updateEq();
-}
-function dropDragons(){
-  if(B.busy)return;
-  const fl=byState('float');
-  if(!fl.length){speak('Tap a dragon to lift it with your magic wand!');sfx.oops();return}
-  B.busy=true;$('#btn-drop').disabled=true;
-  fl.forEach(d=>{d.state='plank';d.order=++B.seq});
-  layout(.55);tone([200,140],.2,'sine',.1);
-  later(()=>{B.angle=angleFor(countS('plank'));setPlank();layout(1)},600);
-  later(evaluateBridge,1800);
-}
-function evaluateBridge(){
-  const w=countS('plank'),add=w-B.pre;updateEq(true);
-  if(w===B.total){
-    sfx.yay();confetti(30);
-    speak(`${B.pre} plus ${add} makes ${B.total}! The bridge is level! Go dragons, go!`);
-    later(()=>{$('#gate').style.transform='translateY(-66px)';sfx.step()},1000);
-    const walkers=byState('plank');
-    later(()=>walkers.forEach((d,i)=>later(()=>{d.el.classList.add('running');setT(d,880,402,0,.9,1.9,'linear');later(()=>{d.el.style.opacity=0},1750)},i*220)),1700);
-    const end=1700+walkers.length*220+2300;
-    later(()=>{B.round++;renderBProgress();B.round>=BR.length?winBridge():newBridgeRound()},end);
-  }else{
-    sfx.oops();
-    const heavy=w>B.total;
-    speak(`${heavy?'Too heavy!':'Not enough!'} ${B.pre} plus ${add} is ${w}, but the boulder is ${B.total}. Run back, dragons! Let's try again.`);
-    later(()=>{byState('plank').filter(d=>!d.pre).forEach(d=>{d.state='bank';d.el.classList.add('running')});B.angle=angleFor(B.pre);setPlank();layout(1.2)},3200);
-    later(()=>{B.dr.forEach(d=>d.el.classList.remove('running'));$('#dlayer').style.opacity=0},4600);
-    later(()=>newBridgeRound(),5100);
-  }
-}
-function winBridge(){
-  const first=!state.progress.done['easy-2'];
-  state.progress.done['easy-2']=true;state.progress.eggs++;state.pos='easy-2';save();
-  sfx.win();confetti(80);
-  modal(`<div class="rays">${egg('big-egg')}</div>
-    <h2>Another Golden Egg!</h2>
-    <p>All the baby dragons made it to the castle! You have <b>${state.progress.eggs}</b> golden eggs.</p>
-    <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-  speak(`Hooray ${me().name}! All the baby dragons are in the castle! You got another golden egg!`);
-  $('#m-ok').onclick=()=>{closeModal();openMap();if(first)setTimeout(()=>{const l=LEVELS[2];speak('Level three is open!');state.pos=l.id;save();moveToken(l);sfx.step()},700)};
-}
-$('#btn-drop').addEventListener('click',dropDragons);
-$('#bridge-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
 
 /* confetti */
 .confetti{position:fixed;top:-20px;width:12px;height:18px;z-index:60;pointer-events:none;border:2px solid var(--ink);border-radius:3px;animation:fall linear forwards}
@@ -370,7 +204,7 @@ $('#bridge-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSyn
 <section id="s-game" class="screen">
   <div class="topbar">
     <button class="icon-btn" id="game-back" aria-label="Back to map">🗺️</button>
-    <div class="progress" id="progress"></div>
+    <div class="shell-wrap" id="progress"></div>
     <button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button>
   </div>
   <div class="game-title">How many baby dragons?</div>
@@ -389,7 +223,7 @@ $('#bridge-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSyn
 <section id="s-bridge" class="screen">
   <div class="topbar">
     <button class="icon-btn" id="bridge-back" aria-label="Back to map">🗺️</button>
-    <div class="progress" id="bprogress"></div>
+    <div class="shell-wrap" id="bprogress"></div>
     <button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button>
   </div>
   <div class="game-title">Balance the bridge!</div>
@@ -497,6 +331,36 @@ function egg(cls,attrs){
   <path d="M60 8 C96 8 112 70 110 96 C108 128 86 144 60 144 C34 144 12 128 10 96 C8 70 24 8 60 8Z" fill="url(#${id})" stroke="#2b2b2b" stroke-width="5"/>
   <path d="M20 92 L36 82 L50 94 L64 82 L78 94 L92 82 L102 90" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".75"/>
   <ellipse cx="42" cy="44" rx="9" ry="15" fill="#fff" opacity=".75" transform="rotate(-20 42 44)"/></svg>`;
+}
+
+/* egg built from 5 shell pieces (bottom piece first) */
+const SHELL_Y=[160,118,92,66,40,-12];
+function zig(y){const p=[];for(let x=-6,k=0;x<=126;x+=12,k++)p.push(`${x},${y+(k%2?5:-5)}`);return p}
+function shellEgg(n,newIdx){
+  const id='sh'+(eggN++),EGG='M60 8 C96 8 112 70 110 96 C108 128 86 144 60 144 C34 144 12 128 10 96 C8 70 24 8 60 8Z';
+  let bands='',cracks='';
+  for(let i=0;i<5;i++){
+    const on=i<n,pts=zig(SHELL_Y[i]).concat(zig(SHELL_Y[i+1]).reverse()).join(' ');
+    bands+=`<polygon class="${i===newIdx?'shell-new':''}" points="${pts}" fill="${on?`url(#${id}g)`:'#eef2f5'}"/>`;
+    if(i>0)cracks+=`<polyline points="${zig(SHELL_Y[i]).join(' ')}" fill="none" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" opacity="${n>=5?.25:.7}"/>`;
+  }
+  return `<svg class="shell-egg" viewBox="0 0 120 150" aria-hidden="true"><defs>
+    <radialGradient id="${id}g" gradientUnits="userSpaceOnUse" cx="45" cy="45" r="110"><stop offset="0" stop-color="#fff6c2"/><stop offset=".45" stop-color="#ffd23f"/><stop offset="1" stop-color="#d99a00"/></radialGradient>
+    <clipPath id="${id}c"><path d="${EGG}"/></clipPath></defs>
+    <g clip-path="url(#${id}c)">${bands}${cracks}</g>
+    <path d="${EGG}" fill="none" stroke="#2b2b2b" stroke-width="5"/></svg>`;
+}
+function renderShell(sel,n,anim){
+  const w=$(sel);w.innerHTML=shellEgg(n,anim?n-1:-1)+`<span>${n}/5</span>`;w.classList.toggle('complete',n>=5);
+}
+function flyShell(fromEl,sel,n){
+  const r=fromEl.getBoundingClientRect(),t=$(sel).querySelector('.shell-egg').getBoundingClientRect();
+  const fx=r.left+r.width/2,fy=r.top+r.height/2,tx=t.left+t.width/2,ty=t.top+t.height/2;
+  const d=document.createElement('div');d.className='shard';
+  d.innerHTML='<svg viewBox="0 0 44 34"><polygon points="3,31 9,8 17,18 25,3 33,15 41,31" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/></svg>';
+  d.style.left=(fx-22)+'px';d.style.top=(fy-17)+'px';document.body.appendChild(d);d.getBoundingClientRect();
+  d.style.transform=`translate(${tx-fx}px,${ty-fy}px) rotate(540deg) scale(.7)`;
+  setTimeout(()=>{d.remove();renderShell(sel,n,true);tone(n>=5?[784,988,1175,1568]:[880,1175],.16,'triangle',.08)},820);
 }
 
 /* ---------- state ---------- */
@@ -659,7 +523,7 @@ function startGame(){
   renderProgress();show('game');nextRound();
   speak('Count the baby dragons, then tap the number!');
 }
-function renderProgress(){$('#progress').innerHTML=ROUNDS.map((_,i)=>`<span class="dot ${i<G.round?'on':''}">${egg('')}</span>`).join('');$$('#progress .dot svg').forEach(s=>{s.style.width='100%';s.style.height='100%'})}
+function renderProgress(){renderShell('#progress',G.round)}
 function nextRound(){
   const [a,b]=ROUNDS[G.round];let n;do{n=rand(a,b)}while(n===G.answer);
   G.answer=n;G.counted=0;G.locked=false;G.wrong=0;
@@ -695,8 +559,8 @@ function answer(b){
     $('#dragons').classList.add('dance');
     const bd=$('#buddy');bd.classList.remove('jump');void bd.offsetWidth;bd.classList.add('jump');
     setBubble(['Yay!','Awesome!','You did it!','Super!','Wow!'][rand(0,4)]);
-    speak(`${v}! Yes! ${v} baby dragon${v===1?'':'s'}!`);
-    G.round++;renderProgress();
+    G.round++;flyShell(b,'#progress',G.round);
+    speak(`${v}! Yes! ${v} baby dragon${v===1?'':'s'}! `+(G.round>=ROUNDS.length?'The golden egg is complete!':'You got an egg shell!'));
     setTimeout(()=>{G.round>=ROUNDS.length?winGame():nextRound()},2300);
   }else{
     // No guessing through the cards: show the right answer, then a brand-new set
@@ -726,7 +590,7 @@ function winGame(){
   const msg=E<need?`You have <b>${E}</b> golden egg${E===1?'':'s'}. Win <b>${need-E}</b> more to open <b>Level 2</b>!`
           :justOpened?`That's <b>${need}</b> golden eggs — <b>Level 2</b> is open!`:`You have <b>${E}</b> golden eggs!`;
   modal(`<div class="rays">${egg('big-egg')}</div>
-    <h2>You got a Golden Egg!</h2>
+    <h2>You built a Golden Egg!</h2>
     <p>${msg}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
   speak(`Hooray ${me().name}! You got a golden egg! `+(E<need?`You need ${need-E} more for level two!`:justOpened?'Level two is open!':`You have ${E} golden eggs!`));
@@ -750,7 +614,7 @@ function star(cx,cy,R,r){let p=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Mat
 function startBridge(){
   clearB();B.round=0;B.total=0;show('bridge');buildScene();renderBProgress();newBridgeRound(true);
 }
-function renderBProgress(){$('#bprogress').innerHTML=BR.map((_,i)=>`<span class="dot ${i<B.round?'on':''}">${egg('')}</span>`).join('');$$('#bprogress .dot svg').forEach(s=>{s.style.width='100%';s.style.height='100%'})}
+function renderBProgress(){renderShell('#bprogress',B.round)}
 function buildScene(){
   const a=avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,'');
   let waves='';for(let x=300;x<700;x+=40)waves+=`<path d="M${x} 515 q10 -8 20 0 t20 0" fill="none" stroke="#fff" stroke-width="3" opacity=".7"/>`;
@@ -780,7 +644,7 @@ function buildScene(){
     <rect x="846" y="316" width="68" height="86" fill="#8b5a2b" stroke="#2b2b2b" stroke-width="3"/>
     <path d="M858 316 V402 M870 316 V402 M882 316 V402 M894 316 V402 M906 316 V402 M846 340 H914 M846 364 H914 M846 388 H914" stroke="#2b2b2b" stroke-width="3"/>
   </g></g>
-  <path d="M850 400 V352 Q880 318 910 352 V400" fill="none" stroke="#2b2b2b" stroke-width="4"/>
+  <path id="arch" d="M850 400 V352 Q880 318 910 352 V400" fill="none" stroke="#2b2b2b" stroke-width="4"/>
   <g id="plank" style="transform-origin:500px 400px;transition:transform 1s cubic-bezier(.4,0,.2,1)">
     <rect x="296" y="392" width="408" height="16" rx="5" fill="#c58b4f" stroke="#2b2b2b" stroke-width="4"/>${boards}
     <path d="M566 392 Q552 346 582 316 Q612 296 642 312 Q670 330 662 364 Q658 388 644 392Z" fill="#a3a9b0" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"/>
@@ -885,7 +749,8 @@ function evaluateBridge(){
     const walkers=byState('plank');
     later(()=>walkers.forEach((d,i)=>later(()=>{d.el.classList.add('running');setT(d,880,402,0,.9,1.9,'linear');later(()=>{d.el.style.opacity=0},1750)},i*220)),1700);
     const end=1700+walkers.length*220+2300;
-    later(()=>{B.round++;renderBProgress();B.round>=BR.length?winBridge():newBridgeRound()},end);
+    later(()=>{B.round++;flyShell($('#arch'),'#bprogress',B.round);speak(B.round>=BR.length?'The golden egg is complete!':'You got an egg shell!')},end-900);
+    later(()=>{B.round>=BR.length?winBridge():newBridgeRound()},end+(B.round>=BR.length-1?900:600));
   }else{
     sfx.oops();
     const heavy=w>B.total;
@@ -900,7 +765,7 @@ function winBridge(){
   state.progress.done['easy-2']=true;state.progress.eggs++;state.pos='easy-2';save();
   sfx.win();confetti(80);
   modal(`<div class="rays">${egg('big-egg')}</div>
-    <h2>Another Golden Egg!</h2>
+    <h2>Another Golden Egg built!</h2>
     <p>All the baby dragons made it to the castle! You have <b>${state.progress.eggs}</b> golden eggs.</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
   speak(`Hooray ${me().name}! All the baby dragons are in the castle! You got another golden egg!`);
