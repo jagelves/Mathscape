@@ -418,9 +418,17 @@ function dragon(i){
   </svg>`;
 }
 let eggN=0;
-function egg(cls,attrs){
-  const id='eg'+(eggN++);
-  return `<svg class="${cls||'egg'}" ${attrs||''} viewBox="0 0 120 150" aria-hidden="true"><defs><radialGradient id="${id}" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff6c2"/><stop offset=".45" stop-color="#ffd23f"/><stop offset="1" stop-color="#d99a00"/></radialGradient></defs>
+/* three kinds of eggs: gold (Level 1), sapphire (Levels 2-3: adding & taking away), emerald (Level 4) */
+const EGG_TYPES={
+  gold:{name:'golden',Name:'Golden',c:['#fff6c2','#ffd23f','#d99a00']},
+  sapphire:{name:'sapphire',Name:'Sapphire',c:['#e3f0ff','#4fa8ff','#1d4fae']},
+  emerald:{name:'emerald',Name:'Emerald',c:['#e3ffe9','#2ecc71','#117a42']}
+};
+const EGG_ORDER=['gold','sapphire','emerald'];
+const LEVEL_EGG={'easy-1':'gold','easy-2':'sapphire','easy-3':'sapphire','easy-4':'emerald','easy-5':'emerald'};
+function egg(cls,attrs,type){
+  const id='eg'+(eggN++),c=(EGG_TYPES[type]||EGG_TYPES.gold).c;
+  return `<svg class="${cls||'egg'}" ${attrs||''} viewBox="0 0 120 150" aria-hidden="true"><defs><radialGradient id="${id}" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="${c[0]}"/><stop offset=".45" stop-color="${c[1]}"/><stop offset="1" stop-color="${c[2]}"/></radialGradient></defs>
   <path d="M60 8 C96 8 112 70 110 96 C108 128 86 144 60 144 C34 144 12 128 10 96 C8 70 24 8 60 8Z" fill="url(#${id})" stroke="#2b2b2b" stroke-width="5"/>
   <path d="M20 92 L36 82 L50 94 L64 82 L78 94 L92 82 L102 90" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".75"/>
   <ellipse cx="42" cy="44" rx="9" ry="15" fill="#fff" opacity=".75" transform="rotate(-20 42 44)"/></svg>`;
@@ -429,8 +437,8 @@ function egg(cls,attrs){
 /* egg built from 5 shell pieces (bottom piece first) */
 const SHELL_Y=[160,118,92,66,40,-12];
 function zig(y){const p=[];for(let x=-6,k=0;x<=126;x+=12,k++)p.push(`${x},${y+(k%2?5:-5)}`);return p}
-function shellEgg(n,newIdx){
-  const id='sh'+(eggN++),EGG='M60 8 C96 8 112 70 110 96 C108 128 86 144 60 144 C34 144 12 128 10 96 C8 70 24 8 60 8Z';
+function shellEgg(n,newIdx,type){
+  const c=(EGG_TYPES[type]||EGG_TYPES.gold).c,id='sh'+(eggN++),EGG='M60 8 C96 8 112 70 110 96 C108 128 86 144 60 144 C34 144 12 128 10 96 C8 70 24 8 60 8Z';
   let bands='',cracks='';
   for(let i=0;i<5;i++){
     const on=i<n,pts=zig(SHELL_Y[i]).concat(zig(SHELL_Y[i+1]).reverse()).join(' ');
@@ -438,19 +446,19 @@ function shellEgg(n,newIdx){
     if(i>0)cracks+=`<polyline points="${zig(SHELL_Y[i]).join(' ')}" fill="none" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" opacity="${n>=5?.25:.7}"/>`;
   }
   return `<svg class="shell-egg" viewBox="0 0 120 150" aria-hidden="true"><defs>
-    <radialGradient id="${id}g" gradientUnits="userSpaceOnUse" cx="45" cy="45" r="110"><stop offset="0" stop-color="#fff6c2"/><stop offset=".45" stop-color="#ffd23f"/><stop offset="1" stop-color="#d99a00"/></radialGradient>
+    <radialGradient id="${id}g" gradientUnits="userSpaceOnUse" cx="45" cy="45" r="110"><stop offset="0" stop-color="${c[0]}"/><stop offset=".45" stop-color="${c[1]}"/><stop offset="1" stop-color="${c[2]}"/></radialGradient>
     <clipPath id="${id}c"><path d="${EGG}"/></clipPath></defs>
     <g clip-path="url(#${id}c)">${bands}${cracks}</g>
     <path d="${EGG}" fill="none" stroke="#2b2b2b" stroke-width="5"/></svg>`;
 }
-function renderShell(sel,n,anim){
-  const w=$(sel);w.innerHTML=shellEgg(n,anim?n-1:-1)+`<span>${n}/5</span>`;w.classList.toggle('complete',n>=5);
+function renderShell(sel,n,anim,type){
+  const w=$(sel);type=type||w.dataset.type||'gold';w.dataset.type=type;w.innerHTML=shellEgg(n,anim?n-1:-1,type)+`<span>${n}/5</span>`;w.classList.toggle('complete',n>=5);
 }
 function flyShell(fromEl,sel,n){
   const r=fromEl.getBoundingClientRect(),t=$(sel).querySelector('.shell-egg').getBoundingClientRect();
   const fx=r.left+r.width/2,fy=r.top+r.height/2,tx=t.left+t.width/2,ty=t.top+t.height/2;
   const d=document.createElement('div');d.className='shard';
-  d.innerHTML='<svg viewBox="0 0 44 34"><polygon points="3,31 9,8 17,18 25,3 33,15 41,31" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/></svg>';
+  d.innerHTML=`<svg viewBox="0 0 44 34"><polygon points="3,31 9,8 17,18 25,3 33,15 41,31" fill="${(EGG_TYPES[$(sel).dataset.type]||EGG_TYPES.gold).c[1]}" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/></svg>`;
   d.style.left=(fx-22)+'px';d.style.top=(fy-17)+'px';document.body.appendChild(d);d.getBoundingClientRect();
   d.style.transform=`translate(${tx-fx}px,${ty-fy}px) rotate(540deg) scale(.7)`;
   setTimeout(()=>{d.remove();renderShell(sel,n,true);tone(n>=5?[784,988,1175,1568]:[880,1175],.16,'triangle',.08)},820);
@@ -460,7 +468,7 @@ function flyShell(fromEl,sel,n){
 const state={
   chars:store.get('chars2',clone(PRESETS)),
   sel:store.get('sel',0),
-  progress:store.get('progress',{eggs:0,done:{}}),
+  progress:store.get('progress',{gems:{gold:0,sapphire:0,emerald:0},done:{}}),
   muted:store.get('muted',false),
   pos:store.get('pos','easy-1')
 };
@@ -468,6 +476,9 @@ if(!Array.isArray(state.chars)||state.chars.length<3)state.chars=clone(PRESETS);
 state.chars=state.chars.slice(0,4).map((c,i)=>Object.assign({},i<3?PRESETS[i]:NEW_CHAR,c));
 if(state.sel>=state.chars.length)state.sel=0;
 if(state.progress.done&&state.progress.done['easy-5']&&!state.progress.done['easy-4']){state.progress.done['easy-4']=true;delete state.progress.done['easy-5'];if(state.pos==='easy-5')state.pos='easy-4'}
+if(!state.progress.gems){state.progress.gems={gold:state.progress.eggs||0,sapphire:0,emerald:0}}  // older saves counted only golden eggs
+EGG_ORDER.forEach(t=>{state.progress.gems[t]=state.progress.gems[t]||0});
+if(!state.progress.done)state.progress.done={};
 const me=()=>state.chars[state.sel];
 function save(){store.set('chars2',state.chars);store.set('sel',state.sel);store.set('progress',state.progress);store.set('muted',state.muted);store.set('pos',state.pos)}
 
@@ -568,16 +579,30 @@ const WORLDS=[{id:'easy',name:'Easy · Dragon Meadow',color:'#9be07a',tile:'#5cc
 const LEVELS=[];WORLDS.forEach(w=>w.xs.forEach((x,i)=>LEVELS.push({id:w.id+'-'+(i+1),world:w,n:i+1,x,y:w.y})));
 const BUILT={'easy-1':true,'easy-2':true,'easy-3':true,'easy-4':true};
 const PREREQ={}; // optional: level id -> the level that must be finished first
-const REQ={'easy-2':3,'easy-3':10}; // golden eggs needed to open
+const REQ={ // eggs needed to open a level (the level before must be finished too)
+  'easy-2':{gold:3},
+  'easy-3':{gold:5,sapphire:5},
+  'easy-4':{gold:5,sapphire:10},
+  'easy-5':{gold:5,sapphire:10,emerald:5}
+};
 const prereqOf=id=>{const i=LEVELS.findIndex(l=>l.id===id);return PREREQ[id]||(i>0?LEVELS[i-1].id:null)};
-const unlocked=id=>{const i=LEVELS.findIndex(l=>l.id===id);if(i===0)return true;const prev=!!state.progress.done[prereqOf(id)];return REQ[id]?prev&&state.progress.eggs>=REQ[id]:prev};
+const gems=()=>state.progress.gems;
+const missingFor=id=>{const r=REQ[id]||{};return EGG_ORDER.filter(t=>r[t]&&gems()[t]<r[t]).map(t=>({t,need:r[t],have:gems()[t],more:r[t]-gems()[t]}))};
+const unlocked=id=>{const i=LEVELS.findIndex(l=>l.id===id);if(i===0)return true;const prev=!!state.progress.done[prereqOf(id)];return prev&&missingFor(id).length===0};
 const openSet=()=>LEVELS.filter(l=>unlocked(l.id)).map(l=>l.id);
-function awardEgg(id){const before=openSet();state.progress.done[id]=true;state.progress.eggs++;save();return openSet().filter(x=>!before.includes(x))}
-function goal(){const g=LEVELS.find(l=>REQ[l.id]&&!unlocked(l.id));if(!g)return null;return{n:g.n,need:REQ[g.id],E:state.progress.eggs,prevDone:!!state.progress.done[prereqOf(g.id)]}}
+function awardEgg(id){const before=openSet();state.progress.done[id]=true;const t=LEVEL_EGG[id]||'gold';state.progress.gems[t]++;save();return openSet().filter(x=>!before.includes(x))}
+function goal(){const g=LEVELS.find(l=>REQ[l.id]&&!unlocked(l.id));if(!g)return null;const miss=missingFor(g.id);return{id:g.id,n:g.n,miss,met:miss.length===0,prevDone:!!state.progress.done[prereqOf(g.id)]}}
+const EGG_FROM={gold:'Level 1',sapphire:'Levels 2 and 3',emerald:'Level 4'};
+function listJoin(a){return a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1]}
 function goalLine(){
-  const g=goal(),E=state.progress.eggs;
-  if(!g)return{html:`You have <b>${E}</b> golden eggs!`,say:`You have ${E} golden eggs!`};
-  if(E<g.need){const m=g.need-E;return{html:`You have <b>${E}</b> golden egg${E===1?'':'s'}. Win <b>${m}</b> more to open <b>Level ${g.n}</b>!`,say:`You need ${m} more golden egg${m===1?'':'s'} for level ${g.n}!`}}
+  const g=goal();
+  const have=EGG_ORDER.filter(t=>gems()[t]).map(t=>`${gems()[t]} ${EGG_TYPES[t].name}`);
+  if(!g)return{html:`You have ${have.length?listJoin(have.map(x=>'<b>'+x+'</b>'))+' eggs':'no eggs yet'}!`,say:have.length?`You have ${listJoin(have)} eggs!`:''};
+  if(!g.met){
+    const parts=g.miss.map(m=>`${m.more} more ${EGG_TYPES[m.t].name}`),from=g.miss.map(m=>`${EGG_TYPES[m.t].name} eggs come from ${EGG_FROM[m.t]}`);
+    return{html:`To open <b>${levelName(g.id)}</b> you need ${listJoin(g.miss.map(m=>`<b>${m.more}</b> more ${EGG_TYPES[m.t].name}`))} egg${g.miss.length===1&&g.miss[0].more===1?'':'s'}! (${listJoin(from)}.)`,
+           say:`You need ${listJoin(parts)} egg${g.miss.length===1&&g.miss[0].more===1?'':'s'} for level ${g.n}!`};
+  }
   return{html:`Finish <b>Level ${g.n-1}</b> to open <b>Level ${g.n}</b>!`,say:`Finish level ${g.n-1} to open level ${g.n}!`};
 }
 function levelName(id){const l=LEVELS.find(x=>x.id===id);return l.world.id==='easy'?`Level ${l.n}`:`${l.world.id[0].toUpperCase()+l.world.id.slice(1)} Level ${l.n}`}
@@ -586,7 +611,7 @@ function toMapAfterWin(opened){closeModal();openMap();if(opened.length)setTimeou
 function openMap(){renderMap();show('map')}
 function renderMap(){
   $('#map-player').innerHTML=avatar(me())+`<span>${esc(me().name)}</span>`;
-  $('#map-eggs').innerHTML=egg()+`<span>× ${state.progress.eggs}</span>`;
+  $('#map-eggs').innerHTML=EGG_ORDER.map(t=>egg('','',t)+`<span>×${gems()[t]}</span>`).join('<span style="width:6px"></span>');
   const pts=LEVELS.map(l=>[l.x,l.y]);
   let d='M'+pts[0].join(' ');for(let i=1;i<pts.length;i++)d+=' L'+pts[i].join(' ');
   const bands=WORLDS.map((w,i)=>{const top=[400,210,0][i],h=[200,190,210][i];return `<rect x="0" y="${top}" width="960" height="${h}" fill="${w.color}"/>
@@ -602,7 +627,7 @@ function renderMap(){
    </g>
    <circle cx="900" cy="22" r="0"/>`;
   const tiles=LEVELS.map(l=>{
-    const un=unlocked(l.id),done=!!state.progress.done[l.id],gg=goal(),next=(un&&!done)||(un&&BUILT[l.id]&&gg&&gg.E<gg.need);
+    const un=unlocked(l.id),done=!!state.progress.done[l.id],gg=goal(),next=(un&&!done)||(un&&BUILT[l.id]&&gg&&!gg.met&&gg.miss.some(m=>LEVEL_EGG[l.id]===m.t));
     const fill=un?l.world.tile:'#cfcfcf';
     return `<g class="tile ${un?'':'locked'}" data-id="${l.id}" role="button" aria-label="${l.world.id} level ${l.n}${un?'':' locked'}">
       ${next?`<circle class="pulse" cx="${l.x}" cy="${l.y}" r="58" fill="#fff" opacity=".55"/>`:''}
@@ -611,8 +636,8 @@ function renderMap(){
       <circle cx="${l.x}" cy="${l.y}" r="34" fill="#fff" opacity=".25"/>
       ${un?`<text x="${l.x}" y="${l.y+16}" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="46" fill="#fff" stroke="#2b2b2b" stroke-width="5" paint-order="stroke">${l.n}</text>`
           :`<g transform="translate(${l.x-16},${l.y-18})"><rect x="0" y="14" width="32" height="24" rx="5" fill="#8a8a8a" stroke="#2b2b2b" stroke-width="3"/><path d="M7 14 V8 a9 9 0 0 1 18 0 V14" fill="none" stroke="#2b2b2b" stroke-width="4"/></g>`}
-      ${!un&&REQ[l.id]?`<rect x="${l.x-34}" y="${l.y+36}" width="68" height="30" rx="15" fill="#fff" stroke="#2b2b2b" stroke-width="3"/>${egg('',`x="${l.x-30}" y="${l.y+38}" width="21" height="26"`)}<text x="${l.x+12}" y="${l.y+59}" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="20" fill="#2b2b2b">×${REQ[l.id]}</text>`:''}
-      ${done?egg('',`x="${l.x+20}" y="${l.y-62}" width="34" height="42"`):''}
+      ${!un&&REQ[l.id]?reqBadge(l):''}
+      ${done?egg('',`x="${l.x+20}" y="${l.y-62}" width="34" height="42"`,LEVEL_EGG[l.id]):''}
     </g>`;
   }).join('');
   const pos=LEVELS.find(l=>l.id===state.pos)||LEVELS[0];
@@ -628,23 +653,28 @@ function renderMap(){
   const doneCount=Object.keys(state.progress.done).length;
   $('#map-hint').textContent=!doneCount?'Tap the glowing space to start!':goalLine().html.replace(/<[^>]+>/g,'')+' Tap a glowing space.';
 }
+function reqBadge(l){
+  const items=EGG_ORDER.filter(t=>REQ[l.id][t]),w=items.length*58+8,x0=l.x-w/2;
+  return `<rect x="${x0}" y="${l.y+36}" width="${w}" height="30" rx="15" fill="#fff" stroke="#2b2b2b" stroke-width="3"/>`+
+    items.map((t,i)=>{const x=x0+6+i*58;return egg('',`x="${x}" y="${l.y+38}" width="20" height="26"`,t)+`<text x="${x+22}" y="${l.y+59}" font-family="Fredoka, sans-serif" font-weight="700" font-size="18" fill="#2b2b2b">×${REQ[l.id][t]}</text>`}).join('');
+}
 function moveToken(l){$('#token').style.transform=`translate(${l.x-38}px,${l.y-122}px)`}
 function tileClick(t){
   const l=LEVELS.find(x=>x.id===t.dataset.id);
   if(!unlocked(l.id)){t.classList.remove('shake');void t.getBBox();t.classList.add('shake');sfx.oops();
     const pq=LEVELS.find(x=>x.id===prereqOf(l.id)),pd=!!state.progress.done[pq.id];
     if(!pd)speak(`Finish level ${pq.n} first!`);
-    else if(REQ[l.id]){const E=state.progress.eggs;speak(`You need ${REQ[l.id]} golden eggs. You have ${E}. Play again to win more!`)}
+    else if(REQ[l.id]){const m=missingFor(l.id);speak(`You need ${listJoin(m.map(x=>x.more+' more '+EGG_TYPES[x.t].name))} egg${m.length===1&&m[0].more===1?'':'s'}. Play again to win more!`)}
     else speak('That space is locked. Finish the space before it first!');return}
   sfx.step();state.pos=l.id;save();moveToken(l);
   setTimeout(()=>{
     if(BUILT[l.id]){({'easy-1':startGame,'easy-2':startBridge,'easy-3':startLava,'easy-4':startPuzzle})[l.id]()}
     else{
-      const needs=false;
-      modal(`<div class="rays">${egg('big-egg')}</div><h2>${l.world.id[0].toUpperCase()+l.world.id.slice(1)} Level ${l.n}</h2>
-        <p>${needs?'Your golden egg opened this space! This game is coming soon.':'This game is coming soon!'}</p>
+      const golem=l.id==='easy-5';
+      modal(`<div class="rays">${egg('big-egg','',LEVEL_EGG[l.id])}</div><h2>${l.world.id[0].toUpperCase()+l.world.id.slice(1)} Level ${l.n}</h2>
+        <p>${golem?'Coming soon: melt the chocolate golem into a chocolate puddle!':'This game is coming soon!'}</p>
         <button class="btn go" id="m-ok">OK!</button>`);
-      speak(needs?'Your golden egg opened this space! Coming soon!':'Coming soon!');
+      speak(golem?'Coming soon! We will melt the chocolate golem into a chocolate puddle!':'Coming soon!');
       $('#m-ok').onclick=closeModal;
     }
   },750);
@@ -664,7 +694,7 @@ function startGame(){
   renderProgress();show('game');nextRound();
   speak('Count the baby dragons, then tap the number!');
 }
-function renderProgress(){renderShell('#progress',G.round)}
+function renderProgress(){renderShell('#progress',G.round,false,'gold')}
 function nextRound(){
   const [a,b]=ROUNDS[G.round];let n;do{n=rand(a,b)}while(n===G.answer);
   G.answer=n;G.counted=0;G.locked=false;G.wrong=0;
@@ -726,7 +756,7 @@ function winGame(){
   const opened=awardEgg('easy-1');state.pos='easy-1';save();
   sfx.win();confetti(80);
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
-  modal(`<div class="rays">${egg('big-egg')}</div>
+  modal(`<div class="rays">${egg('big-egg','','gold')}</div>
     <h2>You built a Golden Egg!</h2>
     <p>${txt}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
@@ -751,7 +781,7 @@ function star(cx,cy,R,r){let p=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Mat
 function startBridge(){
   clearB();B.round=0;B.total=0;show('bridge');buildScene();renderBProgress();newBridgeRound(true);
 }
-function renderBProgress(){renderShell('#bprogress',B.round)}
+function renderBProgress(){renderShell('#bprogress',B.round,false,'sapphire')}
 function buildScene(){
   const a=avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,'');
   let waves='';for(let x=300;x<700;x+=40)waves+=`<path d="M${x} 515 q10 -8 20 0 t20 0" fill="none" stroke="#fff" stroke-width="3" opacity=".7"/>`;
@@ -885,7 +915,7 @@ function evaluateBridge(){
     const walkers=byState('plank');
     later(()=>walkers.forEach((d,i)=>later(()=>{d.el.classList.add('running');setT(d,880,402,0,.9,1.9,'linear');later(()=>{d.el.style.opacity=0},1750)},i*220)),1700);
     const end=1700+walkers.length*220+2300;
-    later(()=>{B.round++;flyShell($('#arch'),'#bprogress',B.round);speak(B.round>=BR.length?'The golden egg is complete!':'You got an egg shell!')},end-900);
+    later(()=>{B.round++;flyShell($('#arch'),'#bprogress',B.round);speak(B.round>=BR.length?'The sapphire egg is complete!':'You got an egg shell!')},end-900);
     later(()=>{B.round>=BR.length?winBridge():newBridgeRound()},end+(B.round>=BR.length-1?900:600));
   }else{
     sfx.oops();
@@ -968,11 +998,11 @@ function winBridge(){
   const opened=awardEgg('easy-2');state.pos='easy-2';save();
   sfx.win();confetti(80);
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
-  modal(`<div class="rays">${egg('big-egg')}</div>
-    <h2>Another Golden Egg built!</h2>
+  modal(`<div class="rays">${egg('big-egg','','sapphire')}</div>
+    <h2>You built a Sapphire Egg!</h2>
     <p>All the baby dragons made it to the castle! ${txt}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-  speak(`Hooray ${me().name}! All the baby dragons are in the castle! You got another golden egg! `+(opened.length?'':gl.say));
+  speak(`Hooray ${me().name}! All the baby dragons are in the castle! You got a sapphire egg! `+(opened.length?'':gl.say));
   $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
 $('#btn-drop').addEventListener('click',dropDragons);
@@ -1008,7 +1038,7 @@ function warlockSVG(){
 }
 function wlSay(t,flip){$('#wltext').textContent=t;const g=$('#wlsay');g.style.opacity=t?1:0;g.setAttribute('transform',flip?'translate(-290 40)':'')}
 function wlLaugh(on){$('#wl .wl-in').classList.toggle('laugh',on)}
-function startLava(){clearB();L.round=0;L.T=0;show('lava');buildLava();renderShell('#lprogress',0);newLavaRound(true)}
+function startLava(){clearB();L.round=0;L.T=0;show('lava');buildLava();renderShell('#lprogress',0,false,'sapphire');newLavaRound(true)}
 function buildLava(){
   const a=avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,'');
   let bricks='';for(let y=20;y<430;y+=36)for(let x=(y/36%2?-30:0);x<1000;x+=60)bricks+=`<rect x="${x}" y="${y}" width="60" height="36" fill="none" stroke="#2f2747" stroke-width="3"/>`;
@@ -1126,7 +1156,7 @@ function evaluateLava(sunk){
     },750);
     later(()=>{wlSay('');poof(530,450,'#b48cff');tone([200,120,80],.3,'sawtooth',.08);speak('Poof! The warlock is gone!')},2000);
     later(()=>{track($('#door').animate([{transform:'scaleX(1)'},{transform:'scaleX(.12)'}],{duration:900,easing:'ease-in-out',fill:'forwards'}));sfx.step();confetti(30)},3000);
-    later(()=>{L.round++;flyShell($('#door'),'#lprogress',L.round);speak(L.round>=LR.length?'The golden egg is complete!':'You got an egg shell!')},4000);
+    later(()=>{L.round++;flyShell($('#door'),'#lprogress',L.round);speak(L.round>=LR.length?'The sapphire egg is complete!':'You got an egg shell!')},4000);
     later(()=>{if(L.round>=LR.length)winLava();else{$('#lscene svg').style.opacity=0;later(()=>newLavaRound(),400)}},5600);
   }else if(rem>L.R){
     sfx.oops();
@@ -1155,11 +1185,11 @@ function winLava(){
   const opened=awardEgg('easy-3');state.pos='easy-3';save();
   sfx.win();confetti(80);
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
-  modal(`<div class="rays">${egg('big-egg')}</div>
+  modal(`<div class="rays">${egg('big-egg','','sapphire')}</div>
     <h2>You beat the warlock!</h2>
-    <p>The castle door is open and you built another Golden Egg! ${txt}</p>
+    <p>The castle door is open and you built a Sapphire Egg! ${txt}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-  speak(`Hooray ${me().name}! You beat the evil warlock! You got another golden egg!`);
+  speak(`Hooray ${me().name}! You beat the evil warlock! You got a sapphire egg!`);
   $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
 $('#btn-lzap').addEventListener('click',lavaZap);
@@ -1215,7 +1245,7 @@ function startPuzzle(){
   clearB();show('puzzle');
   const nums=shuffle([1,2,3,4,5,6,7,8,9]);
   P.ans=nums;P.q=nums.map(a=>makeQ(a));P.placed=Array(9).fill(false);P.sel=-1;P.busy=false;P.shells=0;
-  buildPuzzle();renderShell('#pprogress',0);updatePrompt();
+  buildPuzzle();renderShell('#pprogress',0,false,'emerald');updatePrompt();
   speak("The warlock left a magic puzzle in the castle! Lift a puzzle piece with your wand, then put it where its number belongs.");
 }
 function castleBricks(){let b='';for(let y=20;y<400;y+=36)for(let x=(y/36%2?-30:0);x<1000;x+=60)b+=`<rect x="${x}" y="${y}" width="60" height="36" fill="none" stroke="#2f2747" stroke-width="3"/>`;return b}
@@ -1331,11 +1361,11 @@ function winPuzzle(){
   const opened=awardEgg('easy-4');state.pos='easy-4';save();
   sfx.win();confetti(80);
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open — go stop the golem!`:gl.html;
-  modal(`<div class="rays">${egg('big-egg')}</div>
+  modal(`<div class="rays">${egg('big-egg','','emerald')}</div>
     <h2>You built the Chocolate Golem!</h2>
-    <p>Uh oh — he came alive and stomped off into the castle! You built another Golden Egg. ${txt}</p>
+    <p>Uh oh — he came alive and stomped off into the castle! You built an Emerald Egg. ${txt}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-  speak(`Great building, ${me().name}! You got another golden egg!`);
+  speak(`Great building, ${me().name}! You got an emerald egg!`);
   $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
 $('#puzzle-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
