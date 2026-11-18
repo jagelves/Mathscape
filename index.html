@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mathscape</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#2b2b2b;--sun:#ffd23f;--sky:#8fd3f4;--grass:#7ccf5b;--paper:#fffaf0;--pink:#ff7eb6;--blue:#4fa8ff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{font-family:'Fredoka',system-ui,sans-serif;color:var(--ink);background:linear-gradient(#8fd3f4 0%,#bfe9ff 60%,#9be07a 60%,#7ccf5b 100%);background-attachment:fixed;min-height:100vh;overflow-x:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+.screen{display:none;min-height:100vh;padding:16px;flex-direction:column;align-items:center}
+.screen.active{display:flex;animation:fadeIn .35s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.btn{border:4px solid var(--ink);border-radius:22px;padding:12px 26px;font-size:24px;font-weight:700;background:#fff;box-shadow:0 6px 0 var(--ink);transition:transform .1s,box-shadow .1s}
+.btn:active{transform:translateY(5px);box-shadow:0 1px 0 var(--ink)}
+.btn.go{background:var(--sun);font-size:30px;padding:14px 40px}
+.btn.small{font-size:18px;padding:8px 14px;border-radius:16px;box-shadow:0 4px 0 var(--ink)}
+.icon-btn{width:56px;height:56px;border:4px solid var(--ink);border-radius:50%;background:#fff;font-size:26px;box-shadow:0 4px 0 var(--ink);display:flex;align-items:center;justify-content:center;padding:0}
+.icon-btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+
+/* clouds */
+.clouds{position:fixed;inset:0;pointer-events:none;z-index:-1;overflow:hidden}
+.cloud{position:absolute;background:#fff;border-radius:50px;border:3px solid #e6f4fb;opacity:.9;animation:drift linear infinite}
+.cloud::before,.cloud::after{content:'';position:absolute;background:#fff;border-radius:50%}
+.cloud::before{width:50%;height:140%;left:15%;top:-60%}
+.cloud::after{width:35%;height:110%;left:50%;top:-40%}
+@keyframes drift{from{transform:translateX(-30vw)}to{transform:translateX(130vw)}}
+
+/* HOME */
+.logo{margin:14px 0 2px;font-size:clamp(52px,12vw,104px);font-weight:700;letter-spacing:2px;line-height:1;display:flex}
+.logo span{display:inline-block;-webkit-text-stroke:4px var(--ink);paint-order:stroke fill;text-shadow:0 6px 0 var(--ink);animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(var(--r,0deg))}50%{transform:translateY(-8px) rotate(var(--r,0deg))}}
+.tag{font-size:clamp(20px,4.5vw,28px);font-weight:600;margin:14px 0 8px;background:#fff;border:4px solid var(--ink);border-radius:18px;padding:6px 18px;box-shadow:0 5px 0 var(--ink);transform:rotate(-1.5deg)}
+.avatars{display:flex;gap:clamp(10px,3vw,28px);margin:18px 0;flex-wrap:wrap;justify-content:center}
+.av-card{background:var(--paper);border:5px solid var(--ink);border-radius:28px;padding:10px 10px 6px;width:clamp(130px,27vw,200px);box-shadow:0 8px 0 var(--ink);transition:transform .2s,background .2s;display:flex;flex-direction:column;align-items:center}
+.av-card .av{width:100%;height:auto}
+.av-card .nm{font-size:clamp(20px,4vw,28px);font-weight:700;margin-top:2px}
+.av-card.sel{background:var(--sun);transform:translateY(-12px) rotate(-2deg)}
+.av-card.sel .av{animation:hop .6s ease}
+@keyframes hop{0%,100%{transform:translateY(0)}40%{transform:translateY(-22px)}}
+.home-actions{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+
+/* CUSTOMIZE */
+.custom-wrap{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;align-items:flex-start;max-width:980px;width:100%;margin-top:10px}
+.preview{background:var(--paper);border:5px solid var(--ink);border-radius:30px;padding:16px;box-shadow:0 8px 0 var(--ink);width:min(300px,90vw);text-align:center}
+.preview .av{width:100%;height:auto}
+.preview input{font-family:inherit;font-size:26px;font-weight:700;text-align:center;width:100%;border:4px solid var(--ink);border-radius:16px;padding:6px;margin-top:6px;background:#fff}
+.opts{background:#fff;border:5px solid var(--ink);border-radius:30px;padding:14px 18px;box-shadow:0 8px 0 var(--ink);flex:1;min-width:280px;max-width:560px}
+.opt-row{margin:8px 0 14px}
+.opt-row h3{margin:0 0 8px;font-size:20px}
+.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.sw{width:46px;height:46px;border-radius:50%;border:4px solid var(--ink);box-shadow:0 3px 0 var(--ink);padding:0}
+.sw.on{outline:5px solid var(--sun);outline-offset:2px;transform:scale(1.08)}
+.chip{border:4px solid var(--ink);border-radius:16px;background:#f3f3f3;font-size:18px;font-weight:600;padding:6px 14px;box-shadow:0 3px 0 var(--ink)}
+.chip.on{background:var(--sun)}
+.screen-title{font-size:clamp(30px,6vw,46px);margin:6px 0;-webkit-text-stroke:3px var(--ink);paint-order:stroke fill;color:#fff;text-shadow:0 5px 0 var(--ink)}
+
+/* TOP BAR */
+.topbar{width:100%;max-width:1000px;display:flex;align-items:center;gap:12px;justify-content:space-between}
+.pill{display:flex;align-items:center;gap:8px;background:#fff;border:4px solid var(--ink);border-radius:30px;padding:4px 14px 4px 6px;box-shadow:0 4px 0 var(--ink);font-size:22px;font-weight:700}
+.pill .av{width:44px;height:55px}
+.pill .egg{width:30px;height:38px}
+
+/* MAP */
+.board{width:100%;max-width:1000px;margin-top:14px;border:6px solid var(--ink);border-radius:30px;overflow:hidden;box-shadow:0 10px 0 var(--ink);background:#fff}
+.board svg{display:block;width:100%;height:auto}
+.tile{cursor:pointer}
+.tile:hover .tile-face{filter:brightness(1.06)}
+.tile.locked{cursor:not-allowed}
+.tile.shake{animation:shake .4s}
+.token{transition:transform .7s cubic-bezier(.5,-.4,.5,1.4)}
+.token-inner{animation:idle 1.6s ease-in-out infinite;transform-box:fill-box;transform-origin:bottom center}
+@keyframes idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.pulse{animation:pulse 1.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.map-hint{margin-top:16px;font-size:22px;font-weight:600;background:#fff;border:4px solid var(--ink);border-radius:18px;padding:6px 18px;box-shadow:0 4px 0 var(--ink)}
+
+/* GAME */
+.game-title{font-size:clamp(22px,5vw,38px);font-weight:700;margin:6px 0 0;text-align:center}
+.progress{display:flex;gap:6px}
+.progress .dot{display:inline-block;width:30px;height:38px;opacity:.25;filter:grayscale(1);transition:all .4s}
+.progress .dot.on{opacity:1;filter:none;transform:scale(1.15)}
+.field{width:100%;max-width:760px;margin-top:12px;background:linear-gradient(#c9f2ff,#e8fbff 32%,#a8e27f 32%,#8fd66a);display:flex;flex-direction:column;justify-content:center;border:6px solid var(--ink);border-radius:30px;box-shadow:0 10px 0 var(--ink);padding:18px 14px 22px;min-height:240px;position:relative}
+.dragons{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;justify-items:center;max-width:560px;margin:0 auto}
+.dragon{background:none;border:none;padding:0;position:relative;width:100%;max-width:var(--ds,90px);aspect-ratio:1;animation:popIn .4s backwards cubic-bezier(.3,1.6,.6,1)}
+.dragon svg{width:100%;height:100%;display:block;animation:wiggle 2.2s ease-in-out infinite;animation-delay:var(--d,0s);transform-origin:bottom center}
+.dragon.counted svg{filter:drop-shadow(0 0 6px #fff) drop-shadow(0 0 2px var(--sun))}
+.dragon .badge{position:absolute;top:-6px;right:-4px;background:var(--sun);border:3px solid var(--ink);border-radius:50%;min-width:30px;height:30px;font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center;animation:popIn .3s cubic-bezier(.3,1.8,.6,1)}
+.dragons.dance .dragon svg{animation:dance .5s ease-in-out infinite}
+@keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
+@keyframes wiggle{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg) translateY(-3px)}}
+@keyframes dance{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-14px) rotate(8deg)}}
+.counter{position:absolute;right:14px;top:-22px;background:#fff;border:4px solid var(--ink);border-radius:16px;padding:2px 14px;font-weight:700;font-size:20px;box-shadow:0 4px 0 var(--ink)}
+.play-row{display:flex;align-items:flex-end;gap:18px;margin-top:34px;width:100%;max-width:760px;justify-content:center}
+.buddy{width:clamp(80px,16vw,120px);position:relative;flex-shrink:0}
+.buddy .av{width:100%;height:auto}
+.buddy.jump .av{animation:hop .5s ease 2}
+.bubble{position:absolute;bottom:100%;left:50%;transform:translateX(-30%);background:#fff;border:4px solid var(--ink);border-radius:18px;padding:6px 12px;font-weight:700;font-size:17px;white-space:nowrap;box-shadow:0 3px 0 var(--ink);margin-bottom:6px}
+.choices{display:flex;gap:clamp(10px,3vw,22px);flex-wrap:wrap;justify-content:center}
+.num{width:clamp(84px,19vw,130px);height:clamp(96px,22vw,150px);border:6px solid var(--ink);border-radius:26px;font-size:clamp(48px,11vw,80px);font-weight:700;box-shadow:0 8px 0 var(--ink);transition:transform .1s;animation:popIn .4s backwards cubic-bezier(.3,1.6,.6,1)}
+.num:active{transform:translateY(6px);box-shadow:0 2px 0 var(--ink)}
+.num.right{background:#7be07b!important;transform:scale(1.15) rotate(-4deg)}
+.num.wrong{animation:shake .45s;opacity:.35;pointer-events:none}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px) rotate(-4deg)}40%{transform:translateX(10px) rotate(4deg)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.hint{margin-top:18px;font-size:20px;font-weight:600;opacity:.85;text-align:center}
+
+/* MODAL */
+.modal{position:fixed;inset:0;background:rgba(30,30,50,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal.hidden{display:none}
+.modal-card{background:var(--paper);border:6px solid var(--ink);border-radius:32px;box-shadow:0 10px 0 var(--ink);padding:22px 26px;text-align:center;max-width:460px;width:100%;animation:popIn .4s cubic-bezier(.3,1.6,.6,1)}
+.modal-card h2{font-size:34px;margin:4px 0 6px}
+.modal-card p{font-size:21px;margin:6px 0 16px}
+.big-egg{width:150px;height:190px;animation:eggWobble 1.2s ease-in-out infinite;filter:drop-shadow(0 0 22px #ffe680)}
+@keyframes eggWobble{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg) scale(1.05)}}
+.rays{position:relative;display:inline-block}
+.rays::before{content:'';position:absolute;inset:-40px;background:repeating-conic-gradient(#ffe680 0 12deg,transparent 12deg 24deg);border-radius:50%;animation:spin 8s linear infinite;z-index:-1;opacity:.8;-webkit-mask:radial-gradient(circle,#000 30%,transparent 70%);mask:radial-gradient(circle,#000 30%,transparent 70%)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* confetti */
+.confetti{position:fixed;top:-20px;width:12px;height:18px;z-index:60;pointer-events:none;border:2px solid var(--ink);border-radius:3px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+</style>
+</head>
+<body>
+<div class="clouds" id="clouds"></div>
+
+<!-- HOME -->
+<section id="s-home" class="screen active">
+  <div style="width:100%;max-width:1000px;display:flex;justify-content:flex-end"><button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button></div>
+  <h1 class="logo" id="logo" aria-label="Mathscape"></h1>
+  <div class="tag">Pick your explorer!</div>
+  <div class="avatars" id="home-avatars"></div>
+  <div class="home-actions">
+    <button class="btn" id="btn-custom">✏️ Customize</button>
+    <button class="btn go" id="btn-play">▶ Play!</button>
+  </div>
+</section>
+
+<!-- CUSTOMIZE -->
+<section id="s-custom" class="screen">
+  <h2 class="screen-title">Make your explorer!</h2>
+  <div class="custom-wrap">
+    <div class="preview">
+      <div id="cust-preview"></div>
+      <input id="cust-name" maxlength="10" aria-label="Explorer name">
+    </div>
+    <div class="opts" id="cust-opts"></div>
+  </div>
+  <div class="home-actions" style="margin-top:22px">
+    <button class="btn" id="btn-reset">↺ Reset</button>
+    <button class="btn go" id="btn-done">✔ Done</button>
+  </div>
+</section>
+
+<!-- MAP -->
+<section id="s-map" class="screen">
+  <div class="topbar">
+    <button class="icon-btn" id="map-home" aria-label="Home">🏠</button>
+    <div class="pill" id="map-player"></div>
+    <div class="pill" id="map-eggs"></div>
+    <button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button>
+  </div>
+  <div class="board" id="board"></div>
+  <div class="map-hint" id="map-hint">Tap a glowing space to play!</div>
+</section>
+
+<!-- GAME -->
+<section id="s-game" class="screen">
+  <div class="topbar">
+    <button class="icon-btn" id="game-back" aria-label="Back to map">🗺️</button>
+    <div class="progress" id="progress"></div>
+    <button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button>
+  </div>
+  <div class="game-title">How many baby dragons?</div>
+  <div class="field">
+    <div class="dragons" id="dragons"></div>
+    <div class="counter" id="counter">Tap to count!</div>
+  </div>
+  <div class="play-row">
+    <div class="buddy" id="buddy"><div class="bubble" id="bubble">Let's count!</div></div>
+    <div class="choices" id="choices"></div>
+  </div>
+  <div class="hint">Tap each dragon to count it, then tap the matching number.</div>
+</section>
+
+<div id="modal" class="modal hidden"><div class="modal-card" id="modal-card"></div></div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+const rand=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const clone=o=>JSON.parse(JSON.stringify(o));
+const store={
+  get(k,d){try{const v=localStorage.getItem('mathscape_'+k);return v?JSON.parse(v):d}catch(e){return d}},
+  set(k,v){try{localStorage.setItem('mathscape_'+k,JSON.stringify(v))}catch(e){}}
+};
+
+/* ---------- characters ---------- */
+const PRESETS=[
+  {name:'Papa', skin:'#e2b48c',hairStyle:'slick',hair:'#1b1b1b',eyes:'#4a2c17',shirt:'#2f6fd6',pants:'#3b3b4f',hat:'none'},
+  {name:'Mommy',skin:'#f6d3b3',hairStyle:'long', hair:'#f4d35e',eyes:'#2e86de',shirt:'#e84393',pants:'#5b4a8a',hat:'none'},
+  {name:'Alex', skin:'#fde4d0',hairStyle:'bangs',hair:'#7b4a26',eyes:'#6b3e1f',shirt:'#27ae60',pants:'#2d4a7a',hat:'none'}
+];
+const OPTS=[
+  {key:'skin',label:'Skin',type:'color',vals:['#fde4d0','#f6d3b3','#e2b48c','#e0ac69','#c68642','#8d5524','#5a3519']},
+  {key:'hairStyle',label:'Hair style',type:'chip',vals:[['slick','Slick'],['bangs','Bangs'],['short','Short'],['long','Long'],['messy','Spiky'],['bald','No hair']]},
+  {key:'hair',label:'Hair color',type:'color',vals:['#1b1b1b','#7b4a26','#f4d35e','#e2662b','#b9b9b9','#8e44ad','#ff7eb6']},
+  {key:'eyes',label:'Eyes',type:'color',vals:['#6b3e1f','#4a2c17','#2e86de','#27ae60','#8a6d3b','#7f8c8d']},
+  {key:'shirt',label:'Jacket',type:'color',vals:['#2f6fd6','#e84393','#27ae60','#f39c12','#e74c3c','#8e44ad','#16a085','#f4d35e']},
+  {key:'pants',label:'Pants',type:'color',vals:['#3b3b4f','#2d4a7a','#5b4a8a','#7b4a26','#6d6d6d','#1e8449']},
+  {key:'hat',label:'Hat',type:'chip',vals:[['none','No hat'],['beanie','Beanie'],['cap','Cap'],['crown','Crown']]}
+];
+
+function avatar(c){
+  const o='#2b2b2b', sw='stroke="'+o+'" stroke-width="3" stroke-linejoin="round"';
+  let back='',front='',hat='';
+  if(c.hairStyle==='long'){
+    back=`<path d="M14 56 Q14 12 60 12 Q106 12 106 56 L110 112 Q96 120 88 104 L32 104 Q24 120 10 112 Z" fill="${c.hair}" ${sw}/>`;
+    front=`<path d="M17 56 Q18 15 60 15 Q102 15 103 56 Q94 36 74 32 Q66 42 50 40 Q38 38 34 34 Q22 40 17 56Z" fill="${c.hair}" ${sw}/>`;
+  }else if(c.hairStyle==='slick'){
+    front=`<path d="M15 58 Q13 13 60 13 Q107 13 105 58 Q102 42 92 35 Q70 26 42 33 Q26 39 15 58Z" fill="${c.hair}" ${sw}/><path d="M42 16 Q46 25 42 33" fill="none" stroke="${o}" stroke-width="2.5" stroke-linecap="round"/><path d="M58 20 Q80 18 94 30" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".35"/>`;
+  }else if(c.hairStyle==='bangs'){
+    front=`<path d="M15 60 Q13 13 60 13 Q107 13 105 60 L101 45 L92 39 L85 47 L75 40 L67 48 L58 40 L50 48 L41 40 L33 47 L26 40 L19 46Z" fill="${c.hair}" ${sw}/><path d="M52 18 Q76 16 92 26" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".3"/>`;
+  }else if(c.hairStyle==='short'){
+    front=`<path d="M15 58 Q15 16 60 16 Q105 16 105 58 Q98 40 84 36 Q72 30 60 34 Q46 30 36 36 Q22 40 15 58Z" fill="${c.hair}" ${sw}/>`;
+  }else if(c.hairStyle==='messy'){
+    front=`<path d="M16 58 L12 34 L27 39 L28 17 L43 28 L52 8 L62 26 L75 9 L80 28 L94 17 L94 39 L108 34 L104 58 Q92 38 60 38 Q28 38 16 58Z" fill="${c.hair}" ${sw}/>`;
+  }
+  if(c.hat==='beanie'){
+    hat=`<path d="M15 48 Q16 6 60 6 Q104 6 105 48 Z" fill="${c.shirt}" ${sw}/><rect x="10" y="40" width="100" height="15" rx="7" fill="#fff" ${sw}/><circle cx="60" cy="6" r="9" fill="#fff" ${sw}/>`;
+  }else if(c.hat==='cap'){
+    hat=`<path d="M17 46 Q17 8 60 8 Q103 8 103 46 Z" fill="${c.shirt}" ${sw}/><path d="M58 40 L118 42 Q118 54 104 54 L58 50Z" fill="${c.shirt}" ${sw}/><circle cx="60" cy="9" r="4" fill="#fff" ${sw}/>`;
+  }else if(c.hat==='crown'){
+    hat=`<path d="M30 32 L32 4 L46 20 L60 0 L74 20 L88 4 L90 32 Z" fill="#ffd23f" ${sw}/><circle cx="60" cy="24" r="4" fill="#e74c3c"/><circle cx="42" cy="26" r="3" fill="#2e86de"/><circle cx="78" cy="26" r="3" fill="#27ae60"/>`;
+  }
+  return `<svg class="av" viewBox="0 0 120 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  ${back}
+  <rect x="36" y="116" width="48" height="20" rx="4" fill="${c.pants}" ${sw}/>
+  <ellipse cx="46" cy="140" rx="14" ry="6" fill="${o}"/><ellipse cx="74" cy="140" rx="14" ry="6" fill="${o}"/>
+  <path d="M28 98 Q60 88 92 98 L97 124 Q60 131 23 124 Z" fill="${c.shirt}" ${sw}/>
+  <line x1="60" y1="100" x2="60" y2="126" stroke="${o}" stroke-width="2" opacity=".45"/>
+  <circle cx="21" cy="117" r="9" fill="${c.shirt}" ${sw}/><circle cx="99" cy="117" r="9" fill="${c.shirt}" ${sw}/>
+  <ellipse cx="60" cy="62" rx="46" ry="40" fill="${c.skin}" ${sw}/>
+  <ellipse cx="47" cy="60" rx="14" ry="12" fill="#fff" ${sw}/><ellipse cx="73" cy="60" rx="14" ry="12" fill="#fff" ${sw}/>
+  <circle cx="51" cy="62" r="5" fill="${c.eyes}"/><circle cx="69" cy="62" r="5" fill="${c.eyes}"/>
+  <circle cx="51" cy="62" r="2.4" fill="${o}"/><circle cx="69" cy="62" r="2.4" fill="${o}"/>
+  <circle cx="52.5" cy="60.5" r="1.1" fill="#fff"/><circle cx="70.5" cy="60.5" r="1.1" fill="#fff"/>
+  <path d="M50 83 Q60 92 70 83" fill="none" stroke="${o}" stroke-width="3" stroke-linecap="round"/>
+  ${front}${hat}
+  </svg>`;
+}
+
+/* ---------- dragons & eggs ---------- */
+const DCOL=[['#5cc96b','#d4f7bf'],['#a06cd5','#ead9fc'],['#ff7eb6','#ffdcec'],['#4fa8ff','#d3e9ff'],['#ff9f43','#ffe4c2'],['#20c4b0','#c9f6ef']];
+function dragon(i){
+  const [c,b]=DCOL[i%DCOL.length], s='stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"';
+  return `<svg viewBox="0 0 100 100" aria-hidden="true">
+  <path d="M70 74 Q96 76 92 50 Q90 62 78 62" fill="${c}" ${s}/>
+  <path d="M30 50 L6 32 L13 52 L3 57 L27 64Z" fill="${b}" ${s}/>
+  <path d="M70 50 L94 32 L87 52 L97 57 L73 64Z" fill="${b}" ${s}/>
+  <ellipse cx="38" cy="91" rx="9" ry="5" fill="${c}" ${s}/><ellipse cx="62" cy="91" rx="9" ry="5" fill="${c}" ${s}/>
+  <ellipse cx="50" cy="69" rx="24" ry="22" fill="${c}" ${s}/>
+  <ellipse cx="50" cy="75" rx="14" ry="13" fill="${b}"/>
+  <path d="M36 22 L31 6 L45 17Z" fill="#ffd23f" ${s}/><path d="M64 22 L69 6 L55 17Z" fill="#ffd23f" ${s}/>
+  <circle cx="50" cy="35" r="22" fill="${c}" ${s}/>
+  <ellipse cx="50" cy="45" rx="11" ry="7" fill="${b}"/>
+  <circle cx="41" cy="32" r="6.5" fill="#fff" stroke="#2b2b2b" stroke-width="2"/><circle cx="59" cy="32" r="6.5" fill="#fff" stroke="#2b2b2b" stroke-width="2"/>
+  <circle cx="42.5" cy="33" r="3.2" fill="#2b2b2b"/><circle cx="57.5" cy="33" r="3.2" fill="#2b2b2b"/>
+  <circle cx="43.5" cy="31.8" r="1" fill="#fff"/><circle cx="58.5" cy="31.8" r="1" fill="#fff"/>
+  <circle cx="46" cy="44" r="1.5" fill="#2b2b2b"/><circle cx="54" cy="44" r="1.5" fill="#2b2b2b"/>
+  <path d="M44 49 Q50 54 56 49" fill="none" stroke="#2b2b2b" stroke-width="2.5" stroke-linecap="round"/>
+  <ellipse cx="34" cy="42" rx="4" ry="2.5" fill="#ff7eb6" opacity=".5"/><ellipse cx="66" cy="42" rx="4" ry="2.5" fill="#ff7eb6" opacity=".5"/>
+  </svg>`;
+}
+let eggN=0;
+function egg(cls,attrs){
+  const id='eg'+(eggN++);
+  return `<svg class="${cls||'egg'}" ${attrs||''} viewBox="0 0 120 150" aria-hidden="true"><defs><radialGradient id="${id}" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff6c2"/><stop offset=".45" stop-color="#ffd23f"/><stop offset="1" stop-color="#d99a00"/></radialGradient></defs>
+  <path d="M60 8 C96 8 112 70 110 96 C108 128 86 144 60 144 C34 144 12 128 10 96 C8 70 24 8 60 8Z" fill="url(#${id})" stroke="#2b2b2b" stroke-width="5"/>
+  <path d="M20 92 L36 82 L50 94 L64 82 L78 94 L92 82 L102 90" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".75"/>
+  <ellipse cx="42" cy="44" rx="9" ry="15" fill="#fff" opacity=".75" transform="rotate(-20 42 44)"/></svg>`;
+}
+
+/* ---------- state ---------- */
+const state={
+  chars:store.get('chars2',clone(PRESETS)),
+  sel:store.get('sel',0),
+  progress:store.get('progress',{eggs:0,done:{}}),
+  muted:store.get('muted',false),
+  pos:store.get('pos','easy-1')
+};
+if(!Array.isArray(state.chars)||state.chars.length!==3)state.chars=clone(PRESETS);
+const me=()=>state.chars[state.sel];
+function save(){store.set('chars2',state.chars);store.set('sel',state.sel);store.set('progress',state.progress);store.set('muted',state.muted);store.set('pos',state.pos)}
+
+/* ---------- sound & speech ---------- */
+let actx=null;
+function tone(freqs,dur=.12,type='sine',gap=.09){
+  if(state.muted)return;
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended')actx.resume();
+    freqs.forEach((f,i)=>{
+      const t=actx.currentTime+i*gap,o=actx.createOscillator(),g=actx.createGain();
+      o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.25,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+      o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+dur+.02);
+    });
+  }catch(e){}
+}
+const sfx={pop:()=>tone([660+Math.random()*200],.1,'triangle'),yay:()=>tone([523,659,784,1047],.2,'triangle',.1),oops:()=>tone([300,220],.18,'sine',.14),win:()=>tone([523,659,784,1047,784,1047,1319],.25,'triangle',.12),step:()=>tone([440,550],.1,'square',.08)};
+let voice=null;
+function pickVoice(){try{const v=speechSynthesis.getVoices();voice=v.find(x=>/en[-_]US/i.test(x.lang)&&/female|samantha|google us/i.test(x.name))||v.find(x=>/^en/i.test(x.lang))||null}catch(e){}}
+try{pickVoice();speechSynthesis.onvoiceschanged=pickVoice}catch(e){}
+function speak(t){
+  if(state.muted)return;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=.9;u.pitch=1.25;if(voice)u.voice=voice;speechSynthesis.speak(u)}catch(e){}
+}
+function renderMute(){$$('.mute-btn').forEach(b=>b.textContent=state.muted?'🔇':'🔊')}
+$$('.mute-btn').forEach(b=>b.addEventListener('click',()=>{state.muted=!state.muted;if(state.muted){try{speechSynthesis.cancel()}catch(e){}}save();renderMute();sfx.pop()}));
+
+/* ---------- screens ---------- */
+function show(name){$$('.screen').forEach(s=>s.classList.toggle('active',s.id==='s-'+name));window.scrollTo(0,0)}
+
+/* clouds */
+(function(){const c=$('#clouds');for(let i=0;i<5;i++){const d=document.createElement('div');d.className='cloud';const w=rand(90,170);d.style.cssText=`width:${w}px;height:${w*.35}px;top:${rand(4,40)}vh;animation-duration:${rand(40,80)}s;animation-delay:-${rand(0,60)}s`;c.appendChild(d)}})();
+
+/* logo */
+(function(){const cols=['#ff7eb6','#ffd23f','#5cc96b','#4fa8ff','#ff9f43','#a06cd5','#20c4b0','#ff7eb6','#ffd23f'];$('#logo').innerHTML=[...'Mathscape'].map((ch,i)=>`<span style="color:${cols[i]};--r:${(i%2?3:-3)}deg;animation-delay:${i*.12}s">${ch}</span>`).join('')})();
+
+/* ---------- HOME ---------- */
+function renderHome(){
+  $('#home-avatars').innerHTML=state.chars.map((c,i)=>`<button class="av-card ${i===state.sel?'sel':''}" data-i="${i}" aria-label="${c.name}">${avatar(c)}<div class="nm">${esc(c.name)}</div></button>`).join('');
+  $$('#home-avatars .av-card').forEach(b=>b.addEventListener('click',()=>{state.sel=+b.dataset.i;save();renderHome();sfx.pop();speak(me().name+'!')}));
+}
+function esc(s){return String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
+$('#btn-play').addEventListener('click',()=>{sfx.yay();speak("Let's go, "+me().name+"!");openMap()});
+$('#btn-custom').addEventListener('click',()=>{sfx.pop();openCustom()});
+
+/* ---------- CUSTOMIZE ---------- */
+function openCustom(){renderCustom();show('custom')}
+function renderCustom(){
+  const c=me();
+  $('#cust-preview').innerHTML=avatar(c);
+  $('#cust-name').value=c.name;
+  $('#cust-opts').innerHTML=OPTS.map(o=>`<div class="opt-row"><h3>${o.label}</h3><div class="swatches">${
+    o.type==='color'?o.vals.map(v=>`<button class="sw ${c[o.key]===v?'on':''}" style="background:${v}" data-k="${o.key}" data-v="${v}" aria-label="${o.label} ${v}"></button>`).join('')
+    :o.vals.map(([v,l])=>`<button class="chip ${c[o.key]===v?'on':''}" data-k="${o.key}" data-v="${v}">${l}</button>`).join('')
+  }</div></div>`).join('');
+  $$('#cust-opts [data-k]').forEach(b=>b.addEventListener('click',()=>{c[b.dataset.k]=b.dataset.v;save();sfx.pop();renderCustom()}));
+}
+$('#cust-name').addEventListener('input',e=>{me().name=e.target.value.trim()||PRESETS[state.sel].name;save()});
+$('#btn-reset').addEventListener('click',()=>{state.chars[state.sel]=clone(PRESETS[state.sel]);save();sfx.oops();renderCustom()});
+$('#btn-done').addEventListener('click',()=>{sfx.yay();speak('Looking great, '+me().name+'!');renderHome();show('home')});
+
+/* ---------- MAP ---------- */
+const WORLDS=[{id:'easy',name:'Easy · Dragon Meadow',color:'#9be07a',tile:'#5cc96b',y:500,xs:[120,300,480,660,840]},
+              {id:'medium',name:'Medium · Crystal Caves',color:'#b9a6f2',tile:'#8e6ee0',y:310,xs:[840,660,480,300,120]},
+              {id:'hard',name:'Hard · Volcano Peak',color:'#ffab8a',tile:'#ff6b4a',y:120,xs:[120,300,480,660,840]}];
+const LEVELS=[];WORLDS.forEach(w=>w.xs.forEach((x,i)=>LEVELS.push({id:w.id+'-'+(i+1),world:w,n:i+1,x,y:w.y})));
+const BUILT={'easy-1':true};
+const unlocked=id=>{const i=LEVELS.findIndex(l=>l.id===id);return i===0||!!state.progress.done[LEVELS[i-1].id]};
+
+function openMap(){renderMap();show('map')}
+function renderMap(){
+  $('#map-player').innerHTML=avatar(me())+`<span>${esc(me().name)}</span>`;
+  $('#map-eggs').innerHTML=egg()+`<span>× ${state.progress.eggs}</span>`;
+  const pts=LEVELS.map(l=>[l.x,l.y]);
+  let d='M'+pts[0].join(' ');for(let i=1;i<pts.length;i++)d+=' L'+pts[i].join(' ');
+  const bands=WORLDS.map((w,i)=>{const top=[400,210,0][i],h=[200,190,210][i];return `<rect x="0" y="${top}" width="960" height="${h}" fill="${w.color}"/>
+    <text x="22" y="${top+34}" font-family="Fredoka, sans-serif" font-weight="700" font-size="26" fill="#2b2b2b" stroke="#fff" stroke-width="6" paint-order="stroke">${w.name}</text>`}).join('');
+  const deco=`
+   <g stroke="#2b2b2b" stroke-width="3">
+    <rect x="203" y="560" width="10" height="24" fill="#8b5a2b"/><circle cx="208" cy="548" r="22" fill="#3fae4f"/>
+    <rect x="573" y="560" width="10" height="24" fill="#8b5a2b"/><circle cx="578" cy="550" r="18" fill="#3fae4f"/>
+    <circle cx="390" cy="575" r="8" fill="#ff7eb6"/><circle cx="760" cy="572" r="8" fill="#ffd23f"/><circle cx="930" cy="430" r="8" fill="#ff7eb6"/>
+    <path d="M200 390 L214 350 L228 390Z" fill="#7fe3ff"/><path d="M560 392 L572 362 L584 392Z" fill="#ff9be0"/><path d="M890 260 L904 226 L918 260Z" fill="#7fe3ff"/>
+    <path d="M760 205 L860 40 L960 205Z" fill="#8a5a44"/><path d="M836 80 L860 40 L884 80 Q872 92 860 80 Q848 92 836 80Z" fill="#ff6b4a"/>
+    <circle cx="230" cy="190" r="10" fill="#ffd23f"/><circle cx="560" cy="40" r="8" fill="#ff6b4a"/>
+   </g>
+   <circle cx="900" cy="22" r="0"/>`;
+  const tiles=LEVELS.map(l=>{
+    const un=unlocked(l.id),done=!!state.progress.done[l.id],next=un&&!done;
+    const fill=un?l.world.tile:'#cfcfcf';
+    return `<g class="tile ${un?'':'locked'}" data-id="${l.id}" role="button" aria-label="${l.world.id} level ${l.n}${un?'':' locked'}">
+      ${next?`<circle class="pulse" cx="${l.x}" cy="${l.y}" r="58" fill="#fff" opacity=".55"/>`:''}
+      <ellipse cx="${l.x}" cy="${l.y+10}" rx="48" ry="44" fill="#2b2b2b"/>
+      <circle class="tile-face" cx="${l.x}" cy="${l.y}" r="46" fill="${fill}" stroke="#2b2b2b" stroke-width="5"/>
+      <circle cx="${l.x}" cy="${l.y}" r="34" fill="#fff" opacity=".25"/>
+      ${un?`<text x="${l.x}" y="${l.y+16}" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="46" fill="#fff" stroke="#2b2b2b" stroke-width="5" paint-order="stroke">${l.n}</text>`
+          :`<g transform="translate(${l.x-16},${l.y-18})"><rect x="0" y="14" width="32" height="24" rx="5" fill="#8a8a8a" stroke="#2b2b2b" stroke-width="3"/><path d="M7 14 V8 a9 9 0 0 1 18 0 V14" fill="none" stroke="#2b2b2b" stroke-width="4"/></g>`}
+      ${done?egg('',`x="${l.x+20}" y="${l.y-62}" width="34" height="42"`):''}
+    </g>`;
+  }).join('');
+  const pos=LEVELS.find(l=>l.id===state.pos)||LEVELS[0];
+  $('#board').innerHTML=`<svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg">
+    ${bands}${deco}
+    <path d="${d}" fill="none" stroke="#2b2b2b" stroke-width="30" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="${d}" fill="none" stroke="#fff6d6" stroke-width="20" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="${d}" fill="none" stroke="#e8c77a" stroke-width="4" stroke-dasharray="4 22" stroke-linecap="round"/>
+    ${tiles}
+    <g class="token" id="token" style="transform:translate(${pos.x-38}px,${pos.y-122}px)"><g class="token-inner"><svg width="76" height="95" viewBox="0 0 120 150">${avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,'')}</svg></g></g>
+  </svg>`;
+  $$('#board .tile').forEach(t=>t.addEventListener('click',()=>tileClick(t)));
+  const doneCount=Object.keys(state.progress.done).length;
+  $('#map-hint').textContent=doneCount?`You have ${state.progress.eggs} golden egg${state.progress.eggs===1?'':'s'}! Tap the glowing space.`:'Tap the glowing space to start!';
+}
+function moveToken(l){$('#token').style.transform=`translate(${l.x-38}px,${l.y-122}px)`}
+function tileClick(t){
+  const l=LEVELS.find(x=>x.id===t.dataset.id);
+  if(!unlocked(l.id)){t.classList.remove('shake');void t.getBBox();t.classList.add('shake');sfx.oops();speak('That space is locked. Win a golden egg first!');return}
+  sfx.step();state.pos=l.id;save();moveToken(l);
+  setTimeout(()=>{
+    if(BUILT[l.id]){startGame()}
+    else{
+      const needs=l.id==='easy-2';
+      modal(`<div class="rays">${egg('big-egg')}</div><h2>${l.world.id[0].toUpperCase()+l.world.id.slice(1)} Level ${l.n}</h2>
+        <p>${needs?'Your golden egg opened this space! This game is coming soon.':'This game is coming soon!'}</p>
+        <button class="btn go" id="m-ok">OK!</button>`);
+      speak(needs?'Your golden egg opened this space! Coming soon!':'Coming soon!');
+      $('#m-ok').onclick=closeModal;
+    }
+  },750);
+}
+$('#map-home').addEventListener('click',()=>{sfx.pop();renderHome();show('home')});
+
+/* ---------- MODAL ---------- */
+function modal(html){$('#modal-card').innerHTML=html;$('#modal').classList.remove('hidden')}
+function closeModal(){$('#modal').classList.add('hidden');sfx.pop()}
+
+/* ---------- GAME: Baby Dragon Count ---------- */
+const ROUNDS=[[1,5],[2,8],[4,12],[7,16],[10,20]];
+const G={round:0,answer:0,counted:0,locked:false,wrong:0};
+function startGame(){
+  G.round=0;G.answer=0;
+  $('#buddy').innerHTML=`<div class="bubble" id="bubble">Let's count!</div>`+avatar(me());
+  renderProgress();show('game');nextRound();
+  speak('Count the baby dragons, then tap the number!');
+}
+function renderProgress(){$('#progress').innerHTML=ROUNDS.map((_,i)=>`<span class="dot ${i<G.round?'on':''}">${egg('')}</span>`).join('');$$('#progress .dot svg').forEach(s=>{s.style.width='100%';s.style.height='100%'})}
+function nextRound(){
+  const [a,b]=ROUNDS[G.round];let n;do{n=rand(a,b)}while(n===G.answer);
+  G.answer=n;G.counted=0;G.locked=false;G.wrong=0;
+  const size=n<=5?110:n<=10?88:70;
+  const box=$('#dragons');box.classList.remove('dance');
+  box.style.gridTemplateColumns=`repeat(${Math.min(5,n)},1fr)`;
+  box.style.maxWidth=(Math.min(5,n)*(size+8))+'px';
+  const startCol=rand(0,5);
+  box.innerHTML=Array.from({length:n},(_,i)=>`<button class="dragon" style="--ds:${size}px;--d:${(i*.13).toFixed(2)}s;animation-delay:${(i*.05).toFixed(2)}s" aria-label="baby dragon">${dragon(startCol+i)}</button>`).join('');
+  $$('#dragons .dragon').forEach(d=>d.addEventListener('click',()=>countDragon(d)));
+  $('#counter').textContent='Tap to count!';
+  setBubble("Let's count!");
+  // choices
+  const k=G.round<2?3:4,set=new Set([n]);
+  while(set.size<k){const v=n+rand(1,4)*(Math.random()<.5?-1:1);if(v>=1&&v<=20)set.add(v)}
+  const colors=['#ff7eb6','#4fa8ff','#ffd23f','#ff9f43','#a06cd5','#20c4b0'];shuffle(colors);
+  $('#choices').innerHTML=shuffle([...set]).map((v,i)=>`<button class="num" data-v="${v}" style="background:${colors[i]};animation-delay:${.2+i*.08}s">${v}</button>`).join('');
+  $$('#choices .num').forEach(b=>b.addEventListener('click',()=>answer(b)));
+}
+function countDragon(d){
+  if(d.classList.contains('counted'))return;
+  G.counted++;d.classList.add('counted');
+  d.insertAdjacentHTML('beforeend',`<span class="badge">${G.counted}</span>`);
+  $('#counter').textContent='Counted: '+G.counted;
+  sfx.pop();speak(String(G.counted));
+}
+function setBubble(t){const b=$('#bubble');if(b)b.textContent=t}
+function answer(b){
+  if(G.locked)return;
+  const v=+b.dataset.v;
+  if(v===G.answer){
+    G.locked=true;b.classList.add('right');sfx.yay();confetti(30);
+    $('#dragons').classList.add('dance');
+    const bd=$('#buddy');bd.classList.remove('jump');void bd.offsetWidth;bd.classList.add('jump');
+    setBubble(['Yay!','Awesome!','You did it!','Super!','Wow!'][rand(0,4)]);
+    speak(`${v}! Yes! ${v} baby dragon${v===1?'':'s'}!`);
+    G.round++;renderProgress();
+    setTimeout(()=>{G.round>=ROUNDS.length?winGame():nextRound()},2300);
+  }else{
+    G.wrong++;b.classList.add('wrong');sfx.oops();
+    setBubble('Try again!');
+    speak(G.wrong>1?`That's ${v}. Let's count the dragons together!`:`That's ${v}. Try again!`);
+    if(G.wrong>1)autoCount();
+  }
+}
+function autoCount(){
+  const ds=$$('#dragons .dragon');ds.forEach(d=>{d.classList.remove('counted');const s=d.querySelector('.badge');if(s)s.remove()});
+  G.counted=0;let i=0;G.locked=true;
+  setTimeout(function step(){
+    if(i>=ds.length){G.locked=false;setBubble('Now tap the number!');return}
+    countDragon(ds[i++]);setTimeout(step,850);
+  },1800);
+}
+function winGame(){
+  const first=!state.progress.done['easy-1'];
+  if(first){state.progress.done['easy-1']=true;state.progress.eggs++;}
+  state.pos='easy-1';save();
+  sfx.win();confetti(80);
+  modal(`<div class="rays">${egg('big-egg')}</div>
+    <h2>You got a Golden Egg!</h2>
+    <p>${first?'Keep it safe — you need it to open <b>Level 2</b>!':'Great practice! You already have this golden egg.'}</p>
+    <button class="btn go" id="m-ok">🗺️ To the map</button>`);
+  speak(first?`Hooray ${me().name}! You got a golden egg! You need it for level two!`:'Great counting! Hooray!');
+  $('#m-ok').onclick=()=>{closeModal();openMap();if(first)setTimeout(()=>{const l=LEVELS[1];speak('Level two is open!');state.pos=l.id;save();moveToken(l);sfx.step()},700)};
+}
+$('#game-back').addEventListener('click',()=>{sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
+
+/* confetti */
+function confetti(n){
+  const cols=['#ff7eb6','#ffd23f','#5cc96b','#4fa8ff','#ff9f43','#a06cd5'];
+  for(let i=0;i<n;i++){const c=document.createElement('div');c.className='confetti';
+    c.style.cssText=`left:${Math.random()*100}vw;background:${cols[i%cols.length]};animation-duration:${(1.6+Math.random()*1.6).toFixed(2)}s;animation-delay:${(Math.random()*.4).toFixed(2)}s;transform:rotate(${rand(0,360)}deg)`;
+    document.body.appendChild(c);setTimeout(()=>c.remove(),3800)}
+}
+
+renderMute();renderHome();
+})();
+</script>
+</body>
+</html>
