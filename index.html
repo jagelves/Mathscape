@@ -103,6 +103,8 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 .num{width:clamp(84px,19vw,130px);height:clamp(96px,22vw,150px);border:6px solid var(--ink);border-radius:26px;font-size:clamp(48px,11vw,80px);font-weight:700;box-shadow:0 8px 0 var(--ink);transition:transform .1s;animation:popIn .4s backwards cubic-bezier(.3,1.6,.6,1)}
 .num:active{transform:translateY(6px);box-shadow:0 2px 0 var(--ink)}
 .num.right{background:#7be07b!important;transform:scale(1.15) rotate(-4deg)}
+.num.reveal{outline:6px dashed #fff;outline-offset:4px;animation:pulse 0.8s ease-in-out infinite}
+.swap{transition:opacity .35s,transform .35s;opacity:0;transform:scale(.85)}
 .num.wrong{animation:shake .45s;opacity:.35;pointer-events:none}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px) rotate(-4deg)}40%{transform:translateX(10px) rotate(4deg)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
 .hint{margin-top:18px;font-size:20px;font-weight:600;opacity:.85;text-align:center}
@@ -183,7 +185,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
     <div class="buddy" id="buddy"><div class="bubble" id="bubble">Let's count!</div></div>
     <div class="choices" id="choices"></div>
   </div>
-  <div class="hint">Tap each dragon to count it, then tap the matching number.</div>
+  <div class="hint">Tap each dragon to count it, then tap the matching number. Count carefully — a wrong answer brings new dragons!</div>
 </section>
 
 <div id="modal" class="modal hidden"><div class="modal-card" id="modal-card"></div></div>
@@ -481,10 +483,14 @@ function answer(b){
     G.round++;renderProgress();
     setTimeout(()=>{G.round>=ROUNDS.length?winGame():nextRound()},2300);
   }else{
-    G.wrong++;b.classList.add('wrong');sfx.oops();
-    setBubble('Try again!');
-    speak(G.wrong>1?`That's ${v}. Let's count the dragons together!`:`That's ${v}. Try again!`);
-    if(G.wrong>1)autoCount();
+    // No guessing through the cards: show the right answer, then a brand-new set
+    G.locked=true;b.classList.add('wrong');sfx.oops();
+    const n=G.answer,rb=document.querySelector(`#choices .num[data-v="${n}"]`);
+    if(rb)rb.classList.add('reveal');
+    setBubble('New dragons!');
+    speak(`That's ${v}. There ${n===1?'is':'are'} ${n} baby dragon${n===1?'':'s'}. Let's try new ones!`);
+    setTimeout(()=>{$('#choices').classList.add('swap');$('#dragons').classList.add('swap')},2600);
+    setTimeout(()=>{$('#choices').classList.remove('swap');$('#dragons').classList.remove('swap');nextRound()},3000);
   }
 }
 function autoCount(){
