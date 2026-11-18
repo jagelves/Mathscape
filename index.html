@@ -467,6 +467,7 @@ const state={
 if(!Array.isArray(state.chars)||state.chars.length<3)state.chars=clone(PRESETS);
 state.chars=state.chars.slice(0,4).map((c,i)=>Object.assign({},i<3?PRESETS[i]:NEW_CHAR,c));
 if(state.sel>=state.chars.length)state.sel=0;
+if(state.progress.done&&state.progress.done['easy-5']&&!state.progress.done['easy-4']){state.progress.done['easy-4']=true;delete state.progress.done['easy-5'];if(state.pos==='easy-5')state.pos='easy-4'}
 const me=()=>state.chars[state.sel];
 function save(){store.set('chars2',state.chars);store.set('sel',state.sel);store.set('progress',state.progress);store.set('muted',state.muted);store.set('pos',state.pos)}
 
@@ -565,8 +566,8 @@ const WORLDS=[{id:'easy',name:'Easy · Dragon Meadow',color:'#9be07a',tile:'#5cc
               {id:'medium',name:'Medium · Crystal Caves',color:'#b9a6f2',tile:'#8e6ee0',y:310,xs:[840,660,480,300,120]},
               {id:'hard',name:'Hard · Volcano Peak',color:'#ffab8a',tile:'#ff6b4a',y:120,xs:[120,300,480,660,840]}];
 const LEVELS=[];WORLDS.forEach(w=>w.xs.forEach((x,i)=>LEVELS.push({id:w.id+'-'+(i+1),world:w,n:i+1,x,y:w.y})));
-const BUILT={'easy-1':true,'easy-2':true,'easy-3':true,'easy-5':true};
-const PREREQ={'easy-5':'easy-3'}; // Level 4 isn't built yet, so Level 5 opens after Level 3
+const BUILT={'easy-1':true,'easy-2':true,'easy-3':true,'easy-4':true};
+const PREREQ={}; // optional: level id -> the level that must be finished first
 const REQ={'easy-2':3,'easy-3':10}; // golden eggs needed to open
 const prereqOf=id=>{const i=LEVELS.findIndex(l=>l.id===id);return PREREQ[id]||(i>0?LEVELS[i-1].id:null)};
 const unlocked=id=>{const i=LEVELS.findIndex(l=>l.id===id);if(i===0)return true;const prev=!!state.progress.done[prereqOf(id)];return REQ[id]?prev&&state.progress.eggs>=REQ[id]:prev};
@@ -637,7 +638,7 @@ function tileClick(t){
     else speak('That space is locked. Finish the space before it first!');return}
   sfx.step();state.pos=l.id;save();moveToken(l);
   setTimeout(()=>{
-    if(BUILT[l.id]){({'easy-1':startGame,'easy-2':startBridge,'easy-3':startLava,'easy-5':startPuzzle})[l.id]()}
+    if(BUILT[l.id]){({'easy-1':startGame,'easy-2':startBridge,'easy-3':startLava,'easy-4':startPuzzle})[l.id]()}
     else{
       const needs=false;
       modal(`<div class="rays">${egg('big-egg')}</div><h2>${l.world.id[0].toUpperCase()+l.world.id.slice(1)} Level ${l.n}</h2>
@@ -1172,7 +1173,7 @@ function golemArt(alive){
   let spr='';const sc=['#ff7eb6','#4fa8ff','#ffd23f','#5cc96b','#a06cd5'];
   [[20,30],[60,80],[30,150],[18,250],[262,40],[240,140],[275,215],[250,270],[70,200],[230,90]].forEach(([x,y],i)=>spr+=`<rect x="${x}" y="${y}" width="14" height="5" rx="2.5" fill="${sc[i%5]}" transform="rotate(${i*37} ${x+7} ${y+2})"/>`);
   let squares='';for(let i=0;i<3;i++)for(let j=0;j<3;j++)squares+=`<rect x="${90+i*42}" y="${124+j*38}" width="36" height="31" rx="6" fill="#8b5a33" stroke-width="3"/>`;
-  return `<rect width="300" height="300" fill="#ffe3ef"/>${spr}
+  return `${alive?'':`<rect width="300" height="300" fill="#ffe3ef"/>${spr}`}
   <g stroke="#2b2b2b" stroke-width="5" stroke-linejoin="round" ${A('g-bounce')}>
     <rect x="98" y="232" width="44" height="50" rx="8" fill="#6b3d1e"/><rect x="158" y="232" width="44" height="50" rx="8" fill="#6b3d1e"/>
     <rect x="84" y="268" width="62" height="24" rx="11" fill="#5a3218"/><rect x="154" y="268" width="62" height="24" rx="11" fill="#5a3218"/>
@@ -1187,7 +1188,7 @@ function golemArt(alive){
       <circle cx="131" cy="82" r="6" fill="#2b2b2b" stroke="none"/><circle cx="169" cy="82" r="6" fill="#2b2b2b" stroke="none"/>
       <circle cx="133" cy="79" r="2" fill="#fff" stroke="none"/><circle cx="171" cy="79" r="2" fill="#fff" stroke="none"/></g>
     <ellipse cx="110" cy="100" rx="8" ry="5" fill="#ff7eb6" stroke="none" opacity=".6"/><ellipse cx="190" cy="100" rx="8" ry="5" fill="#ff7eb6" stroke="none" opacity=".6"/>
-    <path d="M130 102 Q150 118 170 102" fill="none" stroke-width="4" stroke-linecap="round"/>
+    ${alive?'<path d="M110 58 L142 70 M190 58 L158 70" stroke-width="7" stroke-linecap="round"/><path d="M130 110 Q150 96 170 110" fill="none" stroke-width="4" stroke-linecap="round"/>':'<path d="M130 102 Q150 118 170 102" fill="none" stroke-width="4" stroke-linecap="round"/>'}
   </g>`;
 }
 const DOTS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8],7:[0,2,3,4,5,6,8],8:[0,1,2,3,5,6,7,8],9:[0,1,2,3,4,5,6,7,8]};
@@ -1215,15 +1216,21 @@ function startPuzzle(){
   const nums=shuffle([1,2,3,4,5,6,7,8,9]);
   P.ans=nums;P.q=nums.map(a=>makeQ(a));P.placed=Array(9).fill(false);P.sel=-1;P.busy=false;P.shells=0;
   buildPuzzle();renderShell('#pprogress',0);updatePrompt();
-  speak("Let's build the chocolate golem! Lift a puzzle piece with your wand, then put it where its number belongs.");
+  speak("The warlock left a magic puzzle in the castle! Lift a puzzle piece with your wand, then put it where its number belongs.");
 }
+function castleBricks(){let b='';for(let y=20;y<400;y+=36)for(let x=(y/36%2?-30:0);x<1000;x+=60)b+=`<rect x="${x}" y="${y}" width="60" height="36" fill="none" stroke="#2f2747" stroke-width="3"/>`;return b}
 function buildPuzzle(){
   const a=avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,'');
   $('#pscene').innerHTML=`<svg viewBox="0 0 1000 560" xmlns="${NS}">
   <defs><g id="golemArt">${golemArt(false)}</g></defs>
-  <rect width="1000" height="560" fill="#fbd5e5"/>
-  <path d="M0 0 H1000 V34 Q975 60 950 34 Q925 74 900 34 Q870 54 840 34 Q810 80 780 34 Q750 52 720 34 Q690 70 660 34 Q630 50 600 34 Q570 76 540 34 Q510 54 480 34 Q450 70 420 34 Q390 50 360 34 Q330 80 300 34 Q270 52 240 34 Q210 68 180 34 Q150 50 120 34 Q90 76 60 34 Q30 52 0 34Z" fill="#7b4a26" stroke="#2b2b2b" stroke-width="4"/>
-  <rect x="0" y="400" width="1000" height="160" fill="#e7b98f"/><line x1="0" y1="400" x2="1000" y2="400" stroke="#2b2b2b" stroke-width="4"/>
+  <rect width="1000" height="560" fill="#3f3560"/>${castleBricks()}
+  <g stroke="#2b2b2b" stroke-width="3">
+    <rect x="34" y="160" width="12" height="40" fill="#7b4a26"/><path class="flame" d="M40 116 Q58 140 50 158 Q40 166 30 158 Q22 140 40 116Z" fill="#ff9f43"/>
+    <rect x="954" y="330" width="12" height="40" fill="#7b4a26"/><path class="flame" d="M960 286 Q978 310 970 328 Q960 336 950 328 Q942 310 960 286Z" fill="#ff9f43"/>
+    <path d="M700 0 V40 Q760 70 820 40 Q880 70 940 40 V0" fill="#8e44ad" opacity=".85"/>
+  </g>
+  <rect x="0" y="400" width="1000" height="160" fill="#6b6178"/><line x1="0" y1="400" x2="1000" y2="400" stroke="#2b2b2b" stroke-width="4"/>
+  <path d="M0 470 H1000 M120 400 V470 M300 400 V470 M480 400 V470 M660 400 V470 M840 400 V470" stroke="#2f2747" stroke-width="3"/>
   <rect x="160" y="430" width="840" height="130" rx="18" fill="#a86b3c" stroke="#2b2b2b" stroke-width="4"/>
   <rect x="${BX-14}" y="${BY-14}" width="${3*CS+28}" height="${3*CS+28}" rx="16" fill="#c58b4f" stroke="#2b2b2b" stroke-width="5"/>
   <rect x="${BX}" y="${BY}" width="${3*CS}" height="${3*CS}" fill="#fff1e4" stroke="#2b2b2b" stroke-width="3"/>
@@ -1310,22 +1317,25 @@ function sparkleAt(x,y){
     p.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*60}px,${Math.sin(a)*60}px)`,opacity:0}],{duration:600,easing:'ease-out'}).onfinish=()=>p.remove()}
 }
 function golemAlive(){
-  $('#eq5').innerHTML=`<span class="eqb ok">🎉 He's alive!</span>`;
+  $('#eq5').innerHTML=`<span class="eqb bad">😮 Uh oh… he's alive!</span>`;
   $('#alive').innerHTML=`<svg x="${BX}" y="${BY}" width="300" height="300" viewBox="0 0 300 300" overflow="visible">${golemArt(true)}</svg>`;
   $('#alive').style.opacity=1;$('#pieces').style.transition='opacity .6s';$('#pieces').style.opacity=0;
-  sfx.win();confetti(40);
-  speak("You built the chocolate golem! He's alive! He says thank you, and yummy!");
-  later(winPuzzle,4200);
+  sfx.yay();confetti(30);
+  speak("You built the chocolate golem! Uh oh! He came alive! ROAR!");
+  later(()=>{tone([110,90,70],.35,'sawtooth',.12);$('#pscene').animate([{transform:'translate(0,0)'},{transform:'translate(-6px,3px)'},{transform:'translate(6px,-3px)'},{transform:'translate(0,0)'}],{duration:300,iterations:3})},1800);
+  later(()=>{const g=$('#alive');g.animate([{transform:'translate(0,0)'},{transform:'translate(120px,-10px)',offset:.25},{transform:'translate(240px,0)',offset:.5},{transform:'translate(360px,-10px)',offset:.75},{transform:'translate(520px,0)',opacity:0}],{duration:1800,fill:'forwards'});
+    speak("He's stomping away into the castle! We'll have to stop him in level five!")},2800);
+  later(winPuzzle,5600);
 }
 function winPuzzle(){
-  const opened=awardEgg('easy-5');state.pos='easy-5';save();
+  const opened=awardEgg('easy-4');state.pos='easy-4';save();
   sfx.win();confetti(80);
-  const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
+  const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open — go stop the golem!`:gl.html;
   modal(`<div class="rays">${egg('big-egg')}</div>
-    <h2>You built a Chocolate Golem!</h2>
-    <p>He's your new friend, and you built another Golden Egg! ${txt}</p>
+    <h2>You built the Chocolate Golem!</h2>
+    <p>Uh oh — he came alive and stomped off into the castle! You built another Golden Egg. ${txt}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-  speak(`Hooray ${me().name}! You built the chocolate golem and got another golden egg!`);
+  speak(`Great building, ${me().name}! You got another golden egg!`);
   $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
 $('#puzzle-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
