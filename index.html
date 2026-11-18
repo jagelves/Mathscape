@@ -109,6 +109,28 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px) rotate(-4deg)}40%{transform:translateX(10px) rotate(4deg)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
 .hint{margin-top:18px;font-size:20px;font-weight:600;opacity:.85;text-align:center}
 
+/* BRIDGE (Level 2) */
+.eq{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap;justify-content:center;min-height:62px}
+.eqb{display:flex;align-items:center;gap:6px;border:4px solid var(--ink);border-radius:18px;padding:2px 14px;font-size:clamp(26px,5.5vw,42px);font-weight:700;box-shadow:0 5px 0 var(--ink);min-width:70px;justify-content:center;background:#fff;animation:popIn .3s cubic-bezier(.3,1.6,.6,1)}
+.eqb svg{width:34px;height:34px}
+.eqb.g{background:#c9f6d0}.eqb.p{background:#ead9fc}.eqb.r{background:#e3e6ea}.eqb.ok{background:#7be07b}.eqb.bad{background:#ffb3b3}
+.op{font-size:clamp(26px,5.5vw,42px);font-weight:700}
+.scene{width:100%;max-width:1000px;margin-top:12px;border:6px solid var(--ink);border-radius:30px;overflow:hidden;box-shadow:0 10px 0 var(--ink);background:#bfe9ff}
+.scene svg{display:block;width:100%;height:auto}
+.bd{cursor:pointer}
+.bd-in{transform-box:fill-box;transform-origin:bottom center}
+.bd.floating .bd-in{animation:floaty 1.3s ease-in-out infinite}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.bd .aura{opacity:0;transition:opacity .3s}
+.bd.floating .aura{opacity:.9}
+.bd.running .bd-in{animation:hopr .28s ease-in-out infinite}
+@keyframes hopr{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.wand{transform-box:fill-box;transform-origin:0% 100%}
+.wand.zap{animation:zap .45s ease}
+@keyframes zap{0%,100%{transform:rotate(0)}40%{transform:rotate(-38deg)}}
+.drop-row{display:flex;gap:16px;align-items:center;margin-top:18px}
+.btn:disabled{opacity:.5;pointer-events:none}
+
 /* MODAL */
 .modal{position:fixed;inset:0;background:rgba(30,30,50,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .modal.hidden{display:none}
@@ -120,6 +142,181 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 .rays{position:relative;display:inline-block}
 .rays::before{content:'';position:absolute;inset:-40px;background:repeating-conic-gradient(#ffe680 0 12deg,transparent 12deg 24deg);border-radius:50%;animation:spin 8s linear infinite;z-index:-1;opacity:.8;-webkit-mask:radial-gradient(circle,#000 30%,transparent 70%);mask:radial-gradient(circle,#000 30%,transparent 70%)}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- LEVEL 2: Balance Bridge (addition) ---------- */
+const BR=[[3,4],[4,6],[5,7],[6,9],[7,10]];
+const B={round:0,total:0,pre:0,dr:[],angle:0,busy:false,seq:0,timers:[]};
+const later=(f,ms)=>B.timers.push(setTimeout(f,ms));
+const clearB=()=>{B.timers.forEach(clearTimeout);B.timers=[]};
+const NS='http://www.w3.org/2000/svg';
+const rockIcon='<svg viewBox="0 0 40 34"><path d="M4 30 Q0 16 10 8 Q20 0 30 6 Q40 12 36 30Z" fill="#a3a9b0" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/></svg>';
+const byState=s=>B.dr.filter(d=>d.state===s).sort((a,b)=>a.order-b.order);
+const countS=s=>B.dr.filter(d=>d.state===s).length;
+const angleFor=w=>Math.max(-1,Math.min(1,(B.total-w)/B.total))*16;
+function rot(x,y,a){const r=a*Math.PI/180,c=Math.cos(r),s=Math.sin(r);return[500+(x-500)*c-(y-400)*s,400+(x-500)*s+(y-400)*c]}
+function star(cx,cy,R,r){let p=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r:R;p.push((cx+q*Math.cos(a)).toFixed(1)+','+(cy+q*Math.sin(a)).toFixed(1))}return p.join(' ')}
+
+function startBridge(){
+  clearB();B.round=0;B.total=0;show('bridge');buildScene();renderBProgress();newBridgeRound(true);
+}
+function renderBProgress(){$('#bprogress').innerHTML=BR.map((_,i)=>`<span class="dot ${i<B.round?'on':''}">${egg('')}</span>`).join('');$$('#bprogress .dot svg').forEach(s=>{s.style.width='100%';s.style.height='100%'})}
+function buildScene(){
+  const a=avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,'');
+  let waves='';for(let x=300;x<700;x+=40)waves+=`<path d="M${x} 515 q10 -8 20 0 t20 0" fill="none" stroke="#fff" stroke-width="3" opacity=".7"/>`;
+  let boards='';for(let x=330;x<700;x+=34)boards+=`<line x1="${x}" y1="394" x2="${x}" y2="406" stroke="#2b2b2b" stroke-width="2" opacity=".35"/>`;
+  $('#scene').innerHTML=`<svg viewBox="0 0 1000 560" xmlns="${NS}">
+  <defs><clipPath id="archclip"><path d="M850 400 V352 Q880 318 910 352 V400 Z"/></clipPath>
+  <linearGradient id="skyg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd3f4"/><stop offset="1" stop-color="#e8fbff"/></linearGradient></defs>
+  <rect width="1000" height="560" fill="url(#skyg)"/>
+  <path d="M0 330 Q150 262 300 318 Q450 256 600 306 Q800 244 1000 318 V560 H0Z" fill="#c4ecb0"/>
+  <rect x="280" y="488" width="440" height="80" fill="#4fa8ff"/>${waves}
+  <g stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round">
+    <path d="M-10 400 H290 V570 H-10Z" fill="#c68a52"/><path d="M-10 400 H290 V416 H-10Z" fill="#7ccf5b"/>
+    <path d="M710 400 H1010 V570 H710Z" fill="#c68a52"/><path d="M710 400 H1010 V416 H710Z" fill="#7ccf5b"/>
+    <rect x="484" y="436" width="32" height="130" fill="#9aa0a6"/><path d="M500 408 L476 440 L524 440Z" fill="#7d838a"/>
+  </g>
+  <g stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round">
+    <rect x="770" y="250" width="60" height="150" fill="#d9d0f0"/><rect x="930" y="250" width="60" height="150" fill="#d9d0f0"/>
+    <rect x="806" y="296" width="148" height="104" fill="#ebe5fa"/>
+    <path d="M806 296 v-14 h16 v14 h14 v-14 h16 v14 h14 v-14 h16 v14 h14 v-14 h16 v14 h14 v-14 h16 v14" fill="#ebe5fa"/>
+    <path d="M764 252 L800 186 L836 252Z" fill="#ff7eb6"/><path d="M924 252 L960 186 L996 252Z" fill="#4fa8ff"/>
+    <line x1="800" y1="186" x2="800" y2="160"/><path d="M800 160 L824 168 L800 176Z" fill="#ffd23f"/>
+    <line x1="960" y1="186" x2="960" y2="160"/><path d="M960 160 L984 168 L960 176Z" fill="#ffd23f"/>
+    <path d="M790 300 v-16 a10 10 0 0 1 20 0 v16Z" fill="#5a3b2a"/><path d="M950 300 v-16 a10 10 0 0 1 20 0 v16Z" fill="#5a3b2a"/>
+    <path d="M850 400 V352 Q880 318 910 352 V400 Z" fill="#3a2618"/>
+  </g>
+  <g clip-path="url(#archclip)"><g id="gate" style="transition:transform 1s ease">
+    <rect x="846" y="316" width="68" height="86" fill="#8b5a2b" stroke="#2b2b2b" stroke-width="3"/>
+    <path d="M858 316 V402 M870 316 V402 M882 316 V402 M894 316 V402 M906 316 V402 M846 340 H914 M846 364 H914 M846 388 H914" stroke="#2b2b2b" stroke-width="3"/>
+  </g></g>
+  <path d="M850 400 V352 Q880 318 910 352 V400" fill="none" stroke="#2b2b2b" stroke-width="4"/>
+  <g id="plank" style="transform-origin:500px 400px;transition:transform 1s cubic-bezier(.4,0,.2,1)">
+    <rect x="296" y="392" width="408" height="16" rx="5" fill="#c58b4f" stroke="#2b2b2b" stroke-width="4"/>${boards}
+    <path d="M566 392 Q552 346 582 316 Q612 296 642 312 Q670 330 662 364 Q658 388 644 392Z" fill="#a3a9b0" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"/>
+    <circle cx="586" cy="330" r="5" fill="#8a9097"/><circle cx="648" cy="372" r="4" fill="#8a9097"/>
+    <text id="bnum" x="612" y="374" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="54" fill="#fff" stroke="#2b2b2b" stroke-width="6" paint-order="stroke">0</text>
+  </g>
+  <ellipse cx="390" cy="205" rx="124" ry="98" fill="#a06cd5" opacity=".12" stroke="#a06cd5" stroke-width="3" stroke-dasharray="8 8"/>
+  <svg x="0" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg>
+  <g class="wand" id="wand"><line x1="91" y1="369" x2="120" y2="324" stroke="#2b2b2b" stroke-width="6" stroke-linecap="round"/><polygon points="${star(122,316,15,7)}" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/></g>
+  <g id="dlayer" style="transition:opacity .4s"></g>
+  <g id="fx"></g>
+  </svg>`;
+  $('#dlayer').addEventListener('click',onDragonTap);
+}
+function addDragon(state,slot,ci){
+  const g=document.createElementNS(NS,'g');g.setAttribute('class','bd');g.dataset.i=B.dr.length;
+  g.innerHTML=`<g class="bd-in"><ellipse class="aura" cx="0" cy="-3" rx="30" ry="9" fill="#c9a6ff"/>${dragon(ci).replace('<svg ','<svg x="-25" y="-50" width="50" height="50" ')}</g>`;
+  $('#dlayer').appendChild(g);
+  const d={el:g,state,slot,order:B.seq++,pre:false};B.dr.push(d);return d;
+}
+function setT(d,x,y,a,k,dur,ease){
+  d.tx=x;d.ty=y;
+  d.el.style.transition=dur?`transform ${dur}s ${ease||'cubic-bezier(.4,0,.2,1)'}, opacity .4s`:'none';
+  d.el.style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotate(${a.toFixed(2)}deg) scale(${k})`;
+}
+function layout(dur=.6){
+  B.dr.forEach(d=>d.el.classList.toggle('floating',d.state==='float'));
+  B.dr.filter(d=>d.state==='bank').forEach(d=>{const c=d.slot%3,r=Math.floor(d.slot/3);setT(d,152+c*54+(r%2?12:0),400-r*50,0,1.15,dur)});
+  byState('float').forEach((d,i)=>{const c=i%4,r=Math.floor(i/4);setT(d,318+c*48,268-r*48,0,1,dur)});
+  byState('plank').forEach((d,i)=>{const c=i%4,r=Math.floor(i/4);const [x,y]=rot(322+c*42,392-r*42,B.angle);setT(d,x,y,B.angle,1,dur)});
+}
+function setPlank(instant){
+  const p=$('#plank');
+  if(instant){p.style.transition='none';p.style.transform=`rotate(${B.angle}deg)`;p.getBoundingClientRect();p.style.transition=''}
+  else p.style.transform=`rotate(${B.angle}deg)`;
+}
+function updateEq(result){
+  const f=countS('float'),w=countS('plank'),add=w-B.pre;
+  const g=dragon(0).replace('<svg ','<svg width="34" height="34" '),pu=dragon(1).replace('<svg ','<svg width="34" height="34" ');
+  let h=`<span class="eqb g">${g}${B.pre}</span><span class="op">+</span>`;
+  if(result){
+    const ok=w===B.total;
+    h+=`<span class="eqb p">${pu}${add}</span><span class="op">=</span><span class="eqb ${ok?'ok':'bad'}">${w}</span>`;
+    h+=ok?`<span class="op">🎉</span>`:`<span class="op">≠</span><span class="eqb r">${rockIcon}${B.total}</span>`;
+  }else{
+    h+=`<span class="eqb p">${pu}${f||'?'}</span><span class="op">⚖️</span><span class="eqb r">${rockIcon}${B.total}</span>`;
+  }
+  $('#eq').innerHTML=h;
+}
+function newBridgeRound(first){
+  const [a,b]=BR[B.round];let t;do{t=rand(a,b)}while(t===B.total&&a!==b);
+  B.total=t;B.pre=rand(1,Math.max(1,Math.floor(t/2)));
+  const avail=(t-B.pre)+rand(2,3);
+  $('#dlayer').innerHTML='';B.dr=[];B.seq=0;
+  const c0=rand(0,5);
+  for(let i=0;i<B.pre;i++){addDragon('plank',0,c0+i).pre=true}
+  for(let s=avail-1;s>=0;s--)addDragon('bank',s,c0+B.pre+s);
+  $('#bnum').textContent=t;$('#gate').style.transform='';
+  B.angle=angleFor(B.pre);setPlank(true);layout(0);
+  $('#dlayer').style.opacity=1;
+  updateEq();B.busy=false;$('#btn-drop').disabled=false;
+  const intro=first?'Balance the bridge so the baby dragons can get to the castle! ':'';
+  speak(`${intro}The boulder is ${t}. ${B.pre} dragon${B.pre>1?'s are':' is'} on the bridge. How many more do we need?`);
+}
+function zap(d){
+  const w=$('#wand');w.classList.remove('zap');void w.getBBox();w.classList.add('zap');
+  const sp=document.createElementNS(NS,'polygon');sp.setAttribute('points',star(0,0,12,5));sp.setAttribute('fill','#ffd23f');sp.setAttribute('stroke','#2b2b2b');sp.setAttribute('stroke-width','2');
+  sp.style.transform='translate(122px,316px)';sp.style.transition='transform .45s ease-out, opacity .45s';
+  $('#fx').appendChild(sp);sp.getBoundingClientRect();
+  sp.style.transform=`translate(${d.tx}px,${d.ty-20}px) rotate(180deg)`;sp.style.opacity=0;
+  setTimeout(()=>sp.remove(),500);
+}
+function onDragonTap(e){
+  const g=e.target.closest('.bd');if(!g||B.busy)return;
+  const d=B.dr[+g.dataset.i];
+  if(d.state==='bank'){
+    if(countS('float')>=12)return;
+    d.state='float';d.order=++B.seq;layout();zap(d);
+    tone([520,780],.12,'triangle',.07);speak(String(countS('float')));
+  }else if(d.state==='float'){
+    d.state='bank';layout();tone([420,300],.1,'sine',.07);
+    const f=countS('float');speak(f?String(f):'zero');
+  }else return;
+  updateEq();
+}
+function dropDragons(){
+  if(B.busy)return;
+  const fl=byState('float');
+  if(!fl.length){speak('Tap a dragon to lift it with your magic wand!');sfx.oops();return}
+  B.busy=true;$('#btn-drop').disabled=true;
+  fl.forEach(d=>{d.state='plank';d.order=++B.seq});
+  layout(.55);tone([200,140],.2,'sine',.1);
+  later(()=>{B.angle=angleFor(countS('plank'));setPlank();layout(1)},600);
+  later(evaluateBridge,1800);
+}
+function evaluateBridge(){
+  const w=countS('plank'),add=w-B.pre;updateEq(true);
+  if(w===B.total){
+    sfx.yay();confetti(30);
+    speak(`${B.pre} plus ${add} makes ${B.total}! The bridge is level! Go dragons, go!`);
+    later(()=>{$('#gate').style.transform='translateY(-66px)';sfx.step()},1000);
+    const walkers=byState('plank');
+    later(()=>walkers.forEach((d,i)=>later(()=>{d.el.classList.add('running');setT(d,880,402,0,.9,1.9,'linear');later(()=>{d.el.style.opacity=0},1750)},i*220)),1700);
+    const end=1700+walkers.length*220+2300;
+    later(()=>{B.round++;renderBProgress();B.round>=BR.length?winBridge():newBridgeRound()},end);
+  }else{
+    sfx.oops();
+    const heavy=w>B.total;
+    speak(`${heavy?'Too heavy!':'Not enough!'} ${B.pre} plus ${add} is ${w}, but the boulder is ${B.total}. Run back, dragons! Let's try again.`);
+    later(()=>{byState('plank').filter(d=>!d.pre).forEach(d=>{d.state='bank';d.el.classList.add('running')});B.angle=angleFor(B.pre);setPlank();layout(1.2)},3200);
+    later(()=>{B.dr.forEach(d=>d.el.classList.remove('running'));$('#dlayer').style.opacity=0},4600);
+    later(()=>newBridgeRound(),5100);
+  }
+}
+function winBridge(){
+  const first=!state.progress.done['easy-2'];
+  state.progress.done['easy-2']=true;state.progress.eggs++;state.pos='easy-2';save();
+  sfx.win();confetti(80);
+  modal(`<div class="rays">${egg('big-egg')}</div>
+    <h2>Another Golden Egg!</h2>
+    <p>All the baby dragons made it to the castle! You have <b>${state.progress.eggs}</b> golden eggs.</p>
+    <button class="btn go" id="m-ok">🗺️ To the map</button>`);
+  speak(`Hooray ${me().name}! All the baby dragons are in the castle! You got another golden egg!`);
+  $('#m-ok').onclick=()=>{closeModal();openMap();if(first)setTimeout(()=>{const l=LEVELS[2];speak('Level three is open!');state.pos=l.id;save();moveToken(l);sfx.step()},700)};
+}
+$('#btn-drop').addEventListener('click',dropDragons);
+$('#bridge-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
 
 /* confetti */
 .confetti{position:fixed;top:-20px;width:12px;height:18px;z-index:60;pointer-events:none;border:2px solid var(--ink);border-radius:3px;animation:fall linear forwards}
@@ -186,6 +383,20 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
     <div class="choices" id="choices"></div>
   </div>
   <div class="hint">Tap each dragon to count it, then tap the matching number. Count carefully — a wrong answer brings new dragons!</div>
+</section>
+
+<!-- LEVEL 2: BALANCE BRIDGE -->
+<section id="s-bridge" class="screen">
+  <div class="topbar">
+    <button class="icon-btn" id="bridge-back" aria-label="Back to map">🗺️</button>
+    <div class="progress" id="bprogress"></div>
+    <button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button>
+  </div>
+  <div class="game-title">Balance the bridge!</div>
+  <div class="eq" id="eq"></div>
+  <div class="scene" id="scene"></div>
+  <div class="drop-row"><button class="btn go" id="btn-drop">🪄 Drop!</button></div>
+  <div class="hint">Tap dragons to lift them with your wand. Make them match the boulder, then tap Drop!</div>
 </section>
 
 <div id="modal" class="modal hidden"><div class="modal-card" id="modal-card"></div></div>
@@ -364,8 +575,9 @@ const WORLDS=[{id:'easy',name:'Easy · Dragon Meadow',color:'#9be07a',tile:'#5cc
               {id:'medium',name:'Medium · Crystal Caves',color:'#b9a6f2',tile:'#8e6ee0',y:310,xs:[840,660,480,300,120]},
               {id:'hard',name:'Hard · Volcano Peak',color:'#ffab8a',tile:'#ff6b4a',y:120,xs:[120,300,480,660,840]}];
 const LEVELS=[];WORLDS.forEach(w=>w.xs.forEach((x,i)=>LEVELS.push({id:w.id+'-'+(i+1),world:w,n:i+1,x,y:w.y})));
-const BUILT={'easy-1':true};
-const unlocked=id=>{const i=LEVELS.findIndex(l=>l.id===id);return i===0||!!state.progress.done[LEVELS[i-1].id]};
+const BUILT={'easy-1':true,'easy-2':true};
+const REQ={'easy-2':3}; // golden eggs needed to open
+const unlocked=id=>{const i=LEVELS.findIndex(l=>l.id===id);if(i===0)return true;if(REQ[id])return state.progress.eggs>=REQ[id];return !!state.progress.done[LEVELS[i-1].id]};
 
 function openMap(){renderMap();show('map')}
 function renderMap(){
@@ -386,7 +598,7 @@ function renderMap(){
    </g>
    <circle cx="900" cy="22" r="0"/>`;
   const tiles=LEVELS.map(l=>{
-    const un=unlocked(l.id),done=!!state.progress.done[l.id],next=un&&!done;
+    const un=unlocked(l.id),done=!!state.progress.done[l.id],next=(un&&!done)||(l.id==='easy-1'&&state.progress.eggs<REQ['easy-2']);
     const fill=un?l.world.tile:'#cfcfcf';
     return `<g class="tile ${un?'':'locked'}" data-id="${l.id}" role="button" aria-label="${l.world.id} level ${l.n}${un?'':' locked'}">
       ${next?`<circle class="pulse" cx="${l.x}" cy="${l.y}" r="58" fill="#fff" opacity=".55"/>`:''}
@@ -395,6 +607,7 @@ function renderMap(){
       <circle cx="${l.x}" cy="${l.y}" r="34" fill="#fff" opacity=".25"/>
       ${un?`<text x="${l.x}" y="${l.y+16}" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="46" fill="#fff" stroke="#2b2b2b" stroke-width="5" paint-order="stroke">${l.n}</text>`
           :`<g transform="translate(${l.x-16},${l.y-18})"><rect x="0" y="14" width="32" height="24" rx="5" fill="#8a8a8a" stroke="#2b2b2b" stroke-width="3"/><path d="M7 14 V8 a9 9 0 0 1 18 0 V14" fill="none" stroke="#2b2b2b" stroke-width="4"/></g>`}
+      ${!un&&REQ[l.id]?`<rect x="${l.x-34}" y="${l.y+36}" width="68" height="30" rx="15" fill="#fff" stroke="#2b2b2b" stroke-width="3"/>${egg('',`x="${l.x-30}" y="${l.y+38}" width="21" height="26"`)}<text x="${l.x+12}" y="${l.y+59}" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="20" fill="#2b2b2b">×${REQ[l.id]}</text>`:''}
       ${done?egg('',`x="${l.x+20}" y="${l.y-62}" width="34" height="42"`):''}
     </g>`;
   }).join('');
@@ -409,17 +622,20 @@ function renderMap(){
   </svg>`;
   $$('#board .tile').forEach(t=>t.addEventListener('click',()=>tileClick(t)));
   const doneCount=Object.keys(state.progress.done).length;
-  $('#map-hint').textContent=doneCount?`You have ${state.progress.eggs} golden egg${state.progress.eggs===1?'':'s'}! Tap the glowing space.`:'Tap the glowing space to start!';
+  const E=state.progress.eggs,need=REQ['easy-2'];
+  $('#map-hint').textContent=!doneCount?'Tap the glowing space to start!':E<need?`Golden eggs: ${E} of ${need}. Win ${need-E} more in Level 1 to open Level 2!`:`You have ${E} golden eggs! Tap a glowing space.`;
 }
 function moveToken(l){$('#token').style.transform=`translate(${l.x-38}px,${l.y-122}px)`}
 function tileClick(t){
   const l=LEVELS.find(x=>x.id===t.dataset.id);
-  if(!unlocked(l.id)){t.classList.remove('shake');void t.getBBox();t.classList.add('shake');sfx.oops();speak('That space is locked. Win a golden egg first!');return}
+  if(!unlocked(l.id)){t.classList.remove('shake');void t.getBBox();t.classList.add('shake');sfx.oops();
+    if(REQ[l.id]){const E=state.progress.eggs;speak(`You need ${REQ[l.id]} golden eggs. You have ${E}. Play level one again!`)}
+    else speak('That space is locked. Finish the space before it first!');return}
   sfx.step();state.pos=l.id;save();moveToken(l);
   setTimeout(()=>{
-    if(BUILT[l.id]){startGame()}
+    if(BUILT[l.id]){l.id==='easy-1'?startGame():startBridge()}
     else{
-      const needs=l.id==='easy-2';
+      const needs=false;
       modal(`<div class="rays">${egg('big-egg')}</div><h2>${l.world.id[0].toUpperCase()+l.world.id.slice(1)} Level ${l.n}</h2>
         <p>${needs?'Your golden egg opened this space! This game is coming soon.':'This game is coming soon!'}</p>
         <button class="btn go" id="m-ok">OK!</button>`);
@@ -502,18 +718,196 @@ function autoCount(){
   },1800);
 }
 function winGame(){
-  const first=!state.progress.done['easy-1'];
-  if(first){state.progress.done['easy-1']=true;state.progress.eggs++;}
+  const need=REQ['easy-2'];
+  state.progress.done['easy-1']=true;state.progress.eggs++;
+  const E=state.progress.eggs,justOpened=E===need;
   state.pos='easy-1';save();
   sfx.win();confetti(80);
+  const msg=E<need?`You have <b>${E}</b> golden egg${E===1?'':'s'}. Win <b>${need-E}</b> more to open <b>Level 2</b>!`
+          :justOpened?`That's <b>${need}</b> golden eggs — <b>Level 2</b> is open!`:`You have <b>${E}</b> golden eggs!`;
   modal(`<div class="rays">${egg('big-egg')}</div>
     <h2>You got a Golden Egg!</h2>
-    <p>${first?'Keep it safe — you need it to open <b>Level 2</b>!':'Great practice! You already have this golden egg.'}</p>
+    <p>${msg}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-  speak(first?`Hooray ${me().name}! You got a golden egg! You need it for level two!`:'Great counting! Hooray!');
-  $('#m-ok').onclick=()=>{closeModal();openMap();if(first)setTimeout(()=>{const l=LEVELS[1];speak('Level two is open!');state.pos=l.id;save();moveToken(l);sfx.step()},700)};
+  speak(`Hooray ${me().name}! You got a golden egg! `+(E<need?`You need ${need-E} more for level two!`:justOpened?'Level two is open!':`You have ${E} golden eggs!`));
+  $('#m-ok').onclick=()=>{closeModal();openMap();if(justOpened)setTimeout(()=>{const l=LEVELS[1];speak('Level two is open!');state.pos=l.id;save();moveToken(l);sfx.step()},700)};
 }
 $('#game-back').addEventListener('click',()=>{sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
+
+/* ---------- LEVEL 2: Balance Bridge (addition) ---------- */
+const BR=[[3,4],[4,6],[5,7],[6,9],[7,10]];
+const B={round:0,total:0,pre:0,dr:[],angle:0,busy:false,seq:0,timers:[]};
+const later=(f,ms)=>B.timers.push(setTimeout(f,ms));
+const clearB=()=>{B.timers.forEach(clearTimeout);B.timers=[]};
+const NS='http://www.w3.org/2000/svg';
+const rockIcon='<svg viewBox="0 0 40 34"><path d="M4 30 Q0 16 10 8 Q20 0 30 6 Q40 12 36 30Z" fill="#a3a9b0" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/></svg>';
+const byState=s=>B.dr.filter(d=>d.state===s).sort((a,b)=>a.order-b.order);
+const countS=s=>B.dr.filter(d=>d.state===s).length;
+const angleFor=w=>Math.max(-1,Math.min(1,(B.total-w)/B.total))*16;
+function rot(x,y,a){const r=a*Math.PI/180,c=Math.cos(r),s=Math.sin(r);return[500+(x-500)*c-(y-400)*s,400+(x-500)*s+(y-400)*c]}
+function star(cx,cy,R,r){let p=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r:R;p.push((cx+q*Math.cos(a)).toFixed(1)+','+(cy+q*Math.sin(a)).toFixed(1))}return p.join(' ')}
+
+function startBridge(){
+  clearB();B.round=0;B.total=0;show('bridge');buildScene();renderBProgress();newBridgeRound(true);
+}
+function renderBProgress(){$('#bprogress').innerHTML=BR.map((_,i)=>`<span class="dot ${i<B.round?'on':''}">${egg('')}</span>`).join('');$$('#bprogress .dot svg').forEach(s=>{s.style.width='100%';s.style.height='100%'})}
+function buildScene(){
+  const a=avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,'');
+  let waves='';for(let x=300;x<700;x+=40)waves+=`<path d="M${x} 515 q10 -8 20 0 t20 0" fill="none" stroke="#fff" stroke-width="3" opacity=".7"/>`;
+  let boards='';for(let x=330;x<700;x+=34)boards+=`<line x1="${x}" y1="394" x2="${x}" y2="406" stroke="#2b2b2b" stroke-width="2" opacity=".35"/>`;
+  $('#scene').innerHTML=`<svg viewBox="0 0 1000 560" xmlns="${NS}">
+  <defs><clipPath id="archclip"><path d="M850 400 V352 Q880 318 910 352 V400 Z"/></clipPath>
+  <linearGradient id="skyg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd3f4"/><stop offset="1" stop-color="#e8fbff"/></linearGradient></defs>
+  <rect width="1000" height="560" fill="url(#skyg)"/>
+  <path d="M0 330 Q150 262 300 318 Q450 256 600 306 Q800 244 1000 318 V560 H0Z" fill="#c4ecb0"/>
+  <rect x="280" y="488" width="440" height="80" fill="#4fa8ff"/>${waves}
+  <g stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round">
+    <path d="M-10 400 H290 V570 H-10Z" fill="#c68a52"/><path d="M-10 400 H290 V416 H-10Z" fill="#7ccf5b"/>
+    <path d="M710 400 H1010 V570 H710Z" fill="#c68a52"/><path d="M710 400 H1010 V416 H710Z" fill="#7ccf5b"/>
+    <rect x="484" y="436" width="32" height="130" fill="#9aa0a6"/><path d="M500 408 L476 440 L524 440Z" fill="#7d838a"/>
+  </g>
+  <g stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round">
+    <rect x="770" y="250" width="60" height="150" fill="#d9d0f0"/><rect x="930" y="250" width="60" height="150" fill="#d9d0f0"/>
+    <rect x="806" y="296" width="148" height="104" fill="#ebe5fa"/>
+    <path d="M806 296 v-14 h16 v14 h14 v-14 h16 v14 h14 v-14 h16 v14 h14 v-14 h16 v14 h14 v-14 h16 v14" fill="#ebe5fa"/>
+    <path d="M764 252 L800 186 L836 252Z" fill="#ff7eb6"/><path d="M924 252 L960 186 L996 252Z" fill="#4fa8ff"/>
+    <line x1="800" y1="186" x2="800" y2="160"/><path d="M800 160 L824 168 L800 176Z" fill="#ffd23f"/>
+    <line x1="960" y1="186" x2="960" y2="160"/><path d="M960 160 L984 168 L960 176Z" fill="#ffd23f"/>
+    <path d="M790 300 v-16 a10 10 0 0 1 20 0 v16Z" fill="#5a3b2a"/><path d="M950 300 v-16 a10 10 0 0 1 20 0 v16Z" fill="#5a3b2a"/>
+    <path d="M850 400 V352 Q880 318 910 352 V400 Z" fill="#3a2618"/>
+  </g>
+  <g clip-path="url(#archclip)"><g id="gate" style="transition:transform 1s ease">
+    <rect x="846" y="316" width="68" height="86" fill="#8b5a2b" stroke="#2b2b2b" stroke-width="3"/>
+    <path d="M858 316 V402 M870 316 V402 M882 316 V402 M894 316 V402 M906 316 V402 M846 340 H914 M846 364 H914 M846 388 H914" stroke="#2b2b2b" stroke-width="3"/>
+  </g></g>
+  <path d="M850 400 V352 Q880 318 910 352 V400" fill="none" stroke="#2b2b2b" stroke-width="4"/>
+  <g id="plank" style="transform-origin:500px 400px;transition:transform 1s cubic-bezier(.4,0,.2,1)">
+    <rect x="296" y="392" width="408" height="16" rx="5" fill="#c58b4f" stroke="#2b2b2b" stroke-width="4"/>${boards}
+    <path d="M566 392 Q552 346 582 316 Q612 296 642 312 Q670 330 662 364 Q658 388 644 392Z" fill="#a3a9b0" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"/>
+    <circle cx="586" cy="330" r="5" fill="#8a9097"/><circle cx="648" cy="372" r="4" fill="#8a9097"/>
+    <text id="bnum" x="612" y="374" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="54" fill="#fff" stroke="#2b2b2b" stroke-width="6" paint-order="stroke">0</text>
+  </g>
+  <ellipse cx="390" cy="205" rx="124" ry="98" fill="#a06cd5" opacity=".12" stroke="#a06cd5" stroke-width="3" stroke-dasharray="8 8"/>
+  <svg x="0" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg>
+  <g class="wand" id="wand"><line x1="91" y1="369" x2="120" y2="324" stroke="#2b2b2b" stroke-width="6" stroke-linecap="round"/><polygon points="${star(122,316,15,7)}" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/></g>
+  <g id="dlayer" style="transition:opacity .4s"></g>
+  <g id="fx"></g>
+  </svg>`;
+  $('#dlayer').addEventListener('click',onDragonTap);
+}
+function addDragon(state,slot,ci){
+  const g=document.createElementNS(NS,'g');g.setAttribute('class','bd');g.dataset.i=B.dr.length;
+  g.innerHTML=`<g class="bd-in"><ellipse class="aura" cx="0" cy="-3" rx="30" ry="9" fill="#c9a6ff"/>${dragon(ci).replace('<svg ','<svg x="-25" y="-50" width="50" height="50" ')}</g>`;
+  $('#dlayer').appendChild(g);
+  const d={el:g,state,slot,order:B.seq++,pre:false};B.dr.push(d);return d;
+}
+function setT(d,x,y,a,k,dur,ease){
+  d.tx=x;d.ty=y;
+  d.el.style.transition=dur?`transform ${dur}s ${ease||'cubic-bezier(.4,0,.2,1)'}, opacity .4s`:'none';
+  d.el.style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotate(${a.toFixed(2)}deg) scale(${k})`;
+}
+function layout(dur=.6){
+  B.dr.forEach(d=>d.el.classList.toggle('floating',d.state==='float'));
+  B.dr.filter(d=>d.state==='bank').forEach(d=>{const c=d.slot%3,r=Math.floor(d.slot/3);setT(d,152+c*54+(r%2?12:0),400-r*50,0,1.15,dur)});
+  byState('float').forEach((d,i)=>{const c=i%4,r=Math.floor(i/4);setT(d,318+c*48,268-r*48,0,1,dur)});
+  byState('plank').forEach((d,i)=>{const c=i%4,r=Math.floor(i/4);const [x,y]=rot(322+c*42,392-r*42,B.angle);setT(d,x,y,B.angle,1,dur)});
+}
+function setPlank(instant){
+  const p=$('#plank');
+  if(instant){p.style.transition='none';p.style.transform=`rotate(${B.angle}deg)`;p.getBoundingClientRect();p.style.transition=''}
+  else p.style.transform=`rotate(${B.angle}deg)`;
+}
+function updateEq(result){
+  const f=countS('float'),w=countS('plank'),add=w-B.pre;
+  const g=dragon(0).replace('<svg ','<svg width="34" height="34" '),pu=dragon(1).replace('<svg ','<svg width="34" height="34" ');
+  let h=`<span class="eqb g">${g}${B.pre}</span><span class="op">+</span>`;
+  if(result){
+    const ok=w===B.total;
+    h+=`<span class="eqb p">${pu}${add}</span><span class="op">=</span><span class="eqb ${ok?'ok':'bad'}">${w}</span>`;
+    h+=ok?`<span class="op">🎉</span>`:`<span class="op">≠</span><span class="eqb r">${rockIcon}${B.total}</span>`;
+  }else{
+    h+=`<span class="eqb p">${pu}${f||'?'}</span><span class="op">⚖️</span><span class="eqb r">${rockIcon}${B.total}</span>`;
+  }
+  $('#eq').innerHTML=h;
+}
+function newBridgeRound(first){
+  const [a,b]=BR[B.round];let t;do{t=rand(a,b)}while(t===B.total&&a!==b);
+  B.total=t;B.pre=rand(1,Math.max(1,Math.floor(t/2)));
+  const avail=(t-B.pre)+rand(2,3);
+  $('#dlayer').innerHTML='';B.dr=[];B.seq=0;
+  const c0=rand(0,5);
+  for(let i=0;i<B.pre;i++){addDragon('plank',0,c0+i).pre=true}
+  for(let s=avail-1;s>=0;s--)addDragon('bank',s,c0+B.pre+s);
+  $('#bnum').textContent=t;$('#gate').style.transform='';
+  B.angle=angleFor(B.pre);setPlank(true);layout(0);
+  $('#dlayer').style.opacity=1;
+  updateEq();B.busy=false;$('#btn-drop').disabled=false;
+  const intro=first?'Balance the bridge so the baby dragons can get to the castle! ':'';
+  speak(`${intro}The boulder is ${t}. ${B.pre} dragon${B.pre>1?'s are':' is'} on the bridge. How many more do we need?`);
+}
+function zap(d){
+  const w=$('#wand');w.classList.remove('zap');void w.getBBox();w.classList.add('zap');
+  const sp=document.createElementNS(NS,'polygon');sp.setAttribute('points',star(0,0,12,5));sp.setAttribute('fill','#ffd23f');sp.setAttribute('stroke','#2b2b2b');sp.setAttribute('stroke-width','2');
+  sp.style.transform='translate(122px,316px)';sp.style.transition='transform .45s ease-out, opacity .45s';
+  $('#fx').appendChild(sp);sp.getBoundingClientRect();
+  sp.style.transform=`translate(${d.tx}px,${d.ty-20}px) rotate(180deg)`;sp.style.opacity=0;
+  setTimeout(()=>sp.remove(),500);
+}
+function onDragonTap(e){
+  const g=e.target.closest('.bd');if(!g||B.busy)return;
+  const d=B.dr[+g.dataset.i];
+  if(d.state==='bank'){
+    if(countS('float')>=12)return;
+    d.state='float';d.order=++B.seq;layout();zap(d);
+    tone([520,780],.12,'triangle',.07);speak(String(countS('float')));
+  }else if(d.state==='float'){
+    d.state='bank';layout();tone([420,300],.1,'sine',.07);
+    const f=countS('float');speak(f?String(f):'zero');
+  }else return;
+  updateEq();
+}
+function dropDragons(){
+  if(B.busy)return;
+  const fl=byState('float');
+  if(!fl.length){speak('Tap a dragon to lift it with your magic wand!');sfx.oops();return}
+  B.busy=true;$('#btn-drop').disabled=true;
+  fl.forEach(d=>{d.state='plank';d.order=++B.seq});
+  layout(.55);tone([200,140],.2,'sine',.1);
+  later(()=>{B.angle=angleFor(countS('plank'));setPlank();layout(1)},600);
+  later(evaluateBridge,1800);
+}
+function evaluateBridge(){
+  const w=countS('plank'),add=w-B.pre;updateEq(true);
+  if(w===B.total){
+    sfx.yay();confetti(30);
+    speak(`${B.pre} plus ${add} makes ${B.total}! The bridge is level! Go dragons, go!`);
+    later(()=>{$('#gate').style.transform='translateY(-66px)';sfx.step()},1000);
+    const walkers=byState('plank');
+    later(()=>walkers.forEach((d,i)=>later(()=>{d.el.classList.add('running');setT(d,880,402,0,.9,1.9,'linear');later(()=>{d.el.style.opacity=0},1750)},i*220)),1700);
+    const end=1700+walkers.length*220+2300;
+    later(()=>{B.round++;renderBProgress();B.round>=BR.length?winBridge():newBridgeRound()},end);
+  }else{
+    sfx.oops();
+    const heavy=w>B.total;
+    speak(`${heavy?'Too heavy!':'Not enough!'} ${B.pre} plus ${add} is ${w}, but the boulder is ${B.total}. Run back, dragons! Let's try again.`);
+    later(()=>{byState('plank').filter(d=>!d.pre).forEach(d=>{d.state='bank';d.el.classList.add('running')});B.angle=angleFor(B.pre);setPlank();layout(1.2)},3200);
+    later(()=>{B.dr.forEach(d=>d.el.classList.remove('running'));$('#dlayer').style.opacity=0},4600);
+    later(()=>newBridgeRound(),5100);
+  }
+}
+function winBridge(){
+  const first=!state.progress.done['easy-2'];
+  state.progress.done['easy-2']=true;state.progress.eggs++;state.pos='easy-2';save();
+  sfx.win();confetti(80);
+  modal(`<div class="rays">${egg('big-egg')}</div>
+    <h2>Another Golden Egg!</h2>
+    <p>All the baby dragons made it to the castle! You have <b>${state.progress.eggs}</b> golden eggs.</p>
+    <button class="btn go" id="m-ok">🗺️ To the map</button>`);
+  speak(`Hooray ${me().name}! All the baby dragons are in the castle! You got another golden egg!`);
+  $('#m-ok').onclick=()=>{closeModal();openMap();if(first)setTimeout(()=>{const l=LEVELS[2];speak('Level three is open!');state.pos=l.id;save();moveToken(l);sfx.step()},700)};
+}
+$('#btn-drop').addEventListener('click',dropDragons);
+$('#bridge-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
 
 /* confetti */
 function confetti(n){
