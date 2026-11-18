@@ -147,6 +147,32 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 @keyframes laugh{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
 #plat{transform-box:fill-box;transform-origin:50% 50%}
 #door{transform-box:fill-box;transform-origin:0% 50%}
+/* WANDS, CREATE SLOT, PUZZLE */
+.wand-sw{transform-box:view-box;transform-origin:0 0}
+.wand-sw.zap{animation:zap .45s ease}
+.av-card.new{border-style:dashed;background:#ffffffcc;justify-content:center;gap:6px}
+.av-card.new .plus{width:78px;height:78px;border-radius:50%;border:5px dashed var(--ink);display:flex;align-items:center;justify-content:center;font-size:52px;font-weight:700;margin:20px 0 6px}
+.name-step{background:#fff;border:5px solid var(--ink);border-radius:30px;box-shadow:0 8px 0 var(--ink);padding:26px;max-width:520px;width:100%;text-align:center;margin-top:16px}
+.name-step h3{font-size:clamp(26px,5vw,36px);margin:0 0 14px}
+.name-step input{font-family:inherit;font-size:clamp(30px,7vw,44px);font-weight:700;text-align:center;width:100%;border:5px solid var(--ink);border-radius:20px;padding:10px;background:#fffaf0}
+.chip.wandchip{display:flex;align-items:center;gap:6px;padding:4px 12px 4px 6px}
+.chip.wandchip svg{width:30px;height:42px}
+.pz{cursor:pointer}
+.pz-in{transform-box:fill-box;transform-origin:50% 100%}
+.pz.floating .pz-in{animation:floaty 1.3s ease-in-out infinite}
+.pz .aura{opacity:0;transition:opacity .3s}
+.pz.floating .aura{opacity:.9}
+.pz.placed{cursor:default}
+.pz.placed rect{stroke:none;fill:none}
+.slot{cursor:pointer}
+.g-blink{transform-box:fill-box;transform-origin:center;animation:blink 2.6s infinite}
+@keyframes blink{0%,88%,100%{transform:scaleY(1)}93%{transform:scaleY(.1)}}
+.g-wave-l{transform-box:fill-box;transform-origin:50% 8%;animation:waveL .5s ease-in-out infinite alternate}
+.g-wave-r{transform-box:fill-box;transform-origin:50% 8%;animation:waveR .5s ease-in-out infinite alternate}
+@keyframes waveL{from{transform:rotate(10deg)}to{transform:rotate(70deg)}}
+@keyframes waveR{from{transform:rotate(-10deg)}to{transform:rotate(-70deg)}}
+.g-bounce{transform-box:fill-box;transform-origin:50% 100%;animation:gbounce .5s ease-in-out infinite}
+@keyframes gbounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 /* EGG SHELL PROGRESS */
 .shell-wrap{display:flex;align-items:center;gap:8px;background:#fff;border:4px solid var(--ink);border-radius:30px;padding:2px 16px 2px 8px;box-shadow:0 4px 0 var(--ink);font-size:24px;font-weight:700}
 .shell-egg{width:54px;height:68px;display:block}
@@ -190,15 +216,23 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 
 <!-- CUSTOMIZE -->
 <section id="s-custom" class="screen">
-  <h2 class="screen-title">Make your explorer!</h2>
-  <div class="custom-wrap">
+  <h2 class="screen-title" id="cust-title">Make your explorer!</h2>
+  <div class="name-step" id="name-step">
+    <h3>What's your name?</h3>
+    <input id="new-name" maxlength="10" placeholder="Type your name" aria-label="Your name" autocomplete="off">
+    <div class="home-actions" style="margin-top:20px">
+      <button class="btn" id="btn-cancel-new">✖ Cancel</button>
+      <button class="btn go" id="btn-name-next">Next ▶</button>
+    </div>
+  </div>
+  <div class="custom-wrap" id="custom-step">
     <div class="preview">
       <div id="cust-preview"></div>
       <input id="cust-name" maxlength="10" aria-label="Explorer name">
     </div>
     <div class="opts" id="cust-opts"></div>
   </div>
-  <div class="home-actions" style="margin-top:22px">
+  <div class="home-actions" style="margin-top:22px" id="custom-actions">
     <button class="btn" id="btn-reset">↺ Reset</button>
     <button class="btn go" id="btn-done">✔ Done</button>
   </div>
@@ -263,6 +297,19 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
   <div class="hint">Tap pillars to pick them. Leave the magic number on the platform, then tap Zap!</div>
 </section>
 
+<!-- LEVEL 5: CHOCOLATE GOLEM PUZZLE -->
+<section id="s-puzzle" class="screen">
+  <div class="topbar">
+    <button class="icon-btn" id="puzzle-back" aria-label="Back to map">🗺️</button>
+    <div class="shell-wrap" id="pprogress"></div>
+    <button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button>
+  </div>
+  <div class="game-title">Build the Chocolate Golem!</div>
+  <div class="eq" id="eq5"></div>
+  <div class="scene" id="pscene"></div>
+  <div class="hint">Tap a piece to lift it with your wand, then tap the spot that matches its number.</div>
+</section>
+
 <div id="modal" class="modal hidden"><div class="modal-card" id="modal-card"></div></div>
 
 <script>
@@ -279,9 +326,9 @@ const store={
 
 /* ---------- characters ---------- */
 const PRESETS=[
-  {name:'Papa', skin:'#e2b48c',hairStyle:'slick',hair:'#1b1b1b',eyes:'#4a2c17',shirt:'#2f6fd6',pants:'#3b3b4f',hat:'none'},
-  {name:'Mommy',skin:'#f6d3b3',hairStyle:'long', hair:'#f4d35e',eyes:'#2e86de',shirt:'#e84393',pants:'#5b4a8a',hat:'none'},
-  {name:'Alex', skin:'#fde4d0',hairStyle:'bangs',hair:'#7b4a26',eyes:'#6b3e1f',shirt:'#27ae60',pants:'#2d4a7a',hat:'none'}
+  {name:'Papa', skin:'#e2b48c',hairStyle:'slick',hair:'#1b1b1b',eyes:'#4a2c17',shirt:'#2f6fd6',pants:'#3b3b4f',hat:'none',wand:'wood'},
+  {name:'Mommy',skin:'#f6d3b3',hairStyle:'long', hair:'#f4d35e',eyes:'#2e86de',shirt:'#e84393',pants:'#5b4a8a',hat:'none',wand:'crystal'},
+  {name:'Alex', skin:'#fde4d0',hairStyle:'bangs',hair:'#7b4a26',eyes:'#6b3e1f',shirt:'#27ae60',pants:'#2d4a7a',hat:'none',wand:'fire'}
 ];
 const OPTS=[
   {key:'skin',label:'Skin',type:'color',vals:['#fde4d0','#f6d3b3','#e2b48c','#e0ac69','#c68642','#8d5524','#5a3519']},
@@ -290,8 +337,10 @@ const OPTS=[
   {key:'eyes',label:'Eyes',type:'color',vals:['#6b3e1f','#4a2c17','#2e86de','#27ae60','#8a6d3b','#7f8c8d']},
   {key:'shirt',label:'Jacket',type:'color',vals:['#2f6fd6','#e84393','#27ae60','#f39c12','#e74c3c','#8e44ad','#16a085','#f4d35e']},
   {key:'pants',label:'Pants',type:'color',vals:['#3b3b4f','#2d4a7a','#5b4a8a','#7b4a26','#6d6d6d','#1e8449']},
-  {key:'hat',label:'Hat',type:'chip',vals:[['none','No hat'],['beanie','Beanie'],['cap','Cap'],['crown','Crown']]}
+  {key:'hat',label:'Hat',type:'chip',vals:[['none','No hat'],['beanie','Beanie'],['cap','Cap'],['crown','Crown']]},
+  {key:'wand',label:'Magic wand',type:'wand',vals:['wood','bone','crystal','fire']}
 ];
+const NEW_CHAR={name:'',skin:'#f6d3b3',hairStyle:'short',hair:'#7b4a26',eyes:'#6b3e1f',shirt:'#f39c12',pants:'#2d4a7a',hat:'none',wand:'wood'};
 
 function avatar(c){
   const o='#2b2b2b', sw='stroke="'+o+'" stroke-width="3" stroke-linejoin="round"';
@@ -331,6 +380,20 @@ function avatar(c){
   ${front}${hat}
   </svg>`;
 }
+
+
+/* ---------- magic wands (hand at 0,0, pointing up) ---------- */
+const WANDS={
+  wood:{name:'Wood',spark:'#ffd23f',svg:()=>`<path d="M-3.5 6 L-2 -50 L2 -50 L3.5 6Z" fill="#8b5a2b" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/><path d="M-1 -10 q2 -8 0 -16 M1 -30 q-2 -6 0 -12" fill="none" stroke="#5a3218" stroke-width="1.5"/><rect x="-4.5" y="-4" width="9" height="10" rx="2" fill="#5a3218" stroke="#2b2b2b" stroke-width="2.5"/><polygon points="${star(0,-60,14,6)}" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>`},
+  bone:{name:'Bone',spark:'#9bff7a',svg:()=>`<rect x="-3.5" y="-48" width="7" height="50" rx="3" fill="#f5efdc" stroke="#2b2b2b" stroke-width="3"/><circle cx="-4.5" cy="4" r="5.5" fill="#f5efdc" stroke="#2b2b2b" stroke-width="3"/><circle cx="4.5" cy="4" r="5.5" fill="#f5efdc" stroke="#2b2b2b" stroke-width="3"/><circle cx="-4.5" cy="-48" r="5.5" fill="#f5efdc" stroke="#2b2b2b" stroke-width="3"/><circle cx="4.5" cy="-48" r="5.5" fill="#f5efdc" stroke="#2b2b2b" stroke-width="3"/><circle cx="0" cy="-62" r="11" fill="#9bff7a" stroke="#2b2b2b" stroke-width="3"/><circle cx="-3.5" cy="-65.5" r="3.2" fill="#fff"/>`},
+  crystal:{name:'Crystal',spark:'#7cf2ff',svg:()=>`<rect x="-3" y="-46" width="6" height="52" rx="3" fill="#c9d6e3" stroke="#2b2b2b" stroke-width="3"/><path d="M-3 -6 L3 -12 M-3 -18 L3 -24 M-3 -30 L3 -36" stroke="#4fa8ff" stroke-width="2.5"/><polygon points="0,-80 12,-60 0,-44 -12,-60" fill="#7cf2ff" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/><path d="M-5 -62 L0 -72" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`},
+  fire:{name:'Fire',spark:'#ff7b29',svg:()=>`<rect x="-3.5" y="-46" width="7" height="52" rx="3" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3"/><path d="M-3.5 -4 L3.5 -12 M-3.5 -18 L3.5 -26 M-3.5 -32 L3.5 -40" stroke="#e74c3c" stroke-width="3"/><path class="flame" d="M0 -84 Q15 -66 10 -54 Q0 -44 -10 -54 Q-15 -66 0 -84Z" fill="#ff7b29" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/><path class="flame" d="M0 -70 Q7 -60 4 -54 Q0 -50 -4 -54 Q-7 -60 0 -70Z" fill="#ffd23f"/>`}
+};
+const WAND_ANGLE=32;
+function wandG(type,hx,hy,id){const w=WANDS[type]||WANDS.wood;return `<g transform="translate(${hx} ${hy})"><g class="wand-sw"${id?` id="${id}"`:''}><g transform="rotate(${WAND_ANGLE})">${w.svg()}</g></g></g>`}
+function wandTip(hx,hy){const r=WAND_ANGLE*Math.PI/180;return[hx+60*Math.sin(r),hy-60*Math.cos(r)]}
+function avatarWithWand(c){return avatar(c).replace('viewBox="0 0 120 150"','viewBox="-6 0 162 150"').replace(/<\/svg>\s*$/,`${wandG(c.wand,99,117)}</svg>`)}
+function wandIcon(type){return `<svg viewBox="-20 -90 40 100">${(WANDS[type]||WANDS.wood).svg()}</svg>`}
 
 /* ---------- dragons & eggs ---------- */
 const DCOL=[['#5cc96b','#d4f7bf'],['#a06cd5','#ead9fc'],['#ff7eb6','#ffdcec'],['#4fa8ff','#d3e9ff'],['#ff9f43','#ffe4c2'],['#20c4b0','#c9f6ef']];
@@ -401,7 +464,9 @@ const state={
   muted:store.get('muted',false),
   pos:store.get('pos','easy-1')
 };
-if(!Array.isArray(state.chars)||state.chars.length!==3)state.chars=clone(PRESETS);
+if(!Array.isArray(state.chars)||state.chars.length<3)state.chars=clone(PRESETS);
+state.chars=state.chars.slice(0,4).map((c,i)=>Object.assign({},i<3?PRESETS[i]:NEW_CHAR,c));
+if(state.sel>=state.chars.length)state.sel=0;
 const me=()=>state.chars[state.sel];
 function save(){store.set('chars2',state.chars);store.set('sel',state.sel);store.set('progress',state.progress);store.set('muted',state.muted);store.set('pos',state.pos)}
 
@@ -441,47 +506,81 @@ function show(name){$$('.screen').forEach(s=>s.classList.toggle('active',s.id===
 
 /* ---------- HOME ---------- */
 function renderHome(){
-  $('#home-avatars').innerHTML=state.chars.map((c,i)=>`<button class="av-card ${i===state.sel?'sel':''}" data-i="${i}" aria-label="${c.name}">${avatar(c)}<div class="nm">${esc(c.name)}</div></button>`).join('');
-  $$('#home-avatars .av-card').forEach(b=>b.addEventListener('click',()=>{state.sel=+b.dataset.i;save();renderHome();sfx.pop();speak(me().name+'!')}));
+  $('#home-avatars').innerHTML=state.chars.map((c,i)=>`<button class="av-card ${i===state.sel?'sel':''}" data-i="${i}" aria-label="${esc(c.name)}">${avatarWithWand(c)}<div class="nm">${esc(c.name)}</div></button>`).join('')
+    +(state.chars.length<4?`<button class="av-card new" id="btn-new-char" aria-label="Create your own explorer"><div class="plus">+</div><div class="nm">Create<br>your own</div></button>`:'');
+  $$('#home-avatars .av-card[data-i]').forEach(b=>b.addEventListener('click',()=>{state.sel=+b.dataset.i;save();renderHome();sfx.pop();speak(me().name+'!')}));
+  const nb=$('#btn-new-char');if(nb)nb.addEventListener('click',()=>{sfx.pop();openCreate()});
 }
 function esc(s){return String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
 $('#btn-play').addEventListener('click',()=>{sfx.yay();speak("Let's go, "+me().name+"!");openMap()});
 $('#btn-custom').addEventListener('click',()=>{sfx.pop();openCustom()});
 
 /* ---------- CUSTOMIZE ---------- */
-function openCustom(){renderCustom();show('custom')}
+const ED={c:null,create:false,idx:0};
+function openCustom(){ED.c=me();ED.create=false;ED.idx=state.sel;showCustomStep(true);renderCustom();show('custom')}
+function openCreate(){
+  ED.c=clone(NEW_CHAR);ED.create=true;ED.idx=3;
+  $('#new-name').value='';$('#cust-title').textContent='New explorer!';
+  $('#name-step').style.display='';$('#custom-step').style.display='none';$('#custom-actions').style.display='none';
+  show('custom');speak("What's your name?");setTimeout(()=>{try{$('#new-name').focus()}catch(e){}},300);
+}
+function showCustomStep(){
+  $('#name-step').style.display='none';$('#custom-step').style.display='';$('#custom-actions').style.display='';
+  $('#cust-title').textContent=ED.create?'Make your explorer!':'Make your explorer!';
+  $('#btn-reset').textContent=ED.create?'✖ Cancel':ED.idx===3?'🗑 Delete':'↺ Reset';
+}
 function renderCustom(){
-  const c=me();
-  $('#cust-preview').innerHTML=avatar(c);
+  const c=ED.c;
+  $('#cust-preview').innerHTML=avatarWithWand(c);
   $('#cust-name').value=c.name;
   $('#cust-opts').innerHTML=OPTS.map(o=>`<div class="opt-row"><h3>${o.label}</h3><div class="swatches">${
     o.type==='color'?o.vals.map(v=>`<button class="sw ${c[o.key]===v?'on':''}" style="background:${v}" data-k="${o.key}" data-v="${v}" aria-label="${o.label} ${v}"></button>`).join('')
+    :o.type==='wand'?o.vals.map(v=>`<button class="chip wandchip ${c[o.key]===v?'on':''}" data-k="${o.key}" data-v="${v}">${wandIcon(v)}${WANDS[v].name}</button>`).join('')
     :o.vals.map(([v,l])=>`<button class="chip ${c[o.key]===v?'on':''}" data-k="${o.key}" data-v="${v}">${l}</button>`).join('')
   }</div></div>`).join('');
-  $$('#cust-opts [data-k]').forEach(b=>b.addEventListener('click',()=>{c[b.dataset.k]=b.dataset.v;save();sfx.pop();renderCustom()}));
+  $$('#cust-opts [data-k]').forEach(b=>b.addEventListener('click',()=>{c[b.dataset.k]=b.dataset.v;if(!ED.create)save();sfx.pop();
+    if(b.dataset.k==='wand'){tone([660,990,1320],.12,'triangle',.06);speak(WANDS[b.dataset.v].name+' wand!')}
+    renderCustom()}));
 }
-$('#cust-name').addEventListener('input',e=>{me().name=e.target.value.trim()||PRESETS[state.sel].name;save()});
-$('#btn-reset').addEventListener('click',()=>{state.chars[state.sel]=clone(PRESETS[state.sel]);save();sfx.oops();renderCustom()});
-$('#btn-done').addEventListener('click',()=>{sfx.yay();speak('Looking great, '+me().name+'!');renderHome();show('home')});
+function nameNext(){
+  const n=$('#new-name').value.trim();
+  if(!n){speak('Type your name first!');sfx.oops();try{$('#new-name').focus()}catch(e){}return}
+  ED.c.name=n;sfx.yay();speak(`Hi ${n}! Now let's make your explorer!`);
+  showCustomStep();renderCustom();
+}
+$('#btn-name-next').addEventListener('click',nameNext);
+$('#new-name').addEventListener('keydown',e=>{if(e.key==='Enter')nameNext()});
+$('#btn-cancel-new').addEventListener('click',()=>{sfx.pop();renderHome();show('home')});
+$('#cust-name').addEventListener('input',e=>{ED.c.name=e.target.value.trim()||(ED.idx<3?PRESETS[ED.idx].name:'Me');if(!ED.create)save()});
+$('#btn-reset').addEventListener('click',()=>{
+  if(ED.create){sfx.pop();renderHome();show('home');return}
+  if(ED.idx===3){state.chars.splice(3,1);state.sel=0;save();sfx.oops();renderHome();show('home');return}
+  state.chars[ED.idx]=clone(PRESETS[ED.idx]);ED.c=state.chars[ED.idx];save();sfx.oops();renderCustom()});
+$('#btn-done').addEventListener('click',()=>{
+  if(ED.create){state.chars[3]=ED.c;state.sel=3}
+  save();sfx.yay();speak('Looking great, '+me().name+'!');renderHome();show('home')});
 
 /* ---------- MAP ---------- */
 const WORLDS=[{id:'easy',name:'Easy · Dragon Meadow',color:'#9be07a',tile:'#5cc96b',y:500,xs:[120,300,480,660,840]},
               {id:'medium',name:'Medium · Crystal Caves',color:'#b9a6f2',tile:'#8e6ee0',y:310,xs:[840,660,480,300,120]},
               {id:'hard',name:'Hard · Volcano Peak',color:'#ffab8a',tile:'#ff6b4a',y:120,xs:[120,300,480,660,840]}];
 const LEVELS=[];WORLDS.forEach(w=>w.xs.forEach((x,i)=>LEVELS.push({id:w.id+'-'+(i+1),world:w,n:i+1,x,y:w.y})));
-const BUILT={'easy-1':true,'easy-2':true,'easy-3':true};
+const BUILT={'easy-1':true,'easy-2':true,'easy-3':true,'easy-5':true};
+const PREREQ={'easy-5':'easy-3'}; // Level 4 isn't built yet, so Level 5 opens after Level 3
 const REQ={'easy-2':3,'easy-3':10}; // golden eggs needed to open
-const unlocked=id=>{const i=LEVELS.findIndex(l=>l.id===id);if(i===0)return true;const prev=!!state.progress.done[LEVELS[i-1].id];return REQ[id]?prev&&state.progress.eggs>=REQ[id]:prev};
+const prereqOf=id=>{const i=LEVELS.findIndex(l=>l.id===id);return PREREQ[id]||(i>0?LEVELS[i-1].id:null)};
+const unlocked=id=>{const i=LEVELS.findIndex(l=>l.id===id);if(i===0)return true;const prev=!!state.progress.done[prereqOf(id)];return REQ[id]?prev&&state.progress.eggs>=REQ[id]:prev};
 const openSet=()=>LEVELS.filter(l=>unlocked(l.id)).map(l=>l.id);
 function awardEgg(id){const before=openSet();state.progress.done[id]=true;state.progress.eggs++;save();return openSet().filter(x=>!before.includes(x))}
-function goal(){const g=LEVELS.find(l=>REQ[l.id]&&!unlocked(l.id));if(!g)return null;const i=LEVELS.indexOf(g);return{n:g.n,need:REQ[g.id],E:state.progress.eggs,prevDone:!!state.progress.done[LEVELS[i-1].id]}}
+function goal(){const g=LEVELS.find(l=>REQ[l.id]&&!unlocked(l.id));if(!g)return null;return{n:g.n,need:REQ[g.id],E:state.progress.eggs,prevDone:!!state.progress.done[prereqOf(g.id)]}}
 function goalLine(){
   const g=goal(),E=state.progress.eggs;
   if(!g)return{html:`You have <b>${E}</b> golden eggs!`,say:`You have ${E} golden eggs!`};
   if(E<g.need){const m=g.need-E;return{html:`You have <b>${E}</b> golden egg${E===1?'':'s'}. Win <b>${m}</b> more to open <b>Level ${g.n}</b>!`,say:`You need ${m} more golden egg${m===1?'':'s'} for level ${g.n}!`}}
   return{html:`Finish <b>Level ${g.n-1}</b> to open <b>Level ${g.n}</b>!`,say:`Finish level ${g.n-1} to open level ${g.n}!`};
 }
-function toMapAfterWin(opened){closeModal();openMap();if(opened.length)setTimeout(()=>{const l=LEVELS.find(x=>x.id===opened[0]);speak(`Level ${l.n} is open!`);state.pos=l.id;save();moveToken(l);sfx.step()},700)}
+function levelName(id){const l=LEVELS.find(x=>x.id===id);return l.world.id==='easy'?`Level ${l.n}`:`${l.world.id[0].toUpperCase()+l.world.id.slice(1)} Level ${l.n}`}
+function toMapAfterWin(opened){closeModal();openMap();if(opened.length)setTimeout(()=>{const l=LEVELS.find(x=>x.id===opened[0]);speak(`${levelName(l.id)} is open!`);state.pos=l.id;save();moveToken(l);sfx.step()},700)}
 
 function openMap(){renderMap();show('map')}
 function renderMap(){
@@ -532,13 +631,13 @@ function moveToken(l){$('#token').style.transform=`translate(${l.x-38}px,${l.y-1
 function tileClick(t){
   const l=LEVELS.find(x=>x.id===t.dataset.id);
   if(!unlocked(l.id)){t.classList.remove('shake');void t.getBBox();t.classList.add('shake');sfx.oops();
-    const pi=LEVELS.indexOf(l),pd=!!state.progress.done[LEVELS[pi-1].id];
-    if(!pd)speak(`Finish level ${LEVELS[pi-1].n} first!`);
+    const pq=LEVELS.find(x=>x.id===prereqOf(l.id)),pd=!!state.progress.done[pq.id];
+    if(!pd)speak(`Finish level ${pq.n} first!`);
     else if(REQ[l.id]){const E=state.progress.eggs;speak(`You need ${REQ[l.id]} golden eggs. You have ${E}. Play again to win more!`)}
     else speak('That space is locked. Finish the space before it first!');return}
   sfx.step();state.pos=l.id;save();moveToken(l);
   setTimeout(()=>{
-    if(BUILT[l.id]){({'easy-1':startGame,'easy-2':startBridge,'easy-3':startLava})[l.id]()}
+    if(BUILT[l.id]){({'easy-1':startGame,'easy-2':startBridge,'easy-3':startLava,'easy-5':startPuzzle})[l.id]()}
     else{
       const needs=false;
       modal(`<div class="rays">${egg('big-egg')}</div><h2>${l.world.id[0].toUpperCase()+l.world.id.slice(1)} Level ${l.n}</h2>
@@ -625,7 +724,7 @@ function autoCount(){
 function winGame(){
   const opened=awardEgg('easy-1');state.pos='easy-1';save();
   sfx.win();confetti(80);
-  const gl=goalLine(),txt=opened.length?`<b>Level ${LEVELS.find(x=>x.id===opened[0]).n}</b> is open!`:gl.html;
+  const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
   modal(`<div class="rays">${egg('big-egg')}</div>
     <h2>You built a Golden Egg!</h2>
     <p>${txt}</p>
@@ -689,7 +788,7 @@ function buildScene(){
   </g>
   <ellipse cx="390" cy="205" rx="124" ry="98" fill="#a06cd5" opacity=".12" stroke="#a06cd5" stroke-width="3" stroke-dasharray="8 8"/>
   <svg x="0" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg>
-  <g class="wand" id="wand"><line x1="91" y1="369" x2="120" y2="324" stroke="#2b2b2b" stroke-width="6" stroke-linecap="round"/><polygon points="${star(122,316,15,7)}" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/></g>
+  ${wandG(me().wand,91,369,'wand')}
   <g id="dlayer" style="transition:opacity .4s"></g>
   <g id="fx"></g>
   </svg>`;
@@ -747,8 +846,8 @@ function newBridgeRound(first){
 }
 function zap(d){
   const w=$('#wand');w.classList.remove('zap');void w.getBBox();w.classList.add('zap');
-  const sp=document.createElementNS(NS,'polygon');sp.setAttribute('points',star(0,0,12,5));sp.setAttribute('fill','#ffd23f');sp.setAttribute('stroke','#2b2b2b');sp.setAttribute('stroke-width','2');
-  sp.style.transform='translate(122px,316px)';sp.style.transition='transform .45s ease-out, opacity .45s';
+  const sp=document.createElementNS(NS,'polygon');sp.setAttribute('points',star(0,0,12,5));sp.setAttribute('fill',WANDS[me().wand].spark);sp.setAttribute('stroke','#2b2b2b');sp.setAttribute('stroke-width','2');
+  sp.style.transform=`translate(${wandTip(91,369)[0]}px,${wandTip(91,369)[1]}px)`;sp.style.transition='transform .45s ease-out, opacity .45s';
   $('#fx').appendChild(sp);sp.getBoundingClientRect();
   sp.style.transform=`translate(${d.tx}px,${d.ty-20}px) rotate(180deg)`;sp.style.opacity=0;
   setTimeout(()=>sp.remove(),500);
@@ -867,7 +966,7 @@ function splash(x){
 function winBridge(){
   const opened=awardEgg('easy-2');state.pos='easy-2';save();
   sfx.win();confetti(80);
-  const gl=goalLine(),txt=opened.length?`<b>Level ${LEVELS.find(x=>x.id===opened[0]).n}</b> is open!`:gl.html;
+  const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
   modal(`<div class="rays">${egg('big-egg')}</div>
     <h2>Another Golden Egg built!</h2>
     <p>All the baby dragons made it to the castle! ${txt}</p>
@@ -944,7 +1043,7 @@ function buildLava(){
   <g id="wl" style="transform:translate(${WL[0]}px,${WL[1]}px)">${warlockSVG()}</g>
   <path d="M200 462 q20 -10 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t20 0 V570 H200Z" fill="#ff7b29"/>
   <svg x="40" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg>
-  <g class="wand" id="wand3"><line x1="131" y1="369" x2="160" y2="324" stroke="#2b2b2b" stroke-width="6" stroke-linecap="round"/><polygon points="${star(162,316,15,7)}" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/></g>
+  ${wandG(me().wand,131,369,'wand3')}
   <g id="fx3"></g>
   </svg>`;
   $('#pillars').addEventListener('click',onPillarTap);
@@ -979,9 +1078,9 @@ function newLavaRound(first){
 }
 function zap3(x,y){
   const w=$('#wand3');w.classList.remove('zap');void w.getBBox();w.classList.add('zap');
-  const sp=document.createElementNS(NS,'polygon');sp.setAttribute('points',star(0,0,12,5));sp.setAttribute('fill','#7cf2ff');sp.setAttribute('stroke','#2b2b2b');sp.setAttribute('stroke-width','2');
+  const sp=document.createElementNS(NS,'polygon');sp.setAttribute('points',star(0,0,12,5));sp.setAttribute('fill',WANDS[me().wand].spark);sp.setAttribute('stroke','#2b2b2b');sp.setAttribute('stroke-width','2');
   $('#fx3').appendChild(sp);
-  sp.animate([{transform:'translate(162px,316px)',opacity:1},{transform:`translate(${x}px,${y}px) rotate(180deg)`,opacity:0}],{duration:420,easing:'ease-out'}).onfinish=()=>sp.remove();
+  sp.animate([{transform:`translate(${wandTip(131,369)[0]}px,${wandTip(131,369)[1]}px)`,opacity:1},{transform:`translate(${x}px,${y}px) rotate(180deg)`,opacity:0}],{duration:420,easing:'ease-out'}).onfinish=()=>sp.remove();
 }
 function onPillarTap(e){
   const g=e.target.closest('.pillar');if(!g||L.busy)return;
@@ -1054,7 +1153,7 @@ function evaluateLava(sunk){
 function winLava(){
   const opened=awardEgg('easy-3');state.pos='easy-3';save();
   sfx.win();confetti(80);
-  const gl=goalLine(),txt=opened.length?`<b>Level ${LEVELS.find(x=>x.id===opened[0]).n}</b> is open!`:gl.html;
+  const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
   modal(`<div class="rays">${egg('big-egg')}</div>
     <h2>You beat the warlock!</h2>
     <p>The castle door is open and you built another Golden Egg! ${txt}</p>
@@ -1064,6 +1163,172 @@ function winLava(){
 }
 $('#btn-lzap').addEventListener('click',lavaZap);
 $('#lava-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
+
+/* ---------- LEVEL 5: Chocolate Golem Puzzle (mixed review: counting, +, −) ---------- */
+const P={ans:[],q:[],placed:[],sel:-1,busy:false,pieces:[],shells:0};
+const BX=350,BY=50,CS=100;
+function golemArt(alive){
+  const A=c=>alive?`class="${c}"`:'';
+  let spr='';const sc=['#ff7eb6','#4fa8ff','#ffd23f','#5cc96b','#a06cd5'];
+  [[20,30],[60,80],[30,150],[18,250],[262,40],[240,140],[275,215],[250,270],[70,200],[230,90]].forEach(([x,y],i)=>spr+=`<rect x="${x}" y="${y}" width="14" height="5" rx="2.5" fill="${sc[i%5]}" transform="rotate(${i*37} ${x+7} ${y+2})"/>`);
+  let squares='';for(let i=0;i<3;i++)for(let j=0;j<3;j++)squares+=`<rect x="${90+i*42}" y="${124+j*38}" width="36" height="31" rx="6" fill="#8b5a33" stroke-width="3"/>`;
+  return `<rect width="300" height="300" fill="#ffe3ef"/>${spr}
+  <g stroke="#2b2b2b" stroke-width="5" stroke-linejoin="round" ${A('g-bounce')}>
+    <rect x="98" y="232" width="44" height="50" rx="8" fill="#6b3d1e"/><rect x="158" y="232" width="44" height="50" rx="8" fill="#6b3d1e"/>
+    <rect x="84" y="268" width="62" height="24" rx="11" fill="#5a3218"/><rect x="154" y="268" width="62" height="24" rx="11" fill="#5a3218"/>
+    <g ${A('g-wave-l')}><rect x="34" y="118" width="46" height="96" rx="18" fill="#7b4a26"/><circle cx="57" cy="222" r="22" fill="#8b5a33"/></g>
+    <g ${A('g-wave-r')}><rect x="220" y="118" width="46" height="96" rx="18" fill="#7b4a26"/><circle cx="243" cy="222" r="22" fill="#8b5a33"/></g>
+    <rect x="76" y="110" width="148" height="132" rx="22" fill="#7b4a26"/>${squares}
+    <circle cx="111" cy="173" r="7" fill="#ff7eb6" stroke-width="3"/><circle cx="150" cy="173" r="7" fill="#ffd23f" stroke-width="3"/><circle cx="189" cy="173" r="7" fill="#4fa8ff" stroke-width="3"/>
+    <rect x="88" y="26" width="124" height="96" rx="26" fill="#8b5a33"/>
+    <path d="M88 54 Q88 26 114 26 H186 Q212 26 212 54 Q204 64 196 54 Q188 72 178 56 Q168 68 158 54 Q148 74 138 56 Q128 66 118 54 Q108 70 100 56 Q94 64 88 54Z" fill="#fff6e8"/>
+    <path d="M150 18 Q154 2 168 -2" fill="none" stroke-width="4"/><circle cx="150" cy="22" r="12" fill="#e74c3c"/><circle cx="146" cy="18" r="3" fill="#fff" stroke="none"/>
+    <g ${A('g-blink')}><circle cx="128" cy="80" r="14" fill="#fff" stroke-width="4"/><circle cx="172" cy="80" r="14" fill="#fff" stroke-width="4"/>
+      <circle cx="131" cy="82" r="6" fill="#2b2b2b" stroke="none"/><circle cx="169" cy="82" r="6" fill="#2b2b2b" stroke="none"/>
+      <circle cx="133" cy="79" r="2" fill="#fff" stroke="none"/><circle cx="171" cy="79" r="2" fill="#fff" stroke="none"/></g>
+    <ellipse cx="110" cy="100" rx="8" ry="5" fill="#ff7eb6" stroke="none" opacity=".6"/><ellipse cx="190" cy="100" rx="8" ry="5" fill="#ff7eb6" stroke="none" opacity=".6"/>
+    <path d="M130 102 Q150 118 170 102" fill="none" stroke-width="4" stroke-linecap="round"/>
+  </g>`;
+}
+const DOTS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8],7:[0,2,3,4,5,6,8],8:[0,1,2,3,5,6,7,8],9:[0,1,2,3,4,5,6,7,8]};
+function makeQ(a,prev){
+  const types=['dots'];if(a>=2)types.push('add');if(a<=9)types.push('sub');
+  let t;do{t=types[rand(0,types.length-1)]}while(t===prev&&types.length>1);
+  if(t==='add'){const x=rand(1,a-1);return{t,a,txt:`${x}+${a-x}`,say:`${x} plus ${a-x} is ${a}`}}
+  if(t==='sub'){const big=rand(a+1,Math.min(10,a+5));return{t,a,txt:`${big}−${big-a}`,say:`${big} take away ${big-a} is ${a}`}}
+  return{t,a,say:`there are ${a} dots`};
+}
+function slotXY(s){return[BX+(s%3)*CS,BY+Math.floor(s/3)*CS]}
+function trayXY(j){return[172+j*92,452]}
+function qMarkup(s){
+  const q=P.q[s],[x,y]=slotXY(s);
+  if(q.t==='dots')return DOTS[q.a].map(k=>`<circle cx="${x+25+(k%3)*25}" cy="${y+25+Math.floor(k/3)*25}" r="9" fill="#7b4a26" stroke="#2b2b2b" stroke-width="2"/>`).join('');
+  return `<text x="${x+50}" y="${y+62}" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="${q.txt.length>3?32:38}" fill="#2b2b2b">${q.txt}</text>`;
+}
+function renderSlots(){
+  $('#slots').innerHTML=P.q.map((q,s)=>{const [x,y]=slotXY(s);const done=P.placed[s];
+    return `<g class="slot" data-s="${s}"><rect x="${x+3}" y="${y+3}" width="${CS-6}" height="${CS-6}" rx="10" fill="${done?'none':'#fff8f0'}" stroke="${done?'none':'#c9a27a'}" stroke-width="3" stroke-dasharray="8 6"/>${done?'':`<g class="q">${qMarkup(s)}</g>`}</g>`}).join('');
+}
+function pieceSetT(p,x,y,k,dur){p.el.style.transition=dur?`transform ${dur}s cubic-bezier(.4,0,.2,1)`:'none';p.el.style.transform=`translate(${x}px,${y}px) scale(${k})`;p.x=x;p.y=y}
+function startPuzzle(){
+  clearB();show('puzzle');
+  const nums=shuffle([1,2,3,4,5,6,7,8,9]);
+  P.ans=nums;P.q=nums.map(a=>makeQ(a));P.placed=Array(9).fill(false);P.sel=-1;P.busy=false;P.shells=0;
+  buildPuzzle();renderShell('#pprogress',0);updatePrompt();
+  speak("Let's build the chocolate golem! Lift a puzzle piece with your wand, then put it where its number belongs.");
+}
+function buildPuzzle(){
+  const a=avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,'');
+  $('#pscene').innerHTML=`<svg viewBox="0 0 1000 560" xmlns="${NS}">
+  <defs><g id="golemArt">${golemArt(false)}</g></defs>
+  <rect width="1000" height="560" fill="#fbd5e5"/>
+  <path d="M0 0 H1000 V34 Q975 60 950 34 Q925 74 900 34 Q870 54 840 34 Q810 80 780 34 Q750 52 720 34 Q690 70 660 34 Q630 50 600 34 Q570 76 540 34 Q510 54 480 34 Q450 70 420 34 Q390 50 360 34 Q330 80 300 34 Q270 52 240 34 Q210 68 180 34 Q150 50 120 34 Q90 76 60 34 Q30 52 0 34Z" fill="#7b4a26" stroke="#2b2b2b" stroke-width="4"/>
+  <rect x="0" y="400" width="1000" height="160" fill="#e7b98f"/><line x1="0" y1="400" x2="1000" y2="400" stroke="#2b2b2b" stroke-width="4"/>
+  <rect x="160" y="430" width="840" height="130" rx="18" fill="#a86b3c" stroke="#2b2b2b" stroke-width="4"/>
+  <rect x="${BX-14}" y="${BY-14}" width="${3*CS+28}" height="${3*CS+28}" rx="16" fill="#c58b4f" stroke="#2b2b2b" stroke-width="5"/>
+  <rect x="${BX}" y="${BY}" width="${3*CS}" height="${3*CS}" fill="#fff1e4" stroke="#2b2b2b" stroke-width="3"/>
+  <g transform="translate(730 80)"><rect x="-10" y="-10" width="200" height="226" rx="14" fill="#fff" stroke="#2b2b2b" stroke-width="4"/>
+    <svg width="180" height="180" viewBox="0 0 300 300"><use href="#golemArt"/></svg>
+    <text x="90" y="206" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="20" fill="#2b2b2b">Build me!</text></g>
+  <g id="slots"></g>
+  <g id="alive" style="opacity:0;transition:opacity .6s"></g>
+  <svg x="0" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg>
+  ${wandG(me().wand,91,369,'wand5')}
+  <g id="pieces"></g>
+  <g id="fx5"></g>
+  </svg>`;
+  renderSlots();
+  const order=shuffle([0,1,2,3,4,5,6,7,8]);P.pieces=[];
+  order.forEach((cell,j)=>{
+    const g=document.createElementNS(NS,'g');g.setAttribute('class','pz');g.dataset.i=cell;
+    g.innerHTML=`<g class="pz-in"><ellipse class="aura" cx="50" cy="104" rx="46" ry="10" fill="#c9a6ff"/>
+      <rect x="-3" y="-3" width="106" height="106" rx="10" fill="#fff" stroke="#2b2b2b" stroke-width="4"/>
+      <svg width="100" height="100" viewBox="${(cell%3)*100} ${Math.floor(cell/3)*100} 100 100"><use href="#golemArt"/></svg>
+      <g class="badge"><circle cx="14" cy="14" r="17" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3"/><text x="14" y="22" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="22" fill="#2b2b2b">${P.ans[cell]}</text></g></g>`;
+    $('#pieces').appendChild(g);
+    const p={el:g,cell,home:trayXY(j),num:P.ans[cell]};P.pieces[cell]=p;
+    pieceSetT(p,p.home[0],p.home[1],.84,0);
+  });
+  $('#pieces').addEventListener('click',onPieceTap);
+  $('#slots').addEventListener('click',onSlotTap);
+}
+function updatePrompt(){
+  if(P.sel<0){$('#eq5').innerHTML=`<span class="eqb r">🧩 Tap a piece!</span>`;return}
+  $('#eq5').innerHTML=`<span class="eqb g">🧩 ${P.pieces[P.sel].num}</span><span class="op">→</span><span class="eqb p">Where does it go?</span>`;
+}
+function liftPiece(p,on){
+  p.el.classList.toggle('floating',on);
+  if(on){$('#pieces').appendChild(p.el);pieceSetT(p,p.home[0]-4,p.home[1]-62,.92,.45);zapAt('wand5','fx5',91,369,p.home[0]+40,p.home[1]-30)}
+  else pieceSetT(p,p.home[0],p.home[1],.84,.45);
+}
+function onPieceTap(e){
+  const g=e.target.closest('.pz');if(!g||P.busy)return;
+  const p=P.pieces[+g.dataset.i];if(p.placed)return;
+  if(P.sel===p.cell){liftPiece(p,false);P.sel=-1;tone([420,300],.1,'sine',.07);updatePrompt();return}
+  if(P.sel>=0)liftPiece(P.pieces[P.sel],false);
+  P.sel=p.cell;liftPiece(p,true);tone([520,780],.12,'triangle',.07);speak(String(p.num));updatePrompt();
+}
+function onSlotTap(e){
+  const g=e.target.closest('.slot');if(!g||P.busy)return;
+  const s=+g.dataset.s;if(P.placed[s])return;
+  if(P.sel<0){speak('First tap a puzzle piece to lift it!');sfx.oops();return}
+  const p=P.pieces[P.sel],[x,y]=slotXY(s);P.busy=true;
+  zapAt('wand5','fx5',91,369,x+50,y+50);
+  pieceSetT(p,x,y,1,.6);
+  later(()=>{
+    if(P.ans[s]===p.num){
+      p.placed=true;P.placed[s]=true;P.sel=-1;p.el.classList.remove('floating');p.el.classList.add('placed');
+      p.el.querySelector('.badge').style.display='none';
+      if(s!==p.cell){/* same number can only be one cell, so s===p.cell */}
+      renderSlots();sfx.yay();sparkleAt(x+50,y+50);
+      const n=P.placed.filter(Boolean).length,q=P.q[s];
+      speak(n>=9?`Yes! ${q.say}! The golem is finished!`:`Yes! ${q.say}!`);
+      const sh=Math.floor(n*5/9);
+      if(sh>P.shells){P.shells=sh;flyShell(g,'#pprogress',sh)}
+      updatePrompt();P.busy=false;
+      if(n>=9){P.busy=true;later(golemAlive,1200)}
+    }else{
+      sfx.oops();
+      const q=P.q[s];
+      speak(`That piece is ${p.num}, but ${q.say}. Try another spot!`);
+      p.el.animate([{transform:`translate(${x}px,${y}px) rotate(0)`},{transform:`translate(${x-8}px,${y}px) rotate(-6deg)`},{transform:`translate(${x+8}px,${y}px) rotate(6deg)`},{transform:`translate(${x}px,${y}px) rotate(0)`}],{duration:400});
+      later(()=>{liftPiece(p,false);P.sel=-1;p.el.classList.remove('floating');
+        P.q[s]=makeQ(P.ans[s],P.q[s].t);renderSlots();updatePrompt();P.busy=false},1300);
+    }
+  },650);
+}
+function zapAt(wid,fxid,hx,hy,x,y){
+  const w=$('#'+wid);if(w){w.classList.remove('zap');void w.getBBox();w.classList.add('zap')}
+  const [tx,ty]=wandTip(hx,hy),sp=document.createElementNS(NS,'polygon');
+  sp.setAttribute('points',star(0,0,12,5));sp.setAttribute('fill',WANDS[me().wand].spark);sp.setAttribute('stroke','#2b2b2b');sp.setAttribute('stroke-width','2');
+  $('#'+fxid).appendChild(sp);
+  sp.animate([{transform:`translate(${tx}px,${ty}px)`,opacity:1},{transform:`translate(${x}px,${y}px) rotate(180deg)`,opacity:0}],{duration:420,easing:'ease-out'}).onfinish=()=>sp.remove();
+}
+function sparkleAt(x,y){
+  for(let i=0;i<8;i++){const p=document.createElementNS(NS,'polygon');p.setAttribute('points',star(x,y,9,4));p.setAttribute('fill','#ffd23f');p.setAttribute('stroke','#2b2b2b');p.setAttribute('stroke-width','2');
+    $('#fx5').appendChild(p);const a=i*Math.PI/4;
+    p.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*60}px,${Math.sin(a)*60}px)`,opacity:0}],{duration:600,easing:'ease-out'}).onfinish=()=>p.remove()}
+}
+function golemAlive(){
+  $('#eq5').innerHTML=`<span class="eqb ok">🎉 He's alive!</span>`;
+  $('#alive').innerHTML=`<svg x="${BX}" y="${BY}" width="300" height="300" viewBox="0 0 300 300" overflow="visible">${golemArt(true)}</svg>`;
+  $('#alive').style.opacity=1;$('#pieces').style.transition='opacity .6s';$('#pieces').style.opacity=0;
+  sfx.win();confetti(40);
+  speak("You built the chocolate golem! He's alive! He says thank you, and yummy!");
+  later(winPuzzle,4200);
+}
+function winPuzzle(){
+  const opened=awardEgg('easy-5');state.pos='easy-5';save();
+  sfx.win();confetti(80);
+  const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
+  modal(`<div class="rays">${egg('big-egg')}</div>
+    <h2>You built a Chocolate Golem!</h2>
+    <p>He's your new friend, and you built another Golden Egg! ${txt}</p>
+    <button class="btn go" id="m-ok">🗺️ To the map</button>`);
+  speak(`Hooray ${me().name}! You built the chocolate golem and got another golden egg!`);
+  $('#m-ok').onclick=()=>toMapAfterWin(opened);
+}
+$('#puzzle-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
 
 /* confetti */
 function confetti(n){
