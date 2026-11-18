@@ -132,6 +132,21 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 .btn:disabled{opacity:.5;pointer-events:none}
 
 .cpiece{transform-box:fill-box;transform-origin:50% 100%}
+/* LEVEL 3: LAVA */
+.pillar{cursor:pointer}
+.pillar.marked .pbody{fill:#ffb37a}
+.pillar.marked .pcrack{opacity:1}
+.pillar.marked{animation:jit .22s linear infinite}
+@keyframes jit{0%,100%{transform:translateX(0)}50%{transform:translateX(2px)}}
+.flame{transform-box:fill-box;transform-origin:50% 100%;animation:flick .35s ease-in-out infinite alternate}
+@keyframes flick{from{transform:scaleY(1) rotate(-3deg)}to{transform:scaleY(1.18) rotate(3deg)}}
+.bub{animation:bub 2.2s ease-in infinite;opacity:0}
+@keyframes bub{0%{transform:translateY(0);opacity:0}20%{opacity:1}100%{transform:translateY(-26px);opacity:0}}
+.wl-in{transform-box:fill-box;transform-origin:50% 100%}
+.wl-in.laugh{animation:laugh .28s ease-in-out infinite}
+@keyframes laugh{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
+#plat{transform-box:fill-box;transform-origin:50% 50%}
+#door{transform-box:fill-box;transform-origin:0% 50%}
 /* EGG SHELL PROGRESS */
 .shell-wrap{display:flex;align-items:center;gap:8px;background:#fff;border:4px solid var(--ink);border-radius:30px;padding:2px 16px 2px 8px;box-shadow:0 4px 0 var(--ink);font-size:24px;font-weight:700}
 .shell-egg{width:54px;height:68px;display:block}
@@ -232,6 +247,20 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
   <div class="scene" id="scene"></div>
   <div class="drop-row"><button class="btn go" id="btn-drop">🪄 Drop!</button></div>
   <div class="hint">Tap dragons to lift them with your wand. Make them match the boulder, then tap Drop!</div>
+</section>
+
+<!-- LEVEL 3: WARLOCK'S LAVA BRIDGE -->
+<section id="s-lava" class="screen">
+  <div class="topbar">
+    <button class="icon-btn" id="lava-back" aria-label="Back to map">🗺️</button>
+    <div class="shell-wrap" id="lprogress"></div>
+    <button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button>
+  </div>
+  <div class="game-title">Zap the pillars!</div>
+  <div class="eq" id="eq3"></div>
+  <div class="scene" id="lscene"></div>
+  <div class="drop-row"><button class="btn go" id="btn-lzap">⚡ Zap!</button></div>
+  <div class="hint">Tap pillars to pick them. Leave the magic number on the platform, then tap Zap!</div>
 </section>
 
 <div id="modal" class="modal hidden"><div class="modal-card" id="modal-card"></div></div>
@@ -440,9 +469,19 @@ const WORLDS=[{id:'easy',name:'Easy · Dragon Meadow',color:'#9be07a',tile:'#5cc
               {id:'medium',name:'Medium · Crystal Caves',color:'#b9a6f2',tile:'#8e6ee0',y:310,xs:[840,660,480,300,120]},
               {id:'hard',name:'Hard · Volcano Peak',color:'#ffab8a',tile:'#ff6b4a',y:120,xs:[120,300,480,660,840]}];
 const LEVELS=[];WORLDS.forEach(w=>w.xs.forEach((x,i)=>LEVELS.push({id:w.id+'-'+(i+1),world:w,n:i+1,x,y:w.y})));
-const BUILT={'easy-1':true,'easy-2':true};
-const REQ={'easy-2':3}; // golden eggs needed to open
-const unlocked=id=>{const i=LEVELS.findIndex(l=>l.id===id);if(i===0)return true;if(REQ[id])return state.progress.eggs>=REQ[id];return !!state.progress.done[LEVELS[i-1].id]};
+const BUILT={'easy-1':true,'easy-2':true,'easy-3':true};
+const REQ={'easy-2':3,'easy-3':10}; // golden eggs needed to open
+const unlocked=id=>{const i=LEVELS.findIndex(l=>l.id===id);if(i===0)return true;const prev=!!state.progress.done[LEVELS[i-1].id];return REQ[id]?prev&&state.progress.eggs>=REQ[id]:prev};
+const openSet=()=>LEVELS.filter(l=>unlocked(l.id)).map(l=>l.id);
+function awardEgg(id){const before=openSet();state.progress.done[id]=true;state.progress.eggs++;save();return openSet().filter(x=>!before.includes(x))}
+function goal(){const g=LEVELS.find(l=>REQ[l.id]&&!unlocked(l.id));if(!g)return null;const i=LEVELS.indexOf(g);return{n:g.n,need:REQ[g.id],E:state.progress.eggs,prevDone:!!state.progress.done[LEVELS[i-1].id]}}
+function goalLine(){
+  const g=goal(),E=state.progress.eggs;
+  if(!g)return{html:`You have <b>${E}</b> golden eggs!`,say:`You have ${E} golden eggs!`};
+  if(E<g.need){const m=g.need-E;return{html:`You have <b>${E}</b> golden egg${E===1?'':'s'}. Win <b>${m}</b> more to open <b>Level ${g.n}</b>!`,say:`You need ${m} more golden egg${m===1?'':'s'} for level ${g.n}!`}}
+  return{html:`Finish <b>Level ${g.n-1}</b> to open <b>Level ${g.n}</b>!`,say:`Finish level ${g.n-1} to open level ${g.n}!`};
+}
+function toMapAfterWin(opened){closeModal();openMap();if(opened.length)setTimeout(()=>{const l=LEVELS.find(x=>x.id===opened[0]);speak(`Level ${l.n} is open!`);state.pos=l.id;save();moveToken(l);sfx.step()},700)}
 
 function openMap(){renderMap();show('map')}
 function renderMap(){
@@ -463,7 +502,7 @@ function renderMap(){
    </g>
    <circle cx="900" cy="22" r="0"/>`;
   const tiles=LEVELS.map(l=>{
-    const un=unlocked(l.id),done=!!state.progress.done[l.id],next=(un&&!done)||(l.id==='easy-1'&&state.progress.eggs<REQ['easy-2']);
+    const un=unlocked(l.id),done=!!state.progress.done[l.id],gg=goal(),next=(un&&!done)||(un&&BUILT[l.id]&&gg&&gg.E<gg.need);
     const fill=un?l.world.tile:'#cfcfcf';
     return `<g class="tile ${un?'':'locked'}" data-id="${l.id}" role="button" aria-label="${l.world.id} level ${l.n}${un?'':' locked'}">
       ${next?`<circle class="pulse" cx="${l.x}" cy="${l.y}" r="58" fill="#fff" opacity=".55"/>`:''}
@@ -487,18 +526,19 @@ function renderMap(){
   </svg>`;
   $$('#board .tile').forEach(t=>t.addEventListener('click',()=>tileClick(t)));
   const doneCount=Object.keys(state.progress.done).length;
-  const E=state.progress.eggs,need=REQ['easy-2'];
-  $('#map-hint').textContent=!doneCount?'Tap the glowing space to start!':E<need?`Golden eggs: ${E} of ${need}. Win ${need-E} more in Level 1 to open Level 2!`:`You have ${E} golden eggs! Tap a glowing space.`;
+  $('#map-hint').textContent=!doneCount?'Tap the glowing space to start!':goalLine().html.replace(/<[^>]+>/g,'')+' Tap a glowing space.';
 }
 function moveToken(l){$('#token').style.transform=`translate(${l.x-38}px,${l.y-122}px)`}
 function tileClick(t){
   const l=LEVELS.find(x=>x.id===t.dataset.id);
   if(!unlocked(l.id)){t.classList.remove('shake');void t.getBBox();t.classList.add('shake');sfx.oops();
-    if(REQ[l.id]){const E=state.progress.eggs;speak(`You need ${REQ[l.id]} golden eggs. You have ${E}. Play level one again!`)}
+    const pi=LEVELS.indexOf(l),pd=!!state.progress.done[LEVELS[pi-1].id];
+    if(!pd)speak(`Finish level ${LEVELS[pi-1].n} first!`);
+    else if(REQ[l.id]){const E=state.progress.eggs;speak(`You need ${REQ[l.id]} golden eggs. You have ${E}. Play again to win more!`)}
     else speak('That space is locked. Finish the space before it first!');return}
   sfx.step();state.pos=l.id;save();moveToken(l);
   setTimeout(()=>{
-    if(BUILT[l.id]){l.id==='easy-1'?startGame():startBridge()}
+    if(BUILT[l.id]){({'easy-1':startGame,'easy-2':startBridge,'easy-3':startLava})[l.id]()}
     else{
       const needs=false;
       modal(`<div class="rays">${egg('big-egg')}</div><h2>${l.world.id[0].toUpperCase()+l.world.id.slice(1)} Level ${l.n}</h2>
@@ -583,19 +623,15 @@ function autoCount(){
   },1800);
 }
 function winGame(){
-  const need=REQ['easy-2'];
-  state.progress.done['easy-1']=true;state.progress.eggs++;
-  const E=state.progress.eggs,justOpened=E===need;
-  state.pos='easy-1';save();
+  const opened=awardEgg('easy-1');state.pos='easy-1';save();
   sfx.win();confetti(80);
-  const msg=E<need?`You have <b>${E}</b> golden egg${E===1?'':'s'}. Win <b>${need-E}</b> more to open <b>Level 2</b>!`
-          :justOpened?`That's <b>${need}</b> golden eggs — <b>Level 2</b> is open!`:`You have <b>${E}</b> golden eggs!`;
+  const gl=goalLine(),txt=opened.length?`<b>Level ${LEVELS.find(x=>x.id===opened[0]).n}</b> is open!`:gl.html;
   modal(`<div class="rays">${egg('big-egg')}</div>
     <h2>You built a Golden Egg!</h2>
-    <p>${msg}</p>
+    <p>${txt}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-  speak(`Hooray ${me().name}! You got a golden egg! `+(E<need?`You need ${need-E} more for level two!`:justOpened?'Level two is open!':`You have ${E} golden eggs!`));
-  $('#m-ok').onclick=()=>{closeModal();openMap();if(justOpened)setTimeout(()=>{const l=LEVELS[1];speak('Level two is open!');state.pos=l.id;save();moveToken(l);sfx.step()},700)};
+  speak(`Hooray ${me().name}! You got a golden egg! `+(opened.length?'':gl.say));
+  $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
 $('#game-back').addEventListener('click',()=>{sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
 
@@ -829,18 +865,205 @@ function splash(x){
   }
 }
 function winBridge(){
-  const first=!state.progress.done['easy-2'];
-  state.progress.done['easy-2']=true;state.progress.eggs++;state.pos='easy-2';save();
+  const opened=awardEgg('easy-2');state.pos='easy-2';save();
   sfx.win();confetti(80);
+  const gl=goalLine(),txt=opened.length?`<b>Level ${LEVELS.find(x=>x.id===opened[0]).n}</b> is open!`:gl.html;
   modal(`<div class="rays">${egg('big-egg')}</div>
     <h2>Another Golden Egg built!</h2>
-    <p>All the baby dragons made it to the castle! You have <b>${state.progress.eggs}</b> golden eggs.</p>
+    <p>All the baby dragons made it to the castle! ${txt}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-  speak(`Hooray ${me().name}! All the baby dragons are in the castle! You got another golden egg!`);
-  $('#m-ok').onclick=()=>{closeModal();openMap();if(first)setTimeout(()=>{const l=LEVELS[2];speak('Level three is open!');state.pos=l.id;save();moveToken(l);sfx.step()},700)};
+  speak(`Hooray ${me().name}! All the baby dragons are in the castle! You got another golden egg! `+(opened.length?'':gl.say));
+  $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
 $('#btn-drop').addEventListener('click',dropDragons);
 $('#bridge-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
+
+/* ---------- LEVEL 3: Warlock's Lava Bridge (subtraction) ---------- */
+const LR=[[4,5,1,2],[5,6,1,3],[6,8,2,4],[7,9,2,5],[8,10,3,6]];
+const L={round:0,T:0,k:0,R:0,m:0,busy:false,anims:[]};
+const WL=[510,250];
+const track=a=>{L.anims.push(a);return a};
+function warlockSVG(){
+  const s='stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"';
+  return `<g class="wl-in">
+    <line x1="40" y1="-4" x2="50" y2="-128" stroke="#7b4a26" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="51" cy="-136" r="12" fill="#7cf2c8" ${s}/><circle cx="47" cy="-140" r="3" fill="#fff"/>
+    <path d="M-42 0 L-26 -92 Q0 -104 26 -92 L42 0 Z" fill="#5b2a86" ${s}/>
+    <polygon points="${star(-14,-40,7,3)}" fill="#ffd23f"/><polygon points="${star(16,-62,6,2.5)}" fill="#ffd23f"/><polygon points="${star(-4,-14,5,2)}" fill="#ffd23f"/>
+    <circle cx="-30" cy="-60" r="10" fill="#9be07a" ${s}/><circle cx="40" cy="-60" r="10" fill="#9be07a" ${s}/>
+    <circle cx="0" cy="-116" r="26" fill="#9be07a" ${s}/>
+    <path d="M-20 -106 Q-12 -60 0 -56 Q12 -60 20 -106 Q0 -96 -20 -106Z" fill="#e8e8e8" ${s}/>
+    <circle cx="-9" cy="-120" r="6" fill="#fff" stroke="#2b2b2b" stroke-width="2"/><circle cx="9" cy="-120" r="6" fill="#fff" stroke="#2b2b2b" stroke-width="2"/>
+    <circle cx="-8" cy="-119" r="3" fill="#c0392b"/><circle cx="8" cy="-119" r="3" fill="#c0392b"/>
+    <path d="M-17 -131 L-3 -125 M17 -131 L3 -125" stroke="#2b2b2b" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="0" cy="-109" rx="5" ry="4" fill="#7fc95e" stroke="#2b2b2b" stroke-width="2"/>
+    <path d="M-34 -134 L8 -210 L34 -134 Z" fill="#5b2a86" ${s}/><ellipse cx="0" cy="-134" rx="38" ry="8" fill="#4a2270" ${s}/>
+    <polygon points="${star(6,-166,9,4)}" fill="#ffd23f" stroke="#2b2b2b" stroke-width="2"/>
+  </g>
+  <g id="wlsay" style="opacity:0;transition:opacity .25s">
+    <path d="M44 -196 L28 -180 L58 -190Z" fill="#fff" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"/>
+    <rect x="40" y="-236" width="206" height="46" rx="22" fill="#fff" stroke="#2b2b2b" stroke-width="4"/>
+    <text id="wltext" x="143" y="-205" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="22" fill="#2b2b2b">Ha ha!</text>
+  </g>`;
+}
+function wlSay(t,flip){$('#wltext').textContent=t;const g=$('#wlsay');g.style.opacity=t?1:0;g.setAttribute('transform',flip?'translate(-290 40)':'')}
+function wlLaugh(on){$('#wl .wl-in').classList.toggle('laugh',on)}
+function startLava(){clearB();L.round=0;L.T=0;show('lava');buildLava();renderShell('#lprogress',0);newLavaRound(true)}
+function buildLava(){
+  const a=avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,'');
+  let bricks='';for(let y=20;y<430;y+=36)for(let x=(y/36%2?-30:0);x<1000;x+=60)bricks+=`<rect x="${x}" y="${y}" width="60" height="36" fill="none" stroke="#2f2747" stroke-width="3"/>`;
+  let bubs='';for(let i=0;i<9;i++)bubs+=`<circle class="bub" cx="${230+i*66}" cy="${448+(i%3)*14}" r="${4+(i%3)*2}" fill="#ffd23f" style="animation-delay:${(i*.37).toFixed(2)}s"/>`;
+  const torch=x=>`<g><rect x="${x-6}" y="160" width="12" height="40" fill="#7b4a26" stroke="#2b2b2b" stroke-width="3"/><path class="flame" d="M${x} 116 Q${x+18} 140 ${x+10} 158 Q${x} 166 ${x-10} 158 Q${x-18} 140 ${x} 116Z" fill="#ff9f43" stroke="#2b2b2b" stroke-width="3"/><path class="flame" d="M${x} 136 Q${x+8} 148 ${x+4} 158 Q${x} 160 ${x-4} 158 Q${x-8} 148 ${x} 136Z" fill="#ffd23f"/></g>`;
+  $('#lscene').innerHTML=`<svg viewBox="0 0 1000 560" xmlns="${NS}" style="transition:opacity .4s">
+  <defs>
+    <linearGradient id="lavag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23f"/><stop offset=".35" stop-color="#ff7b29"/><stop offset="1" stop-color="#d63a1a"/></linearGradient>
+    <radialGradient id="glowg" cx="50%" cy="100%" r="70%"><stop offset="0" stop-color="#ff9f43" stop-opacity=".55"/><stop offset="1" stop-color="#ff9f43" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1000" height="560" fill="#3f3560"/>${bricks}
+  <rect x="150" y="150" width="720" height="410" fill="url(#glowg)"/>
+  ${torch(110)}${torch(760)}
+  <path d="M430 40 Q510 -10 590 40 V120 H430Z" fill="#26203d" stroke="#2b2b2b" stroke-width="4"/><circle cx="545" cy="70" r="14" fill="#fff6c2"/>
+  <g stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round">
+    <path d="M-10 400 H200 V570 H-10Z" fill="#6b6178"/><path d="M-10 400 H200 V414 H-10Z" fill="#8f86a0"/>
+    <path d="M820 400 H1010 V570 H820Z" fill="#6b6178"/><path d="M820 400 H1010 V414 H820Z" fill="#8f86a0"/>
+    <path d="M870 400 V290 Q920 240 970 290 V400Z" fill="#fff3b0"/>
+  </g>
+  <g id="door" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round">
+    <path d="M870 400 V290 Q920 240 970 290 V400Z" fill="#8b5a2b"/>
+    <path d="M903 266 V400 M937 266 V400" stroke-width="3" opacity=".5"/>
+    <rect x="908" y="336" width="24" height="20" rx="4" fill="#ffd23f"/><path d="M913 336 v-6 a7 7 0 0 1 14 0 v6" fill="none"/>
+  </g>
+  <g id="pillars"></g>
+  <rect x="200" y="430" width="620" height="140" fill="url(#lavag)"/>${bubs}
+  <g id="plat"><rect x="330" y="250" width="360" height="28" rx="6" fill="#8a8298" stroke="#2b2b2b" stroke-width="4"/>
+    <path d="M370 252 l14 12 l-8 12 M640 252 l-10 14 l12 10" fill="none" stroke="#2b2b2b" stroke-width="3" opacity=".35"/>
+    <circle cx="510" cy="264" r="22" fill="#7cf2c8" stroke="#2b2b2b" stroke-width="4"/>
+    <text id="lnum" x="510" y="274" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="30" fill="#2b2b2b">0</text>
+    <path id="pcracks" d="M420 250 l20 14 l-10 14 M560 250 l-14 16 l16 12 M480 278 l10 -12" fill="none" stroke="#2b2b2b" stroke-width="4" style="opacity:0"/>
+  </g>
+  <g id="wl" style="transform:translate(${WL[0]}px,${WL[1]}px)">${warlockSVG()}</g>
+  <path d="M200 462 q20 -10 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t20 0 V570 H200Z" fill="#ff7b29"/>
+  <svg x="40" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg>
+  <g class="wand" id="wand3"><line x1="131" y1="369" x2="160" y2="324" stroke="#2b2b2b" stroke-width="6" stroke-linecap="round"/><polygon points="${star(162,316,15,7)}" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/></g>
+  <g id="fx3"></g>
+  </svg>`;
+  $('#pillars').addEventListener('click',onPillarTap);
+}
+function updateEq3(res){
+  const pil='<svg viewBox="0 0 30 40"><rect x="8" y="8" width="14" height="30" fill="#a59cb5" stroke="#2b2b2b" stroke-width="3"/><rect x="3" y="3" width="24" height="8" rx="2" fill="#c3bbd0" stroke="#2b2b2b" stroke-width="3"/></svg>';
+  const m=$$('#pillars .pillar.marked').length;
+  let h=`<span class="eqb r">${pil}${L.T}</span><span class="op">−</span>`;
+  if(res){const rem=L.T-L.m,ok=rem===L.R;
+    h+=`<span class="eqb p">⚡${L.m}</span><span class="op">=</span><span class="eqb ${ok?'ok':'bad'}">${rem}</span>`+(ok?'<span class="op">🎉</span>':`<span class="op">≠</span><span class="eqb g">${L.R}</span>`);
+  }else h+=`<span class="eqb p">⚡${m||'?'}</span><span class="op">→</span><span class="eqb g">${L.R}</span>`;
+  $('#eq3').innerHTML=h;
+}
+function newLavaRound(first){
+  const [ta,tb,ka,kb]=LR[L.round];let T,k;
+  do{T=rand(ta,tb);k=rand(ka,Math.min(kb,T-1))}while(T===L.T&&k===L.k);
+  L.T=T;L.k=k;L.R=T-k;L.m=0;L.busy=false;
+  L.anims.forEach(a=>a.cancel());L.anims=[];
+  const sp=340/T,w=Math.min(40,sp-10);let h='';
+  for(let i=0;i<T;i++){const cx=340+sp*(i+.5);
+    h+=`<g class="pillar" data-x="${cx.toFixed(1)}"><rect class="pbody" x="${cx-w/2}" y="276" width="${w}" height="190" fill="#a59cb5" stroke="#2b2b2b" stroke-width="4"/>
+    <line x1="${cx}" y1="294" x2="${cx}" y2="460" stroke="#2b2b2b" stroke-width="2" opacity=".3"/>
+    <rect x="${cx-w/2-5}" y="274" width="${w+10}" height="14" rx="3" fill="#c3bbd0" stroke="#2b2b2b" stroke-width="4"/>
+    <path class="pcrack" d="M${cx-w/4} 300 l${w/2.5} 28 l-${w/2.5} 24 l${w/2.5} 28" fill="none" stroke="#2b2b2b" stroke-width="3" opacity="0"/></g>`}
+  $('#pillars').innerHTML=h;
+  $('#lnum').textContent=L.R;$('#pcracks').style.opacity=0;$('#fx3').innerHTML='';
+  $('#wl').style.transform=`translate(${WL[0]}px,${WL[1]}px)`;wlSay('');wlLaugh(false);
+  $('#lscene svg').style.opacity=1;
+  updateEq3();$('#btn-lzap').disabled=false;
+  const intro=first?`The evil warlock is blocking the door! `:'';
+  speak(`${intro}There are ${T} pillars. Zap pillars so only ${L.R} ${L.R===1?'is':'are'} left!`);
+}
+function zap3(x,y){
+  const w=$('#wand3');w.classList.remove('zap');void w.getBBox();w.classList.add('zap');
+  const sp=document.createElementNS(NS,'polygon');sp.setAttribute('points',star(0,0,12,5));sp.setAttribute('fill','#7cf2ff');sp.setAttribute('stroke','#2b2b2b');sp.setAttribute('stroke-width','2');
+  $('#fx3').appendChild(sp);
+  sp.animate([{transform:'translate(162px,316px)',opacity:1},{transform:`translate(${x}px,${y}px) rotate(180deg)`,opacity:0}],{duration:420,easing:'ease-out'}).onfinish=()=>sp.remove();
+}
+function onPillarTap(e){
+  const g=e.target.closest('.pillar');if(!g||L.busy)return;
+  g.classList.toggle('marked');const m=$$('#pillars .pillar.marked').length;
+  if(g.classList.contains('marked')){zap3(+g.dataset.x,330);tone([900,1300],.1,'square',.05);speak(String(m))}
+  else{tone([420,300],.1,'sine',.07);speak(m?String(m):'zero')}
+  updateEq3();
+}
+function arcFrames(x0,y0,x1,y1,h,rot0,rot1,n=14){const f=[];for(let i=0;i<=n;i++){const t=i/n;f.push({transform:`translate(${x0+(x1-x0)*t}px,${y0+(y1-y0)*t-4*h*t*(1-t)}px) rotate(${rot0+(rot1-rot0)*t}deg)`})}return f}
+function poof(x,y,col){
+  for(let i=0;i<10;i++){const c=document.createElementNS(NS,'circle'),cx=x+rand(-50,50),cy=y+rand(-20,10);
+    c.setAttribute('cx',cx);c.setAttribute('cy',cy);c.setAttribute('r',rand(16,30));c.setAttribute('fill',col);c.setAttribute('stroke','#2b2b2b');c.setAttribute('stroke-width','2');
+    $('#fx3').appendChild(c);
+    c.animate([{transform:'scale(.2)',opacity:1,transformOrigin:`${cx}px ${cy}px`},{transform:`translate(${rand(-30,30)}px,${rand(-120,-60)}px) scale(1.5)`,opacity:0,transformOrigin:`${cx}px ${cy}px`}],{duration:1300,delay:rand(0,250),easing:'ease-out',fill:'forwards'}).onfinish=()=>c.remove();}
+}
+function lavaZap(){
+  if(L.busy)return;
+  const marked=$$('#pillars .pillar.marked');
+  if(!marked.length){speak('Tap the pillars you want to zap!');sfx.oops();return}
+  L.busy=true;L.m=marked.length;$('#btn-lzap').disabled=true;
+  const sunk=[];
+  marked.forEach((g,i)=>{g.dataset.gone='1';later(()=>{g.classList.remove('marked');g.querySelector('.pbody').setAttribute('fill','#ffb37a');
+    zap3(+g.dataset.x,330);tone([300,180],.18,'sawtooth',.06);
+    sunk.push(track(g.animate([{transform:'translateY(0)'},{transform:'translateY(240px)'}],{duration:900,easing:'ease-in',fill:'forwards'})));
+  },i*180)});
+  later(()=>evaluateLava(sunk),900+marked.length*180+200);
+}
+function evaluateLava(sunk){
+  const rem=L.T-L.m;updateEq3(true);
+  const said=`${L.T} take away ${L.m} is ${rem}.`;
+  const plat=$('#plat'),wl=$('#wl'),left=$$('#pillars .pillar').filter(g=>!g.dataset.gone);
+  if(rem===L.R){
+    sfx.yay();
+    speak(`${said} Yes! The platform is falling!`);
+    track(plat.animate([{transform:'rotate(0)'},{transform:'rotate(-3deg)'},{transform:'rotate(3deg)'},{transform:'rotate(-2deg)'},{transform:'rotate(0)'}],{duration:700}));
+    later(()=>{
+      wlSay('Noooo!');
+      const fall={duration:1300,easing:'cubic-bezier(.5,0,1,1)',fill:'forwards'};
+      track(plat.animate([{transform:'none'},{transform:'translate(20px,360px) rotate(14deg)'}],fall));
+      left.forEach(g=>track(g.animate([{transform:'none'},{transform:'translateY(320px)'}],fall)));
+      track(wl.animate([{transform:`translate(${WL[0]}px,${WL[1]}px) rotate(0deg)`},{transform:`translate(${WL[0]+30}px,${WL[1]+520}px) rotate(30deg)`}],fall));
+    },750);
+    later(()=>{wlSay('');poof(530,450,'#b48cff');tone([200,120,80],.3,'sawtooth',.08);speak('Poof! The warlock is gone!')},2000);
+    later(()=>{track($('#door').animate([{transform:'scaleX(1)'},{transform:'scaleX(.12)'}],{duration:900,easing:'ease-in-out',fill:'forwards'}));sfx.step();confetti(30)},3000);
+    later(()=>{L.round++;flyShell($('#door'),'#lprogress',L.round);speak(L.round>=LR.length?'The golden egg is complete!':'You got an egg shell!')},4000);
+    later(()=>{if(L.round>=LR.length)winLava();else{$('#lscene svg').style.opacity=0;later(()=>newLavaRound(),400)}},5600);
+  }else if(rem>L.R){
+    sfx.oops();
+    track(plat.animate([{transform:'translateX(0)'},{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}],{duration:350}));
+    wlSay('Ha ha ha!');wlLaugh(true);
+    speak(`Not enough! ${said} We need only ${L.R} left. The warlock is laughing!`);
+    later(()=>{sunk.forEach(a=>a.reverse())},3000);
+    later(()=>{wlLaugh(false);wlSay('');$('#lscene svg').style.opacity=0},4300);
+    later(()=>newLavaRound(),4800);
+  }else{
+    sfx.oops();
+    $('#pcracks').style.opacity=1;
+    speak(`Too many! ${said} We needed ${L.R} left. Oh no, he jumped to safety!`);
+    track(plat.animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:300,iterations:2}));
+    later(()=>{const j=track(wl.animate(arcFrames(WL[0],WL[1],912,400,200,0,0),{duration:950,easing:'linear',fill:'forwards'}));tone([400,700],.12,'triangle',.06);
+      j.onfinish=()=>{wlSay('Ha ha! Too many!',true);wlLaugh(true)}},500);
+    later(()=>{const sink={duration:1600,easing:'ease-in',fill:'forwards'};
+      track(plat.animate([{transform:'none'},{transform:'translate(-10px,320px) rotate(-10deg)'}],sink));
+      left.forEach(g=>track(g.animate([{transform:'none'},{transform:'translateY(320px)'}],sink)));
+      tone([220,160,110],.3,'sawtooth',.1)},1500);
+    later(()=>{wlLaugh(false);wlSay('');$('#lscene svg').style.opacity=0},5200);
+    later(()=>newLavaRound(),5700);
+  }
+}
+function winLava(){
+  const opened=awardEgg('easy-3');state.pos='easy-3';save();
+  sfx.win();confetti(80);
+  const gl=goalLine(),txt=opened.length?`<b>Level ${LEVELS.find(x=>x.id===opened[0]).n}</b> is open!`:gl.html;
+  modal(`<div class="rays">${egg('big-egg')}</div>
+    <h2>You beat the warlock!</h2>
+    <p>The castle door is open and you built another Golden Egg! ${txt}</p>
+    <button class="btn go" id="m-ok">🗺️ To the map</button>`);
+  speak(`Hooray ${me().name}! You beat the evil warlock! You got another golden egg!`);
+  $('#m-ok').onclick=()=>toMapAfterWin(opened);
+}
+$('#btn-lzap').addEventListener('click',lavaZap);
+$('#lava-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
 
 /* confetti */
 function confetti(n){
