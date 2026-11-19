@@ -288,6 +288,10 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 @keyframes batR{from{transform:rotate(25deg)}to{transform:rotate(-20deg)}}
 .vlist{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-height:46vh;overflow:auto}
 .vchip{font-size:16px}
+.freed{display:flex;gap:4px;align-items:flex-end;min-width:0}
+.fdragon{width:clamp(44px,7vw,60px);height:clamp(44px,7vw,60px)}
+.fdragon svg{width:100%;height:100%;animation:wiggle 1.6s ease-in-out infinite}
+.fdragon.scared svg{animation:jit .15s linear infinite}
 /* MODAL */
 .modal{position:fixed;inset:0;background:rgba(30,30,50,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .modal.hidden{display:none}
@@ -374,6 +378,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
   <div class="pens" id="pens"></div>
   <div class="play-row chest-row">
     <div class="buddy" id="buddy"><div class="bubble" id="bubble">Let's count!</div></div>
+    <div class="freed" id="freed"></div>
     <div class="chest-wrap" id="chest"></div>
     <div class="choices" id="choices"></div>
   </div>
@@ -1369,7 +1374,7 @@ const CHESTS=[[1,4],[2,7],[4,10]];
 const CNAME=['green','purple','pink','blue','orange','teal'];
 const G={chest:0,nums:[],cols:[],dial:0,locked:false,counts:[0,0,0]};
 function startGame(){
-  clearB();G.chest=0;
+  clearB();G.chest=0;$('#freed').innerHTML='';
   $('#buddy').innerHTML=`<div class="bubble" id="bubble">Let's count!</div>`+avatarWithWand(me());
   renderShell('#progress',0,false,'gold',3);show('game');newChest(true);
 }
@@ -1410,7 +1415,7 @@ function newChest(first){
   [0,1,2].forEach(fillPen);
   activateDial();
   const cn=CNAME[G.cols[0]];
-  speak(first?`Welcome to Dragon Meadow! The baby dragons found three treasure chests. Each one hides a piece of a golden egg! This chest has a secret number lock! Count each color of baby dragons to find the numbers. How many ${cn} dragons?`
+  speak(first?`Welcome to Dragon Meadow! Oh no, three baby dragons are locked inside treasure chests! Let's set them free! This chest has a secret number lock! Count each color of baby dragons to find the numbers. How many ${cn} dragons?`
              :`A new treasure chest! How many ${cn} dragons?`);
 }
 function fillPen(i){
@@ -1500,7 +1505,8 @@ function openChest(){
   setTimeout(()=>{tone([500,800,1200],.08,'square',.05);
     $('#cpad').animate([{transform:'translate(0,0)'},{transform:'translate(0,-10px)',offset:.2},{transform:'translate(14px,140px) rotate(40deg)',opacity:0}],{duration:900,easing:'ease-in',fill:'forwards'})},500);
   setTimeout(()=>{
-    sfx.yay();speak('Click! The chest is open! A golden egg piece!');
+    sfx.yay();speak('Click! The chest is open! A baby dragon is free! And a golden egg piece!');
+    freeChestDragon();
     $('#clid').animate([{transform:'rotate(0)'},{transform:'rotate(68deg)'}],{duration:700,easing:'cubic-bezier(.3,1.5,.6,1)',fill:'forwards'});
     $('#cglow').style.opacity=1;
     const f=$('#cfrag');f.animate([{transform:'translateY(30px) scale(.4)',opacity:0},{transform:'translateY(-70px) scale(1.25)',opacity:1}],{duration:900,easing:'ease-out',fill:'forwards'});
@@ -1516,16 +1522,50 @@ function openChest(){
     setTimeout(()=>{sw.forEach(e=>e.classList.remove('swap'));newChest()},400);
   },4600);
 }
-function winGame(){celebrate({dom:'#buddy',els:['#buddy']},winGameModal)}
+function freeChestDragon(){
+  const ch=$('#chest').getBoundingClientRect(),c=[4,0,2][G.chest%3];
+  const d=document.createElement('div');d.className='fdragon';d.innerHTML=dragon(c);$('#freed').appendChild(d);
+  const r=d.getBoundingClientRect(),dx=ch.left+ch.width/2-(r.left+r.width/2),dy=ch.top+ch.height*.3-(r.top+r.height/2);
+  d.animate([{transform:`translate(${dx}px,${dy}px) scale(.3)`,opacity:0},{transform:`translate(${dx}px,${dy-90}px) scale(1.2)`,opacity:1,offset:.45},{transform:'translate(0,0) scale(1)'}],{duration:1300,easing:'ease-out'});
+  tone([700,1000,1300],.08,'triangle',.05);
+}
+/* end of Level 1: the warlock appears and captures the freed baby dragons */
+function warlockCapture(done){
+  const L=$('#fxlayer'),fr=$('#freed').getBoundingClientRect(),cx=fr.left+fr.width/2,cy=fr.bottom,wx=Math.min(innerWidth-70,fr.right+230),wy=fr.bottom+10;
+  const g=document.createElementNS(NS,'g');g.innerHTML=`<g id="cwl" style="opacity:0">${warlockSVG('c')}</g>`;L.appendChild(g);
+  const wl=$('#cwl');const at=(x,y,k)=>`translate(${x}px,${y}px) scale(${k})`;
+  wl.style.transform=at(wx,wy,.75);
+  setTimeout(()=>{poof(wx,wy-80,'#b48cff','#fxlayer');wl.style.opacity=1;wlSay('Ha ha! Mine now!',true,'c');wlLaugh(true,'c');tone([200,300,500],.15,'square',.06);
+    speak('Oh no! The evil warlock is here!')},300);
+  setTimeout(()=>{
+    const o=[wx+51*.75,wy-136*.75],beam=document.createElementNS(NS,'path');
+    beam.setAttribute('d',`M${o[0]} ${o[1]} Q${(o[0]+cx)/2} ${o[1]-120} ${cx} ${cy-50}`);beam.setAttribute('fill','none');beam.setAttribute('stroke','#c77dff');beam.setAttribute('stroke-width','10');beam.setAttribute('stroke-linecap','round');beam.setAttribute('stroke-dasharray','18 14');
+    L.appendChild(beam);beam.animate([{opacity:0},{opacity:1,offset:.2},{opacity:1,offset:.8},{opacity:0}],{duration:1000,fill:'forwards'}).onfinish=()=>beam.remove();
+    const cage=document.createElementNS(NS,'g');cage.id='ccage';const w=fr.width+30,h=fr.height+30,x0=fr.left-15,y0=fr.top-20;
+    let bars='';for(let x=x0+10;x<x0+w;x+=22)bars+=`<rect x="${x}" y="${y0+8}" width="5" height="${h-8}" fill="#9aa0a6" stroke="#2b2b2b" stroke-width="2"/>`;
+    cage.innerHTML=`${bars}<rect x="${x0}" y="${y0}" width="${w}" height="12" rx="4" fill="#6d6d6d" stroke="#2b2b2b" stroke-width="3"/><rect x="${x0}" y="${y0+h-6}" width="${w}" height="10" rx="3" fill="#6d6d6d" stroke="#2b2b2b" stroke-width="3"/><path d="M${x0+w/2-10} ${y0} v-14 a10 10 0 0 1 20 0 v14" fill="none" stroke="#2b2b2b" stroke-width="4"/>`;
+    L.appendChild(cage);cage.animate([{transform:'translateY(-160px)',opacity:0},{transform:'translateY(0)',opacity:1}],{duration:600,easing:'cubic-bezier(.3,1.4,.6,1)',fill:'forwards'});
+    tone([300,200,120],.2,'sawtooth',.08);
+    $$('#freed .fdragon').forEach(d=>d.classList.add('scared'));
+    speak('He trapped the baby dragons in a cage!')},1600);
+  setTimeout(()=>{wlSay('To my castle!',true,'c');
+    const fly={duration:1800,easing:'ease-in',fill:'forwards'};
+    wl.animate([{transform:at(wx,wy,.75)},{transform:at(wx+60,wy-200,.75)},{transform:at(innerWidth+200,wy-320,.75)}],fly);
+    $('#ccage').animate([{transform:'translate(0,0)'},{transform:'translate(60px,-200px)'},{transform:`translate(${innerWidth+200-cx}px,-320px)`}],fly);
+    $('#freed').animate([{transform:'translate(0,0)'},{transform:'translate(60px,-200px)'},{transform:`translate(${innerWidth+200-cx}px,-320px)`}],fly);
+    speak("He's taking them to his castle! After him!")},4200);
+  setTimeout(()=>{g.remove();const c=$('#ccage');if(c)c.remove();$('#freed').innerHTML='';$('#freed').getAnimations().forEach(a=>a.cancel());done&&done()},7400);
+}
+function winGame(){celebrate({dom:'#buddy',els:['#buddy']},()=>warlockCapture(winGameModal))}
 function winGameModal(){
   const opened=awardEgg('easy-1');state.pos='easy-1';save();
   sfx.win();confetti(80);
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
   modal(`<div class="rays">${egg('big-egg','','gold')}</div>
     <h2>You built a Golden Egg!</h2>
-    <p>You opened all three treasure chests! But look — the evil warlock is guarding the baby dragons' castle across the river! ${txt}</p>
+    <p>You freed the baby dragons — but the evil warlock captured them and took them to his castle! Let's chase him! ${txt}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-  speak(`Hooray ${me().name}! You opened all three chests and built a golden egg! But oh no, an evil warlock took over the baby dragons' castle! `+(opened.length?'':gl.say));
+  speak(`Hooray ${me().name}! You built a golden egg! Now let's chase the warlock and save the baby dragons! `+(opened.length?'':gl.say));
   $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
 $('#game-back').addEventListener('click',()=>{sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
@@ -1541,7 +1581,7 @@ function rot(x,y,a){const r=a*Math.PI/180,c=Math.cos(r),s=Math.sin(r);return[500
 function star(cx,cy,R,r){let p=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r:R;p.push((cx+q*Math.cos(a)).toFixed(1)+','+(cy+q*Math.sin(a)).toFixed(1))}return p.join(' ')}
 
 function startBridge(){
-  clearB();B.round=0;B.total=0;show('bridge');buildScene();renderBProgress();newBridgeRound(true);
+  clearB();B.round=0;B.total=0;B.freed=0;show('bridge');buildScene();renderBProgress();newBridgeRound(true);
 }
 function renderBProgress(){renderShell('#bprogress',B.round,false,'sapphire',3)}
 /* ---------- LEVEL 2: Ice Cream Catapult (addition up to 10) ---------- */
@@ -1577,6 +1617,7 @@ function buildScene(){
     <path d="M850 400 V352 Q880 318 910 352 V400 Z" fill="#2b1a10"/>
     <path id="wgate" d="M850 400 V352 Q880 318 910 352 V400 Z" fill="#8b5a2b" style="transform-box:fill-box;transform-origin:0% 50%"/>
   </g>
+  <g id="chained">${[0,1,2].map(i=>{const x=[762,808,962][i],c=[4,0,2][i],px=x+(i===2?-28:-30);return `<g class="chd" id="chd${i}"><rect x="${px-4}" y="368" width="8" height="34" fill="#7b4a26" stroke="#2b2b2b" stroke-width="2"/><line x1="${x}" y1="384" x2="${px}" y2="380" stroke="#6d6d6d" stroke-width="5" stroke-dasharray="6 3"/><g class="chd-in" transform="translate(${x-25} 350)">${dragon(c).replace('<svg ','<svg width="50" height="50" ')}</g></g>`}).join('')}</g>
   <g id="wl2" style="transform:translate(${WL2[0]}px,${WL2[1]}px) scale(.9)">${warlockSVG('b')}<g id="wl2splat"></g></g>
   <!-- catapult -->
   <g ${s}>
@@ -1649,7 +1690,7 @@ function newBridgeRound(first){
   $('#bnum').textContent=t;$('#wl2splat').innerHTML='';wlAngry('b',false);wlSay('',true,'b');wlLaugh(false,'b');
   layout(0);$('#scene svg').style.opacity=1;
   updateEq();B.busy=false;$('#btn-drop').disabled=false;
-  const intro=first?'The baby dragons want to go home, but the evil warlock is guarding their castle! Load the catapult with ice cream to splat him! ':'';
+  const intro=first?'We found the warlock! He chained up the baby dragons by his castle! Load the catapult with ice cream to splat him and set them free! ':'';
   speak(`${intro}The catapult needs ${t} scoops. Tap the pink scoop${B.pre>1?'s':''} to count. Then load more ice cream and keep counting to ${t}!`);
 }
 function zap(d){
@@ -1742,7 +1783,8 @@ function evaluateBridge(ok,over,total){
   const wl=$('#wl2');
   if(ok){
     sfx.yay();confetti(30);wlAngry('b',true);wlSay('Grrr!',true,'b');
-    speak(`${B.pre} plus ${add} makes ${B.total}! Splat! Right on the warlock! He is so angry!`);
+    speak(`${B.pre} plus ${add} makes ${B.total}! Splat! Right on the warlock! A baby dragon is free!`);
+    later(freeChainedDragon,900);
     steam('#fx',WL2[0],WL2[1]-200);
     later(()=>{tone([150,110],.2,'sawtooth',.1);wl.animate([{transform:`translate(${WL2[0]}px,${WL2[1]}px) scale(.9)`},{transform:`translate(${WL2[0]}px,${WL2[1]-24}px) scale(.9)`},{transform:`translate(${WL2[0]}px,${WL2[1]}px) scale(.9)`}],{duration:380,iterations:3})},700);
     later(()=>{B.round++;flyShell($('#wlspot'),'#bprogress',B.round);speak(B.round>=BR.length?'The sapphire egg is complete!':'You got an egg shell!')},2600);
@@ -1771,6 +1813,15 @@ function splash(x){
     d.animate([{transform:'translate(0,0)'},{transform:`translate(${dx*.6}px,${-up}px)`,offset:.45},{transform:`translate(${dx}px,10px)`,opacity:0}],{duration:750,easing:'ease-out',fill:'forwards'}).onfinish=()=>d.remove();
   }
 }
+function freeChainedDragon(){
+  const i=B.freed++,d=$(`#chd${i}`);if(!d)return;
+  d.querySelector('rect').animate([{opacity:1},{opacity:0}],{duration:300,fill:'forwards'});const ln=d.querySelector('line');ln.animate([{opacity:1},{opacity:0}],{duration:300,fill:'forwards'});tone([900,600],.06,'square',.05);
+  const x0=[762,808,962][i],tx=150+i*55,ty=240,inn=d.querySelector('.chd-in');
+  inn.setAttribute('transform','');inn.innerHTML=inn.innerHTML;
+  const sv=inn.querySelector('svg');sv.setAttribute('x',-25);sv.setAttribute('y',-50);
+  inn.animate(arcFrames(x0,396,tx,ty,160,0,0,16),{duration:1200,easing:'ease-in-out',fill:'forwards'});
+  later(()=>inn.animate([{transform:`translate(${tx}px,${ty}px)`},{transform:`translate(${tx}px,${ty-10}px)`}],{duration:600,iterations:Infinity,direction:'alternate'}),1200);
+}
 function winBridge(){
   const wl=$('#wl2'),g=$('#wgate'),X0=WL2[0],Y0=WL2[1];
   wlAngry('b',true);wlSay('Hmph! I\'m going inside!',true,'b');
@@ -1780,6 +1831,7 @@ function winBridge(){
     wl.animate(f,{duration:1300,easing:'ease-in',fill:'forwards'});tone([500,420,340,260],.07,'square',.05)},1500);
   later(()=>{g.animate([{transform:'scaleX(.08)'},{transform:'scaleX(1)'}],{duration:400,fill:'forwards'});tone([140,100],.2,'sawtooth',.08);
     $('#scene').animate([{transform:'translate(0,0)'},{transform:'translate(-4px,2px)'},{transform:'translate(4px,-2px)'},{transform:'translate(0,0)'}],{duration:240})},2900);
+  later(()=>speak('We freed all the baby dragons! Now let\'s chase the warlock into the castle!'),3300);
   later(()=>celebrate({els:['#pl2','#wand'],fx:'#fx',tip:wandTip(91,369)},winBridgeModal),3500);
 }
 function winBridgeModal(){
@@ -1788,9 +1840,9 @@ function winBridgeModal(){
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
   modal(`<div class="rays">${egg('big-egg','','sapphire')}</div>
     <h2>You built a Sapphire Egg!</h2>
-    <p>The warlock is covered in ice cream! He ran inside the castle to call his gargoyles. Let's go after him! ${txt}</p>
+    <p>You splatted the warlock and freed all the baby dragons! He ran inside the castle to call his gargoyles. Let's chase him! ${txt}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-  speak(`Hooray ${me().name}! You splatted the warlock with ice cream! You got a sapphire egg! He ran inside the castle. Let's go after him! `+(opened.length?'':gl.say));
+  speak(`Hooray ${me().name}! You freed the baby dragons and got a sapphire egg! The warlock ran inside the castle. Let's go after him! `+(opened.length?'':gl.say));
   $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
 $('#btn-drop').addEventListener('click',dropDragons);
