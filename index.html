@@ -262,6 +262,10 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 .mt .f small{font-size:clamp(14px,2.4vw,18px);font-weight:700;-webkit-text-stroke:0;color:#2b2b2b;background:#fff;border-radius:10px;padding:0 8px;border:2px solid var(--ink)}
 .mt.done{opacity:.35}
 .zfly{position:fixed;width:80px;height:32px;z-index:70;pointer-events:none;border:3px solid var(--ink);border-radius:6px;color:#fff;font-weight:700;font-size:20px;display:flex;align-items:center;justify-content:center;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill;transition:transform .8s cubic-bezier(.5,-.3,.5,1)}
+.qlock{transform-box:fill-box;transform-origin:center}
+.qlock.pulse{animation:pulse 1s ease-in-out infinite}
+.qsh,.qsh2{transform-box:fill-box;transform-origin:0% 100%}
+#qchoices .num{font-size:clamp(34px,6.5vw,54px)}
 /* MODAL */
 .modal{position:fixed;inset:0;background:rgba(30,30,50,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .modal.hidden{display:none}
@@ -449,6 +453,20 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
   <div class="scene" id="zscene"></div>
   <div class="mem off" id="mem"></div>
   <div class="hint">Tap two shells to flip them. Find a big letter and its little letter (like B and b) to put a piece back on the bridge!</div>
+</section>
+
+<!-- LETTERSCAPE LEVEL 4: RESCUE THE CRAB -->
+<section id="s-rescue" class="screen">
+  <div class="topbar">
+    <button class="icon-btn" id="rescue-back" aria-label="Back to map">🗺️</button>
+    <div class="shell-wrap" id="qprogress"></div>
+    <button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button>
+  </div>
+  <div class="game-title">Rescue the crab!</div>
+  <div class="eq" id="eq9"></div>
+  <div class="scene" id="qscene"></div>
+  <div class="choices" id="qchoices" style="margin-top:18px"></div>
+  <div class="hint">Look at the picture and listen to the word. Tap the letter the word starts with to open a lock. Tap 🔊 to hear the word again.</div>
 </section>
 
 <!-- STORE -->
@@ -709,7 +727,7 @@ const GAMES={
             {id:'reef',tier:'Medium',name:'Medium · Coral Reef',color:'#8fd8ef',tile:'#1ea7c9',y:310,xs:[840,660,480,300,120]},
             {id:'ship',tier:'Hard',name:'Hard · Pirate Ship',color:'#7fa6d9',tile:'#a0522d',y:120,xs:[120,300,480,660,840]}],
     levelEgg:{'beach-1':'topaz','beach-2':'amethyst','beach-3':'amethyst','beach-4':'aqua','beach-5':'diamond'},
-    built:{'beach-1':true,'beach-2':true,'beach-3':true},
+    built:{'beach-1':true,'beach-2':true,'beach-3':true,'beach-4':true},
     req:{'beach-2':{topaz:3},'beach-3':{topaz:3,amethyst:3},'beach-4':{topaz:3,amethyst:6},'beach-5':{topaz:3,amethyst:6,aqua:3}},
     from:{topaz:'Level 1',amethyst:'Levels 2 and 3',aqua:'Level 4',diamond:'Level 5'}}
 };
@@ -826,7 +844,7 @@ const SONGS={
   puzzle:{bpm:100,mel:PUZ_MEL,ch:PUZ_CH,lead:'triangle',oct:0,vol:.17,style:'puzzle'},
   golem:{bpm:138,mel:GOLEM_MEL,ch:GOLEM_CH,lead:'square',oct:0,vol:.15,style:'golem'}
 };
-const SCREEN_SONG={home:'title',custom:'title',store:'title',game:'meadow',bridge:'meadow',lava:'boss',puzzle:'puzzle',melt:'golem',letters:'meadow',crab:'meadow',pbridge:'meadow'};
+const SCREEN_SONG={home:'title',custom:'title',store:'title',game:'meadow',bridge:'meadow',lava:'boss',puzzle:'puzzle',melt:'golem',letters:'meadow',crab:'meadow',pbridge:'meadow',rescue:'meadow'};
 function shiftOct(n,o){if(n==='R'||!o)return n;return n.replace(/\d$/,d=>+d+o)}
 function mtone(ctx,dest,f,t,d,type,vol){
   if(!f)return;const o=ctx.createOscillator(),g=ctx.createGain();
@@ -1199,7 +1217,7 @@ function tileClick(t){
     else speak('That space is locked. Finish the space before it first!');return}
   sfx.step();state.pos=l.id;save();moveToken(l);
   setTimeout(()=>{
-    if(BUILT[l.id]){({'easy-1':startGame,'easy-2':startBridge,'easy-3':startLava,'easy-4':startPuzzle,'easy-5':startMelt,'beach-1':startLetters,'beach-2':startCrab,'beach-3':startPirate})[l.id]()}
+    if(BUILT[l.id]){({'easy-1':startGame,'easy-2':startBridge,'easy-3':startLava,'easy-4':startPuzzle,'easy-5':startMelt,'beach-1':startLetters,'beach-2':startCrab,'beach-3':startPirate,'beach-4':startRescue})[l.id]()}
     else{
       const golem=l.id==='easy-5';
       modal(`<div class="rays">${egg('big-egg','',LEVEL_EGG[l.id]||GAME.def)}</div><h2>${l.world.tier} Level ${l.n}</h2>
@@ -2755,10 +2773,11 @@ function startPirate(){
     $('#eq8').innerHTML=`<span class="eqb r">🔤 Match big and little letters!</span><span class="eqb g">🌉 0 / 4</span>`;
     speak('The pirate broke the bridge! Find a big letter and its little letter to build it again!')},7000);
 }
-function pirateSVG(){
+function pirateSVG(pre,stand){
+  pre=pre||'';
   const o='stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"';
   let stripes='';for(let y=-66;y<-12;y+=12)stripes+=`<rect x="-22" y="${y}" width="44" height="6" fill="#e74c3c"/>`;
-  return `<g id="pir-in">
+  return `<g id="${pre}pir-in">${stand?'<rect x="-18" y="-14" width="13" height="16" rx="3" fill="#3a3a44" stroke="#2b2b2b" stroke-width="3"/><rect x="5" y="-14" width="13" height="16" rx="3" fill="#3a3a44" stroke="#2b2b2b" stroke-width="3"/>':''}
     <g transform="translate(40 -20) rotate(-40)" ${o}><rect x="-8" y="-40" width="16" height="44" rx="4" fill="#3a3a44"/><circle cx="0" cy="6" r="10" fill="#7b4a26"/></g>
     <rect x="-24" y="-70" width="48" height="62" rx="10" fill="#fff" ${o}/>${stripes}<rect x="-24" y="-70" width="48" height="62" rx="10" fill="none" ${o}/>
     <path d="M-24 -56 L-40 -30" stroke="#2b2b2b" stroke-width="12" stroke-linecap="round"/><path d="M-24 -56 L-40 -30" stroke="#f1c49a" stroke-width="7" stroke-linecap="round"/>
@@ -2768,16 +2787,16 @@ function pirateSVG(){
     <path d="M-8 -82 Q0 -76 8 -82" fill="none" stroke="#2b2b2b" stroke-width="3" stroke-linecap="round"/>
     <circle cx="9" cy="-98" r="5" fill="#fff" stroke="#2b2b2b" stroke-width="2"/><circle cx="10" cy="-97" r="2.4" fill="#2b2b2b"/>
     <ellipse cx="-9" cy="-98" rx="7" ry="6" fill="#2b2b2b"/><path d="M-22 -108 L20 -92" stroke="#2b2b2b" stroke-width="2.5"/>
-    <path id="pir-brow" d="M2 -108 L16 -104" stroke="#2b2b2b" stroke-width="4" stroke-linecap="round"/>
+    <path id="${pre}pir-brow" d="M2 -108 L16 -104" stroke="#2b2b2b" stroke-width="4" stroke-linecap="round"/>
     <path d="M-34 -112 Q0 -132 34 -112 Q20 -106 0 -108 Q-20 -106 -34 -112Z" fill="#2b2b2b" ${o}/>
     <path d="M-26 -114 Q0 -150 26 -114Z" fill="#2b2b2b" ${o}/><path d="M-32 -112 Q0 -128 32 -112" fill="none" stroke="#ffd23f" stroke-width="3"/>
-    <path d="M-60 -6 H64 Q58 30 0 34 Q-58 30 -60 -6Z" fill="#8b5a2b" ${o}/><path d="M-56 4 H60" stroke="#6b4220" stroke-width="3"/>
+    ${stand?'':`<path d="M-60 -6 H64 Q58 30 0 34 Q-58 30 -60 -6Z" fill="#8b5a2b" ${o}/><path d="M-56 4 H60" stroke="#6b4220" stroke-width="3"/>`}
   </g>
-  <g id="zsay" style="opacity:0;transition:opacity .25s"><path d="M40 -120 L60 -100 L58 -128Z" fill="#fff" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"/>
+  <g id="${pre||'z'}say" style="opacity:0;transition:opacity .25s"${stand?' transform="translate(-200 -40)"':''}><path d="${stand?'M180 -126 L196 -100 L206 -126Z':'M40 -120 L60 -100 L58 -128Z'}" fill="#fff" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"/>
     <rect x="50" y="-170" width="220" height="48" rx="22" fill="#fff" stroke="#2b2b2b" stroke-width="4"/>
-    <text id="zsayt" x="160" y="-138" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="22" fill="#2b2b2b">Arr!</text></g>`;
+    <text id="${pre||'z'}sayt" x="160" y="-138" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="22" fill="#2b2b2b">Arr!</text></g>`;
 }
-function zSay(t){const g=$('#zsay');if(!g)return;$('#zsayt').textContent=t;g.style.opacity=t?1:0}
+function zSay(t,pre){pre=pre||'z';const g=$(`#${pre}say`);if(!g)return;$(`#${pre}sayt`).textContent=t;g.style.opacity=t?1:0}
 function buildPirate(){
   const a=avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,''),o='stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"';
   let waves='';for(let x=0;x<1000;x+=60)waves+=`<path d="M${x} 176 q15 -10 30 0 t30 0" fill="none" stroke="#fff" stroke-width="4" opacity=".7"/>`;
@@ -2833,7 +2852,7 @@ function zSplash(x){
     $('#fx8').appendChild(d);const dx=rand(-30,30);
     d.animate([{transform:'translate(0,0)'},{transform:`translate(${dx*.6}px,-50px)`,offset:.45},{transform:`translate(${dx}px,10px)`,opacity:0}],{duration:700,easing:'ease-out',fill:'forwards'}).onfinish=()=>d.remove()}
 }
-function zLaugh(on){const p=$('#pir-in');if(!p)return;if(on)p.animate([{transform:'translateY(0) rotate(0)'},{transform:'translateY(-8px) rotate(-3deg)'},{transform:'translateY(0) rotate(3deg)'}],{duration:280,iterations:4})}
+function zLaugh(on,pre){const p=$(`#${pre||''}pir-in`);if(!p)return;if(on)p.animate([{transform:'translateY(0) rotate(0)'},{transform:'translateY(-8px) rotate(-3deg)'},{transform:'translateY(0) rotate(3deg)'}],{duration:280,iterations:4})}
 function renderMem(){
   $('#mem').classList.add('off');
   $('#mem').innerHTML=Z.tiles.map((t,i)=>{const L=t.big?t.l.toUpperCase():t.l;
@@ -2901,6 +2920,164 @@ function winPirate(){
   speak(`Hooray ${me().name}! You fixed the bridge and found an amethyst gem! `+(opened.length?'':gl.say));
   $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
+/* ---------- LETTERSCAPE LEVEL 4: Rescue the Crab (first letters of words, adaptive) ---------- */
+const QW={A:[['🍎','apple'],['🐜','ant']],B:[['🐻','bear'],['⚽','ball'],['🍌','banana']],C:[['🐱','cat'],['🎂','cake'],['🚗','car']],D:[['🐶','dog'],['🦆','duck']],
+  E:[['🥚','egg'],['🐘','elephant']],F:[['🐟','fish'],['🐸','frog']],G:[['🍇','grapes'],['🐐','goat']],H:[['🎩','hat'],['🐴','horse']],J:[['🧃','juice']],K:[['🔑','key']],
+  L:[['🦁','lion'],['🍃','leaf']],M:[['🐵','monkey'],['🌙','moon']],N:[['👃','nose']],O:[['🐙','octopus']],P:[['🐷','pig'],['🍕','pizza']],R:[['🌈','rainbow'],['🐰','rabbit']],
+  S:[['⭐','star'],['☀️','sun']],T:[['🐢','turtle'],['🌳','tree']],U:[['☂️','umbrella']],W:[['🐳','whale'],['🍉','watermelon']],Z:[['🦓','zebra']]};
+const QEASY='BDFMPST',QLOCKS=5;
+const Q={k:2,open:0,round:0,queue:[],recent:[],word:null,busy:true,streak:0};
+const QLX=i=>548+i*38;
+function startRescue(){
+  clearB();show('rescue');
+  Object.assign(Q,{k:2,open:0,round:0,queue:[],recent:[],word:null,busy:true,streak:0});
+  buildRescue();renderShell('#qprogress',0,false,'aqua',1);updateEq9();
+  $('#qchoices').innerHTML='';
+  speak('Oh no! The pirate grabbed our crab friend and locked him in a cage on his ship! Tap the letter each picture starts with to open the locks!');
+  later(()=>{zSay('Arr! He\'s mine!','r');zLaugh(true,'r')},1200);
+  later(()=>zSay('','r'),3800);
+  later(()=>{Q.busy=false;qNext()},7600);
+}
+function buildRescue(){
+  const a=avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,''),o='stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"';
+  let waves='';for(let y=170;y<440;y+=50)for(let x=(y/50%2?0:30);x<1000;x+=70)waves+=`<path d="M${x} ${y} q12 -8 24 0 t24 0" fill="none" stroke="#fff" stroke-width="3" opacity=".55"/>`;
+  let bars='';for(let x=524;x<=716;x+=24)bars+=`<rect x="${x-3}" y="112" width="6" height="138" fill="#9aa0a6" stroke="#2b2b2b" stroke-width="2.5"/>`;
+  const locks=[0,1,2,3,4].map(i=>{const x=QLX(i);return `<g id="qlock${i}" class="qlock">
+    <path class="qsh" d="M${x-9} 222 v-10 a9 9 0 0 1 18 0 v10" fill="none" stroke="#2b2b2b" stroke-width="5"/><path d="M${x-9} 222 v-10 a9 9 0 0 1 18 0 v10" fill="none" stroke="#ffd23f" stroke-width="2.5" class="qsh2"/>
+    <rect x="${x-15}" y="220" width="30" height="26" rx="5" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3"/><circle cx="${x}" cy="231" r="3.5" fill="#2b2b2b"/><rect x="${x-1.5}" y="231" width="3" height="8" fill="#2b2b2b"/></g>`}).join('');
+  const crab=crabSVG().replace(/id="y/g,'id="q');
+  $('#qscene').innerHTML=`<svg viewBox="0 0 1000 440" xmlns="${NS}">
+  <rect width="1000" height="440" fill="#bfe9ff"/><circle cx="110" cy="60" r="32" fill="#ffd23f" ${o}/>
+  <rect y="150" width="1000" height="290" fill="#4fb3e8"/>${waves}
+  <g ${o}><rect x="20" y="300" width="14" height="140" fill="#7b4a26"/><rect x="190" y="300" width="14" height="140" fill="#7b4a26"/>
+    <rect x="-10" y="290" width="250" height="20" fill="#c58b4f"/><path d="M40 290 V310 M90 290 V310 M140 290 V310 M190 290 V310" stroke-width="2" opacity=".5"/></g>
+  <g id="qship">
+    <g ${o}>
+      <line x1="890" y1="250" x2="890" y2="20" stroke-width="8"/>
+      <path d="M894 34 Q980 80 894 140Z M894 150 Q990 200 894 240Z" fill="#fffaf0"/>
+      <path d="M890 20 H846 V46 H890Z" fill="#2b2b2b"/><circle cx="868" cy="30" r="5" fill="#fff" stroke="none"/><path d="M858 40 L878 40" stroke="#fff" stroke-width="2.5"/>
+      <path d="M430 250 H990 L955 345 H470Z" fill="#8b5a2b"/><path d="M440 272 H982" stroke-width="3"/>
+      <rect x="425" y="240" width="570" height="14" rx="4" fill="#a0652f"/>
+      <circle cx="520" cy="300" r="8" fill="#2b2b2b"/><circle cx="620" cy="300" r="8" fill="#2b2b2b"/><circle cx="720" cy="300" r="8" fill="#2b2b2b"/><circle cx="820" cy="300" r="8" fill="#2b2b2b"/>
+    </g>
+    <rect x="510" y="104" width="220" height="14" rx="4" fill="#6d6d6d" ${o}/><rect x="510" y="238" width="220" height="12" rx="3" fill="#6d6d6d" ${o}/>
+    <g transform="translate(620 238) scale(.62)"><g id="qcrab">${crab}</g></g>
+    <g id="qbars">${bars}<rect x="510" y="104" width="220" height="14" rx="4" fill="#8a8f96" ${o}/></g>
+    ${locks}
+    <g id="qpir" style="transform:translate(810px,240px) scale(.8)">${pirateSVG('r',true)}</g>
+    <g id="qgem" style="opacity:0">${egg('',`x="760" y="140" width="40" height="50"`,'aqua')}</g>
+  </g>
+  <g id="pl9"><svg x="40" y="152" width="110" height="138" viewBox="0 0 120 150">${a}</svg></g>
+  ${wandG(me().wand,131,259,'wand9')}
+  <g id="fx9"></g>
+  <rect id="qspot" x="760" y="150" width="40" height="40" fill="none"/>
+  </svg>`;
+  $('#qcrab').querySelector('#qmouth').setAttribute('d','M-14 -32 Q0 -46 14 -32');
+}
+function updateEq9(hint){
+  const w=Q.word,left=QLOCKS-Q.open;
+  let h='';
+  if(w){h+=`<button class="eqb r ysay-btn" id="qsay-btn" aria-label="Hear the word again">🔊</button><span class="eqb g" style="font-size:clamp(40px,8vw,60px);padding:0 16px">${w.e}</span>`;
+    if(hint||w.shown)h+=`<span class="eqb p"><b style="color:#e8173a;font-size:1.25em">${w.w[0]}</b>${w.w.slice(1)}</span>`;}
+  h+=`<span class="eqb r">🔒 × ${left}</span>`;
+  $('#eq9').innerHTML=h;const b=$('#qsay-btn');if(b)b.onclick=()=>qSayWord();
+}
+function qSayWord(){const w=Q.word;if(w)speak(w.hint?`${w.w}. ${w.w} starts with ${w.L}!`:`${w.w}! What letter does ${w.w} start with?`)}
+function qPick(){
+  // a missed word comes back two rounds later, with a hint
+  const due=Q.queue.findIndex(x=>x.at<=Q.round);
+  if(due>=0){const x=Q.queue.splice(due,1)[0];return Object.assign({},x.w,{hint:true})}
+  const pool=Object.keys(QW).filter(L=>(Q.round<2?QEASY.includes(L):true)&&!Q.recent.includes(L));
+  const L=pool[rand(0,pool.length-1)],[e,w]=QW[L][rand(0,QW[L].length-1)];
+  return {L,e,w,hint:false};
+}
+function qNext(){
+  Q.word=qPick();Q.recent=[Q.word.L,...Q.recent].slice(0,4);Q.word.shown=Q.word.hint;
+  const L=Q.word.L,set=new Set([L]),keys=Object.keys(QW).filter(x=>x!==L&&!(L==='C'&&x==='K')&&!(L==='K'&&x==='C'));
+  shuffle(keys);while(set.size<Q.k)set.add(keys.pop());
+  const colors=['#ff7eb6','#4fa8ff','#ffd23f','#ff9f43','#a06cd5','#20c4b0'];shuffle(colors);
+  $('#qchoices').innerHTML=shuffle([...set]).map((v,i)=>`<button class="num" data-v="${v}" style="background:${colors[i]};animation-delay:${.15+i*.08}s">${v}${v.toLowerCase()}</button>`).join('');
+  $$('#qchoices .num').forEach(b=>b.addEventListener('click',()=>qAnswer(b)));
+  $$('#qship .qlock').forEach((g,i)=>g.classList.toggle('pulse',i===Q.open));
+  updateEq9(Q.word.hint);Q.busy=false;
+  speak(Q.word.hint?`${Q.word.w}! ${Q.word.w} starts with ${L}. Can you find ${L}?`:`${Q.word.w}! What letter does ${Q.word.w} start with?`);
+}
+function qAnswer(b){
+  if(Q.busy)return;Q.busy=true;
+  const v=b.dataset.v,w=Q.word,L=w.L;w.shown=true;updateEq9(true);
+  if(v===L){
+    b.classList.add('right');sfx.yay();Q.k=Math.min(4,Q.k+1);Q.streak++;
+    const i=Q.open;Q.open++;Q.round++;
+    flyLetter(b,$(`#qlock${i}`),L,()=>openLock(i));
+    speak(Q.open<QLOCKS?`Yes! ${w.w} starts with ${L}! ${QLOCKS-Q.open} lock${QLOCKS-Q.open===1?'':'s'} left.`:`Yes! ${w.w} starts with ${L}! That's the last lock!`);
+    later(()=>{if(Q.open>=QLOCKS)freeCrab();else qNext()},Q.open>=QLOCKS?1800:3000);
+  }else{
+    b.classList.add('wrong');sfx.oops();Q.k=Math.max(2,Q.k-1);Q.streak=0;Q.round++;
+    const rb=document.querySelector(`#qchoices .num[data-v="${L}"]`);if(rb)rb.classList.add('reveal');
+    Q.queue.push({w:{L,e:w.e,w:w.w},at:Q.round+2});
+    zSay('Arr arr arr!','r');zLaugh(true,'r');
+    speak(`That's ${v}. ${w.w} starts with ${L}. ${w.w}! We'll try it again soon.`);
+    later(()=>zSay('','r'),2000);
+    later(()=>{$('#qchoices').classList.add('swap')},3600);
+    later(()=>{$('#qchoices').classList.remove('swap');qNext()},4000);
+  }
+}
+function flyLetter(fromEl,toEl,L,done){
+  const r=fromEl.getBoundingClientRect(),t=toEl.getBoundingClientRect();
+  const d=document.createElement('div');d.className='zfly';d.style.background='#ffd23f';d.style.width='56px';d.style.height='56px';d.style.fontSize='34px';d.style.borderRadius='50%';d.textContent=L;
+  d.style.left=(r.left+r.width/2-28)+'px';d.style.top=(r.top+r.height/2-28)+'px';document.body.appendChild(d);d.getBoundingClientRect();
+  d.style.transform=`translate(${t.left+t.width/2-(r.left+r.width/2)}px,${t.top+t.height/2-(r.top+r.height/2)}px) scale(.6) rotate(360deg)`;
+  const w=$('#wand9');if(w){w.classList.remove('zap');void w.getBBox();w.classList.add('zap')}
+  setTimeout(()=>{d.remove();done&&done()},850);
+}
+function openLock(i){
+  const g=$(`#qlock${i}`),x=QLX(i);g.classList.remove('pulse');
+  tone([500,800,1200],.08,'square',.05);
+  g.querySelectorAll('.qsh,.qsh2').forEach(p=>p.animate([{transform:'translate(0,0)'},{transform:'translate(0,-8px) rotate(-30deg)'}],{duration:250,fill:'forwards'}));
+  later(()=>{g.animate([{transform:'translate(0,0) rotate(0)'},{transform:`translate(${rand(-20,20)}px,200px) rotate(${rand(-120,120)}deg)`,opacity:.3}],{duration:800,easing:'ease-in',fill:'forwards'});
+    later(()=>qSplash(x+rand(-20,20),350),780)},300);
+  const m=$('#qmouth');if(Q.open>=2)m.setAttribute('d','M-14 -40 Q0 -28 14 -40');else m.setAttribute('d','M-14 -36 Q0 -36 14 -36');
+  $('#qcrab').animate([{transform:'translateY(0)'},{transform:'translateY(-20px)'},{transform:'translateY(0)'}],{duration:400,iterations:2});
+  if(Q.open<QLOCKS){zSay('Arr! Not me lock!','r');later(()=>zSay('','r'),1500)}
+}
+function qSplash(x,y){
+  tone([700,350,200],.14,'sine',.05);
+  for(let i=0;i<6;i++){const d=document.createElementNS(NS,'circle');d.setAttribute('cx',x);d.setAttribute('cy',y);d.setAttribute('r',rand(4,7));d.setAttribute('fill','#cfe9ff');d.setAttribute('stroke','#2b2b2b');d.setAttribute('stroke-width','2');
+    $('#fx9').appendChild(d);const dx=rand(-30,30);
+    d.animate([{transform:'translate(0,0)'},{transform:`translate(${dx*.6}px,-55px)`,offset:.45},{transform:`translate(${dx}px,10px)`,opacity:0}],{duration:750,easing:'ease-out',fill:'forwards'}).onfinish=()=>d.remove()}
+}
+function freeCrab(){
+  $('#qchoices').innerHTML='';Q.word=null;updateEq9();
+  speak('All the locks are open! The crab is free!');
+  $('#qbars').animate([{transform:'translateY(0)',opacity:1},{transform:'translateY(-150px)',opacity:0}],{duration:900,easing:'ease-in',fill:'forwards'});
+  tone([523,659,784,1047],.14,'triangle',.07);
+  const c=$('#qcrab'),s=1/.62;
+  later(()=>{c.animate([{transform:'translate(0,0)'},{transform:`translate(${60*s}px,${-70*s}px)`,offset:.5},{transform:`translate(${130*s}px,0)`}],{duration:600,fill:'forwards'})},1200);
+  later(()=>{const p=$('#qpir');zSay('Yeowch!','r');tone([900,1400],.08,'square',.06);
+    p.animate([{transform:'translate(810px,240px) scale(.8)'},{transform:'translate(810px,180px) scale(.8)'},{transform:'translate(810px,240px) scale(.8)'}],{duration:500});
+    speak('Pinch! The crab pinched the pirate! He dropped a gem!');
+    const g=$('#qgem');g.style.opacity=1;g.animate(arcFrames(0,0,-140,40,90,0,360,14),{duration:800,fill:'forwards'})},2000);
+  later(()=>{zSay('','r');const p=$('#qpir');
+    p.animate([{transform:'translate(810px,240px) scale(.8) rotate(0)'},{transform:'translate(900px,150px) scale(.8) rotate(40deg)',offset:.4},{transform:'translate(960px,480px) scale(.8) rotate(120deg)'}],{duration:1200,easing:'ease-in',fill:'forwards'});
+    later(()=>qSplash(960,350),1100);speak('Splash! The pirate fell in the water!')},3400);
+  later(()=>{flyShell($('#qspot'),'#qprogress',1);$('#qgem').style.visibility='hidden'},4800);
+  later(()=>{const s2=1/.62;c.animate([{transform:`translate(${130*s2}px,0)`},{transform:`translate(${-200*s2}px,${-160*s2}px)`,offset:.5},{transform:`translate(${-420*s2}px,${52*s2}px)`}],{duration:1100,fill:'forwards'});
+    speak('Hooray! Our crab friend is back!')},5600);
+  later(winRescue,7600);
+}
+function winRescue(){
+  const opened=awardEgg('beach-4');state.pos='beach-4';save();
+  sfx.win();confetti(80);
+  const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
+  modal(`<div class="rays">${egg('big-egg','','aqua')}</div>
+    <h2>You rescued the crab!</h2>
+    <p>You found the first letter of every word and got an Aquamarine Gem! ${txt}</p>
+    <button class="btn go" id="m-ok">🗺️ To the map</button>`);
+  speak(`Hooray ${me().name}! You rescued the crab and found an aquamarine gem! `+(opened.length?'':gl.say));
+  $('#m-ok').onclick=()=>toMapAfterWin(opened);
+}
+$('#rescue-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
+
 $('#pbridge-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
 
 $('#crab-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
