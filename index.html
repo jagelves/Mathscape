@@ -208,6 +208,32 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 .shard{position:fixed;width:44px;height:34px;z-index:70;pointer-events:none;transition:transform .8s cubic-bezier(.5,-.3,.5,1)}
 .shard svg{width:100%;height:100%}
 
+
+/* LEVEL 1: TREASURE CHESTS */
+.pens{display:flex;gap:14px;width:100%;max-width:1000px;margin-top:12px;align-items:stretch}
+.pen{flex:1;position:relative;border:6px solid var(--pc);outline:4px solid var(--ink);border-radius:26px;background:linear-gradient(#e8fbff 0%,#e8fbff 18%,var(--pl) 18%);box-shadow:0 8px 0 var(--ink);padding:30px 8px 14px;min-height:200px;display:flex;align-items:center;justify-content:center;transition:opacity .3s,transform .3s,filter .3s}
+.pen .dragons{width:100%;gap:4px}
+.pen-tag{position:absolute;top:-22px;left:50%;transform:translateX(-50%);background:var(--pc);border:4px solid var(--ink);border-radius:16px;min-width:56px;padding:0 12px;font-size:28px;font-weight:700;color:#fff;-webkit-text-stroke:2px var(--ink);paint-order:stroke fill;text-align:center;box-shadow:0 4px 0 var(--ink)}
+.pen.active{transform:translateY(-6px);box-shadow:0 14px 0 var(--ink),0 0 0 10px #fff8}
+.pen.active .pen-tag{animation:pulse 1.2s ease-in-out infinite}
+.pen.wait{opacity:.55;filter:saturate(.6)}
+.pen.done::after{content:'✔';position:absolute;right:10px;top:4px;font-size:26px;font-weight:700;color:#2ecc71;-webkit-text-stroke:2px var(--ink)}
+.chest-row{max-width:1000px;margin-top:22px;flex-wrap:wrap;align-items:center}
+.chest-wrap{width:clamp(180px,26vw,250px);flex-shrink:0}
+.chest-wrap svg{width:100%;height:auto;display:block;overflow:visible}
+.chest-wrap .dial{transform-box:fill-box;transform-origin:center}
+.chest-wrap .dial.pulse{animation:pulse 1.2s ease-in-out infinite}
+.chest-row .choices{min-width:clamp(230px,38vw,380px)}
+.chest-row .num{width:clamp(70px,11vw,108px);height:clamp(84px,13vw,128px);font-size:clamp(40px,7vw,66px)}
+.chest-wrap.swap,.pens.swap{opacity:0;transform:scale(.9);transition:opacity .35s,transform .35s}
+/* LEVEL 3: GARGOYLE wings */
+.gg-wing{transform-box:fill-box}
+.gg-wl{transform-origin:100% 80%}.gg-wr{transform-origin:0% 80%}
+.flying .gg-wl{animation:flapL .25s ease-in-out infinite alternate}
+.flying .gg-wr{animation:flapR .25s ease-in-out infinite alternate}
+@keyframes flapL{from{transform:rotate(-20deg)}to{transform:rotate(25deg)}}
+@keyframes flapR{from{transform:rotate(20deg)}to{transform:rotate(-25deg)}}
+.c-wheel{animation:spin .6s linear infinite;transform-box:view-box}
 /* MODAL */
 .modal{position:fixed;inset:0;background:rgba(30,30,50,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .modal.hidden{display:none}
@@ -284,33 +310,31 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
     <div class="shell-wrap" id="progress"></div>
     <button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button>
   </div>
-  <div class="game-title">How many baby dragons?</div>
-  <div class="field">
-    <div class="dragons" id="dragons"></div>
-    <div class="counter" id="counter">Tap to count!</div>
-  </div>
-  <div class="play-row">
+  <div class="game-title">Open the treasure chest!</div>
+  <div class="pens" id="pens"></div>
+  <div class="play-row chest-row">
     <div class="buddy" id="buddy"><div class="bubble" id="bubble">Let's count!</div></div>
+    <div class="chest-wrap" id="chest"></div>
     <div class="choices" id="choices"></div>
   </div>
-  <div class="hint">Tap each dragon to zap it with your magic wand and count it, then tap the matching number. Count carefully — a wrong answer brings new dragons!</div>
+  <div class="hint">Count the glowing group of dragons with your wand, then tap the matching number to set that color on the lock. Find all three numbers to open the chest!</div>
 </section>
 
-<!-- LEVEL 2: BALANCE BRIDGE -->
+<!-- LEVEL 2: ICE CREAM CATAPULT -->
 <section id="s-bridge" class="screen">
   <div class="topbar">
     <button class="icon-btn" id="bridge-back" aria-label="Back to map">🗺️</button>
     <div class="shell-wrap" id="bprogress"></div>
     <button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button>
   </div>
-  <div class="game-title">Balance the bridge!</div>
+  <div class="game-title">Splat the warlock!</div>
   <div class="eq" id="eq"></div>
   <div class="scene" id="scene"></div>
-  <div class="drop-row"><button class="btn go" id="btn-drop">🪄 Drop!</button></div>
-  <div class="hint">Tap the dragons on the bridge to count them. Then lift more dragons with your wand and keep counting until you reach the boulder's number. Tap Drop!</div>
+  <div class="drop-row"><button class="btn go" id="btn-drop">🚀 Launch!</button></div>
+  <div class="hint">Tap the pink scoops in the catapult to count them. Then tap green scoops to load them and keep counting until you reach the catapult's number. Tap Launch!</div>
 </section>
 
-<!-- LEVEL 3: WARLOCK'S LAVA BRIDGE -->
+<!-- LEVEL 3: WARLOCK'S GARGOYLES -->
 <section id="s-lava" class="screen">
   <div class="topbar">
     <button class="icon-btn" id="lava-back" aria-label="Back to map">🗺️</button>
@@ -321,17 +345,17 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
   <div class="eq" id="eq3"></div>
   <div class="scene" id="lscene"></div>
   <div class="drop-row"><button class="btn go" id="btn-lzap">⚡ Zap!</button></div>
-  <div class="hint">Count the pillars. Tap pillars to zap them and count how many are left. Stop at the magic number on the platform, then tap Zap!</div>
+  <div class="hint">Count the pillars. Tap pillars to zap them and count how many are left. Stop at the magic number on the platform, then tap Zap! to drop the gargoyle into the fire.</div>
 </section>
 
-<!-- LEVEL 5: CHOCOLATE GOLEM PUZZLE -->
+<!-- LEVEL 4: CHOCOLATE PUZZLES -->
 <section id="s-puzzle" class="screen">
   <div class="topbar">
     <button class="icon-btn" id="puzzle-back" aria-label="Back to map">🗺️</button>
     <div class="shell-wrap" id="pprogress"></div>
     <button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button>
   </div>
-  <div class="game-title">Build the Chocolate Golem!</div>
+  <div class="game-title" id="pz-title">Build the Chocolate Car!</div>
   <div class="eq" id="eq5"></div>
   <div class="scene" id="pscene"></div>
   <div class="hint">Tap a piece to lift it with your wand, then tap the spot that matches its number.</div>
@@ -536,13 +560,14 @@ function egg(cls,attrs,type){
 /* egg built from 5 shell pieces (bottom piece first) */
 const SHELL_Y=[160,118,92,66,40,-12];
 function zig(y){const p=[];for(let x=-6,k=0;x<=126;x+=12,k++)p.push(`${x},${y+(k%2?5:-5)}`);return p}
-function shellEgg(n,newIdx,type){
+function shellEgg(n,newIdx,type,total){
+  total=total||5;const Y=total===3?[160,104,56,-12]:SHELL_Y;
   const c=(EGG_TYPES[type]||EGG_TYPES.gold).c,id='sh'+(eggN++),EGG='M60 8 C96 8 112 70 110 96 C108 128 86 144 60 144 C34 144 12 128 10 96 C8 70 24 8 60 8Z';
   let bands='',cracks='';
-  for(let i=0;i<5;i++){
-    const on=i<n,pts=zig(SHELL_Y[i]).concat(zig(SHELL_Y[i+1]).reverse()).join(' ');
+  for(let i=0;i<total;i++){
+    const on=i<n,pts=zig(Y[i]).concat(zig(Y[i+1]).reverse()).join(' ');
     bands+=`<polygon class="${i===newIdx?'shell-new':''}" points="${pts}" fill="${on?`url(#${id}g)`:'#eef2f5'}"/>`;
-    if(i>0)cracks+=`<polyline points="${zig(SHELL_Y[i]).join(' ')}" fill="none" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" opacity="${n>=5?.25:.7}"/>`;
+    if(i>0)cracks+=`<polyline points="${zig(Y[i]).join(' ')}" fill="none" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" opacity="${n>=total?.25:.7}"/>`;
   }
   return `<svg class="shell-egg" viewBox="0 0 120 150" aria-hidden="true"><defs>
     <radialGradient id="${id}g" gradientUnits="userSpaceOnUse" cx="45" cy="45" r="110"><stop offset="0" stop-color="${c[0]}"/><stop offset=".45" stop-color="${c[1]}"/><stop offset="1" stop-color="${c[2]}"/></radialGradient>
@@ -550,8 +575,9 @@ function shellEgg(n,newIdx,type){
     <g clip-path="url(#${id}c)">${bands}${cracks}</g>
     <path d="${EGG}" fill="none" stroke="#2b2b2b" stroke-width="5"/></svg>`;
 }
-function renderShell(sel,n,anim,type){
-  const w=$(sel);type=type||w.dataset.type||'gold';w.dataset.type=type;w.innerHTML=shellEgg(n,anim?n-1:-1,type)+`<span>${n}/5</span>`;w.classList.toggle('complete',n>=5);
+function renderShell(sel,n,anim,type,total){
+  const w=$(sel);type=type||w.dataset.type||'gold';w.dataset.type=type;total=total||+w.dataset.total||5;w.dataset.total=total;
+  w.innerHTML=shellEgg(n,anim?n-1:-1,type,total)+`<span>${n}/${total}</span>`;w.classList.toggle('complete',n>=total);
 }
 function flyShell(fromEl,sel,n){
   const r=fromEl.getBoundingClientRect(),t=$(sel).querySelector('.shell-egg').getBoundingClientRect();
@@ -560,7 +586,7 @@ function flyShell(fromEl,sel,n){
   d.innerHTML=`<svg viewBox="0 0 44 34"><polygon points="3,31 9,8 17,18 25,3 33,15 41,31" fill="${(EGG_TYPES[$(sel).dataset.type]||EGG_TYPES.gold).c[1]}" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/></svg>`;
   d.style.left=(fx-22)+'px';d.style.top=(fy-17)+'px';document.body.appendChild(d);d.getBoundingClientRect();
   d.style.transform=`translate(${tx-fx}px,${ty-fy}px) rotate(540deg) scale(.7)`;
-  setTimeout(()=>{d.remove();renderShell(sel,n,true);tone(n>=5?[784,988,1175,1568]:[880,1175],.16,'triangle',.08)},820);
+  setTimeout(()=>{d.remove();renderShell(sel,n,true);tone(n>=+$(sel).dataset.total?[784,988,1175,1568]:[880,1175],.16,'triangle',.08)},820);
 }
 
 /* ---------- state ---------- */
@@ -991,34 +1017,75 @@ $('#map-home').addEventListener('click',()=>{sfx.pop();renderHome();show('home')
 function modal(html){$('#modal-card').innerHTML=html;$('#modal').classList.remove('hidden')}
 function closeModal(){$('#modal').classList.add('hidden');sfx.pop()}
 
-/* ---------- GAME: Baby Dragon Count ---------- */
-const ROUNDS=[[1,4],[2,6],[3,8],[5,9],[6,10]];
-const G={round:0,answer:0,counted:0,locked:false,wrong:0};
+/* ---------- LEVEL 1: Dragon Treasure Chests (counting 1–10) ---------- */
+// 3 chests, each locked with a 3-number combination. Each number = one color group of dragons.
+const CHESTS=[[1,4],[2,7],[4,10]];
+const CNAME=['green','purple','pink','blue','orange','teal'];
+const G={chest:0,nums:[],cols:[],dial:0,locked:false,counts:[0,0,0]};
 function startGame(){
-  G.round=0;G.answer=0;
+  clearB();G.chest=0;
   $('#buddy').innerHTML=`<div class="bubble" id="bubble">Let's count!</div>`+avatarWithWand(me());
-  renderProgress();show('game');nextRound();
-  speak('Zap the baby dragons with your magic wand to count them, then tap the number!');
+  renderShell('#progress',0,false,'gold',3);show('game');newChest(true);
 }
-function renderProgress(){renderShell('#progress',G.round,false,'gold')}
-function nextRound(){
-  const [a,b]=ROUNDS[G.round];let n;do{n=rand(a,b)}while(n===G.answer);
-  G.answer=n;G.counted=0;G.locked=false;G.wrong=0;
-  const size=n<=5?110:n<=10?88:70;
-  const box=$('#dragons');box.classList.remove('dance');
-  box.style.gridTemplateColumns=`repeat(${Math.min(5,n)},1fr)`;
-  box.style.maxWidth=(Math.min(5,n)*(size+8))+'px';
-  const startCol=rand(0,5);
-  box.innerHTML=Array.from({length:n},(_,i)=>`<button class="dragon" style="--ds:${size}px;--d:${(i*.13).toFixed(2)}s;animation-delay:${(i*.05).toFixed(2)}s" aria-label="baby dragon">${dragon(startCol+i)}</button>`).join('');
-  $$('#dragons .dragon').forEach(d=>d.addEventListener('click',()=>countDragon(d)));
-  $('#counter').textContent='Tap to count!';
-  setBubble("Let's count!");
-  // choices
-  const k=G.round<2?3:4,set=new Set([n]);
+function chestSVG(){
+  const s='stroke="#2b2b2b" stroke-width="5" stroke-linejoin="round"';
+  const dials=[0,1,2].map(i=>{const x=52+i*56,c=DCOL[G.cols[i]][0];
+    return `<g class="dial" id="dial${i}"><rect x="${x}" y="112" width="44" height="58" rx="9" fill="#fff" stroke="${c}" stroke-width="6"/>
+      <rect x="${x}" y="112" width="44" height="58" rx="9" fill="none" stroke="#2b2b2b" stroke-width="2.5"/>
+      <text x="${x+22}" y="157" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="40" fill="#2b2b2b">?</text></g>`}).join('');
+  return `<svg viewBox="0 -60 260 260" aria-label="treasure chest">
+    <ellipse cx="130" cy="196" rx="118" ry="10" fill="#2b2b2b" opacity=".18"/>
+    <g id="cglow" style="opacity:0;transition:opacity .5s"><ellipse cx="130" cy="88" rx="104" ry="16" fill="#fff6c2"/>
+      <path d="M40 88 L10 -40 M85 88 L70 -55 M130 88 V-60 M175 88 L190 -55 M220 88 L250 -40" stroke="#ffe680" stroke-width="12" stroke-linecap="round" opacity=".7"/></g>
+    <g id="cfrag" style="opacity:0"><polygon points="112,110 120,72 132,88 142,64 150,84 158,110" fill="#ffd23f" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M124 100 L132 90" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".8"/></g>
+    <rect x="20" y="88" width="220" height="104" rx="10" fill="#8b5a2b" ${s}/>
+    <path d="M20 120 H240" stroke="#6b4220" stroke-width="3" opacity=".6"/>
+    <rect x="44" y="88" width="14" height="104" fill="#ffd23f" ${s}/><rect x="202" y="88" width="14" height="104" fill="#ffd23f" ${s}/>
+    <rect x="40" y="102" width="180" height="78" rx="14" fill="#ffd23f" ${s}/>
+    ${dials}
+    <g id="clid" style="transform-box:view-box;transform-origin:240px 88px">
+      <path d="M20 88 V58 Q20 20 130 20 Q240 20 240 58 V88 Z" fill="#a0652f" ${s}/>
+      <path d="M44 88 V30 M216 88 V30" stroke="#ffd23f" stroke-width="14"/><path d="M44 88 V30 M216 88 V30" stroke="#2b2b2b" stroke-width="2" opacity=".4"/>
+      <path d="M20 88 V58 Q20 20 130 20 Q240 20 240 58 V88 Z" fill="none" ${s}/>
+      <path d="M20 80 H240" stroke="#2b2b2b" stroke-width="4"/>
+    </g>
+    <g id="cpad"><path d="M119 78 v-12 a11 11 0 0 1 22 0 v12" fill="none" stroke="#9aa0a6" stroke-width="7"/><path d="M119 78 v-12 a11 11 0 0 1 22 0 v12" fill="none" stroke="#2b2b2b" stroke-width="2" opacity=".5"/>
+      <rect x="110" y="74" width="40" height="30" rx="7" fill="#c9ced4" ${s}/><circle cx="130" cy="86" r="4" fill="#2b2b2b"/><rect x="128" y="86" width="4" height="10" fill="#2b2b2b"/></g>
+  </svg>`;
+}
+function newChest(first){
+  const [a,b]=CHESTS[G.chest];const nums=[];
+  while(nums.length<3){const v=rand(a,b);if(!nums.includes(v))nums.push(v)}
+  G.nums=nums;G.cols=shuffle([0,1,2,3,4,5]).slice(0,3);G.dial=0;G.locked=false;G.counts=[0,0,0];
+  $('#chest').innerHTML=chestSVG();
+  $('#pens').innerHTML=G.cols.map((c,i)=>`<div class="pen" data-p="${i}" style="--pc:${DCOL[c][0]};--pl:${DCOL[c][1]}"><div class="pen-tag">?</div><div class="dragons"></div></div>`).join('');
+  $$('#pens .pen').forEach(p=>p.addEventListener('click',e=>{const d=e.target.closest('.dragon');if(d)onPenDragon(+p.dataset.p,d)}));
+  [0,1,2].forEach(fillPen);
+  activateDial();
+  const cn=CNAME[G.cols[0]];
+  speak(first?`This treasure chest has a secret number lock! Count each color of baby dragons to find the numbers. How many ${cn} dragons?`
+             :`A new treasure chest! How many ${cn} dragons?`);
+}
+function fillPen(i){
+  const n=G.nums[i],c=G.cols[i],pen=$(`#pens .pen[data-p="${i}"]`),box=pen.querySelector('.dragons');
+  const cols=n<=2?n:n<=4?2:n<=9?3:4,size=n<=4?84:n<=6?74:62;
+  box.style.gridTemplateColumns=`repeat(${cols},1fr)`;box.style.maxWidth=(cols*(size+8))+'px';box.classList.remove('dance');
+  box.innerHTML=Array.from({length:n},(_,k)=>`<button class="dragon" style="--ds:${size}px;--d:${(k*.13).toFixed(2)}s;animation-delay:${(k*.05).toFixed(2)}s" aria-label="${CNAME[c]} baby dragon">${dragon(c)}</button>`).join('');
+  G.counts[i]=0;
+}
+function activateDial(){
+  $$('#pens .pen').forEach(p=>{const i=+p.dataset.p;p.classList.toggle('done',i<G.dial);p.classList.toggle('active',i===G.dial);p.classList.toggle('wait',i>G.dial)});
+  $$('#chest .dial').forEach((d,i)=>d.classList.toggle('pulse',i===G.dial));
+  if(G.dial>2)return;
+  const n=G.nums[G.dial];
+  setBubble(`How many ${CNAME[G.cols[G.dial]]}?`);
+  const k=G.chest===0?3:4,set=new Set([n]);
   while(set.size<k){const v=n+rand(1,4)*(Math.random()<.5?-1:1);if(v>=1&&v<=10)set.add(v)}
   const colors=['#ff7eb6','#4fa8ff','#ffd23f','#ff9f43','#a06cd5','#20c4b0'];shuffle(colors);
   $('#choices').innerHTML=shuffle([...set]).map((v,i)=>`<button class="num" data-v="${v}" style="background:${colors[i]};animation-delay:${.2+i*.08}s">${v}</button>`).join('');
   $$('#choices .num').forEach(b=>b.addEventListener('click',()=>answer(b)));
+  G.locked=false;
 }
 /* wand spark from the explorer card (HTML screens) to any element */
 function domZap(toEl){
@@ -1035,45 +1102,76 @@ function domZap(toEl){
     const w=sv.querySelector('.wand-sw');if(w){w.classList.remove('zap');void w.getBBox();w.classList.add('zap')}
   }catch(e){}
 }
-function countDragon(d){
+function onPenDragon(i,d){
+  if(G.locked)return;
+  if(i<G.dial){speak(`${G.nums[i]} ${CNAME[G.cols[i]]} dragon${G.nums[i]===1?'':'s'}!`);return}
+  if(i>G.dial){speak(`Let's count the ${CNAME[G.cols[G.dial]]} dragons first!`);return}
   if(d.classList.contains('counted'))return;
   domZap(d);tone([900,1300],.08,'triangle',.05);
-  G.counted++;d.classList.add('counted');
+  const n=++G.counts[i];d.classList.add('counted');
   const sp=WANDS[me().wand].spark,ds=d.querySelector('svg');if(ds)ds.style.filter=`drop-shadow(0 0 7px ${sp}) drop-shadow(0 0 3px ${sp})`;
-  d.insertAdjacentHTML('beforeend',`<span class="badge">${G.counted}</span>`);
-  $('#counter').textContent='Counted: '+G.counted;
-  sfx.pop();speak(String(G.counted));
+  d.insertAdjacentHTML('beforeend',`<span class="badge">${n}</span>`);
+  sfx.pop();speak(String(n));
 }
 function setBubble(t){const b=$('#bubble');if(b)b.textContent=t}
+function setDial(i,v){
+  const t=$(`#dial${i} text`);t.textContent=v;
+  t.animate([{transform:'translateY(-30px)',opacity:0},{transform:'translateY(6px)',opacity:1,offset:.7},{transform:'translateY(0)'}],{duration:450,easing:'ease-out'});
+  $(`#dial${i} rect`).setAttribute('fill',DCOL[G.cols[i]][1]);
+  tone([600,900],.07,'square',.05);
+}
 function answer(b){
   if(G.locked)return;
-  const v=+b.dataset.v;
-  if(v===G.answer){
-    G.locked=true;domZap(b);b.classList.add('right');sfx.yay();confetti(30);
-    $('#dragons').classList.add('dance');
+  const v=+b.dataset.v,i=G.dial,n=G.nums[i],cn=CNAME[G.cols[i]];
+  const pen=$(`#pens .pen[data-p="${i}"]`);
+  if(v===n){
+    G.locked=true;domZap(b);b.classList.add('right');sfx.yay();
+    pen.querySelector('.dragons').classList.add('dance');pen.querySelector('.pen-tag').textContent=v;
     const bd=$('#buddy');bd.classList.remove('jump');void bd.offsetWidth;bd.classList.add('jump');
     setBubble(['Yay!','Awesome!','You did it!','Super!','Wow!'][rand(0,4)]);
-    G.round++;flyShell(b,'#progress',G.round);
-    speak(`${v}! Yes! ${v} baby dragon${v===1?'':'s'}! `+(G.round>=ROUNDS.length?'The golden egg is complete!':'You got an egg shell!'));
-    setTimeout(()=>{G.round>=ROUNDS.length?winGame():nextRound()},2300);
+    setTimeout(()=>setDial(i,v),350);
+    G.dial++;
+    if(G.dial<3){
+      speak(`${v}! Yes! ${v} ${cn} dragon${v===1?'':'s'}! Now, how many ${CNAME[G.cols[G.dial]]} dragons?`);
+      setTimeout(activateDial,1500);
+    }else{
+      speak(`${v}! Yes! ${v} ${cn} dragon${v===1?'':'s'}! You found all three numbers!`);
+      setTimeout(()=>{activateDial();$('#choices').innerHTML='';openChest()},1500);
+    }
   }else{
-    // No guessing through the cards: show the right answer, then a brand-new set
     G.locked=true;b.classList.add('wrong');sfx.oops();
-    const n=G.answer,rb=document.querySelector(`#choices .num[data-v="${n}"]`);
-    if(rb)rb.classList.add('reveal');
+    const rb=document.querySelector(`#choices .num[data-v="${n}"]`);if(rb)rb.classList.add('reveal');
     setBubble('New dragons!');
-    speak(`That's ${v}. There ${n===1?'is':'are'} ${n} baby dragon${n===1?'':'s'}. Let's try new ones!`);
-    setTimeout(()=>{$('#choices').classList.add('swap');$('#dragons').classList.add('swap')},2600);
-    setTimeout(()=>{$('#choices').classList.remove('swap');$('#dragons').classList.remove('swap');nextRound()},3000);
+    speak(`That's ${v}. There ${n===1?'is':'are'} ${n} ${cn} dragon${n===1?'':'s'}. Let's try new ones!`);
+    setTimeout(()=>{$('#choices').classList.add('swap');pen.querySelector('.dragons').classList.add('swap')},2600);
+    setTimeout(()=>{
+      $('#choices').classList.remove('swap');pen.querySelector('.dragons').classList.remove('swap');
+      const [a,bb]=CHESTS[G.chest];let nv,tries=0;
+      do{nv=rand(a,bb)}while((nv===n||G.nums.some((x,j)=>j!==i&&x===nv))&&++tries<30);
+      G.nums[i]=nv;fillPen(i);activateDial();speak(`How many ${cn} dragons?`);
+    },3000);
   }
 }
-function autoCount(){
-  const ds=$$('#dragons .dragon');ds.forEach(d=>{d.classList.remove('counted');const s=d.querySelector('.badge');if(s)s.remove()});
-  G.counted=0;let i=0;G.locked=true;
-  setTimeout(function step(){
-    if(i>=ds.length){G.locked=false;setBubble('Now tap the number!');return}
-    countDragon(ds[i++]);setTimeout(step,850);
-  },1800);
+function openChest(){
+  G.locked=true;
+  setTimeout(()=>{tone([500,800,1200],.08,'square',.05);
+    $('#cpad').animate([{transform:'translate(0,0)'},{transform:'translate(0,-10px)',offset:.2},{transform:'translate(14px,140px) rotate(40deg)',opacity:0}],{duration:900,easing:'ease-in',fill:'forwards'})},500);
+  setTimeout(()=>{
+    sfx.yay();speak('Click! The chest is open! A golden egg piece!');
+    $('#clid').animate([{transform:'rotate(0)'},{transform:'rotate(68deg)'}],{duration:700,easing:'cubic-bezier(.3,1.5,.6,1)',fill:'forwards'});
+    $('#cglow').style.opacity=1;
+    const f=$('#cfrag');f.animate([{transform:'translateY(30px) scale(.4)',opacity:0},{transform:'translateY(-70px) scale(1.25)',opacity:1}],{duration:900,easing:'ease-out',fill:'forwards'});
+    confetti(30);
+  },1300);
+  setTimeout(()=>{
+    G.chest++;flyShell($('#cfrag'),'#progress',G.chest);$('#cfrag').style.visibility='hidden';
+    if(G.chest>=CHESTS.length)speak('The golden egg is complete!');
+  },3000);
+  setTimeout(()=>{
+    if(G.chest>=CHESTS.length){winGame();return}
+    const sw=[$('#chest'),$('#pens')];sw.forEach(e=>e.classList.add('swap'));
+    setTimeout(()=>{sw.forEach(e=>e.classList.remove('swap'));newChest()},400);
+  },4600);
 }
 function winGame(){
   const opened=awardEgg('easy-1');state.pos='easy-1';save();
@@ -1081,9 +1179,9 @@ function winGame(){
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
   modal(`<div class="rays">${egg('big-egg','','gold')}</div>
     <h2>You built a Golden Egg!</h2>
-    <p>${txt}</p>
+    <p>You opened all three treasure chests! ${txt}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-  speak(`Hooray ${me().name}! You got a golden egg! `+(opened.length?'':gl.say));
+  speak(`Hooray ${me().name}! You opened all three chests and built a golden egg! `+(opened.length?'':gl.say));
   $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
 $('#game-back').addEventListener('click',()=>{sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
@@ -1095,9 +1193,6 @@ const later=(f,ms)=>B.timers.push(setTimeout(f,ms));
 const clearB=()=>{B.timers.forEach(clearTimeout);B.timers=[]};
 const NS='http://www.w3.org/2000/svg';
 const rockIcon='<svg viewBox="0 0 40 34"><path d="M4 30 Q0 16 10 8 Q20 0 30 6 Q40 12 36 30Z" fill="#a3a9b0" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/></svg>';
-const byState=s=>B.dr.filter(d=>d.state===s).sort((a,b)=>a.order-b.order);
-const countS=s=>B.dr.filter(d=>d.state===s).length;
-const angleFor=w=>Math.max(-1,Math.min(1,(B.total-w)/B.total))*16;
 function rot(x,y,a){const r=a*Math.PI/180,c=Math.cos(r),s=Math.sin(r);return[500+(x-500)*c-(y-400)*s,400+(x-500)*s+(y-400)*c]}
 function star(cx,cy,R,r){let p=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r:R;p.push((cx+q*Math.cos(a)).toFixed(1)+','+(cy+q*Math.sin(a)).toFixed(1))}return p.join(' ')}
 
@@ -1105,240 +1200,233 @@ function startBridge(){
   clearB();B.round=0;B.total=0;show('bridge');buildScene();renderBProgress();newBridgeRound(true);
 }
 function renderBProgress(){renderShell('#bprogress',B.round,false,'sapphire')}
+/* ---------- LEVEL 2: Ice Cream Catapult (addition up to 10) ---------- */
+const PIV=[545,300],SWING=130,LAUNCH=[604,150],WL2=[870,400],SK=1.45;
+const FLAV={pre:['#ff8fc0','#ffd0e4'],add:['#7fe0b8','#d2f7e6']};
+function scoopSVG(kind){
+  const [c,l]=FLAV[kind];
+  return `<path d="M-15 2 A15 15 0 1 1 15 2 Q12 8 8 5 Q5 11 1 6 Q-3 12 -6 6 Q-10 9 -15 2Z" fill="${c}" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>
+    <ellipse cx="-5" cy="-6" rx="5" ry="3.5" fill="${l}" transform="rotate(-30 -5 -6)"/>
+    <circle cx="5" cy="-2" r="1.6" fill="#a0522d"/><circle cx="-2" cy="2" r="1.6" fill="#ffd23f"/><circle cx="8" cy="-9" r="1.6" fill="#4fa8ff"/>`;
+}
+const scoopIcon=k=>`<svg viewBox="-18 -18 36 34">${scoopSVG(k)}</svg>`;
+function pileXY(s){const rows=[4,3,3,2];let r=0;while(s>=rows[r]){s-=rows[r];r++}return[142+s*42+r*21,380-r*36]}
+function bucketXY(i){const R=[[349,350,4],[366,318,3],[366,286,3],[383,254,2]];let r=0;while(r<3&&i>=R[r][2]){i-=R[r][2];r++}return[R[r][0]+i*34,R[r][1]]}
 function buildScene(){
   const a=avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,'');
-  let waves='';for(let x=300;x<700;x+=40)waves+=`<path d="M${x} 515 q10 -8 20 0 t20 0" fill="none" stroke="#fff" stroke-width="3" opacity=".7"/>`;
-  let boards='';for(let x=330;x<700;x+=34)boards+=`<line x1="${x}" y1="394" x2="${x}" y2="406" stroke="#2b2b2b" stroke-width="2" opacity=".35"/>`;
-  $('#scene').innerHTML=`<svg viewBox="0 0 1000 560" xmlns="${NS}">
-  <defs><clipPath id="archclip"><path d="M850 400 V352 Q880 318 910 352 V400 Z"/></clipPath>
-  <linearGradient id="skyg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd3f4"/><stop offset="1" stop-color="#e8fbff"/></linearGradient></defs>
+  let waves='';for(let x=640;x<740;x+=40)waves+=`<path d="M${x} 485 q10 -8 20 0 t20 0" fill="none" stroke="#fff" stroke-width="3" opacity=".7"/>`;
+  const s='stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"';
+  $('#scene').innerHTML=`<svg viewBox="0 0 1000 560" xmlns="${NS}" style="transition:opacity .4s">
+  <defs><linearGradient id="skyg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd3f4"/><stop offset="1" stop-color="#e8fbff"/></linearGradient></defs>
   <rect width="1000" height="560" fill="url(#skyg)"/>
   <path d="M0 330 Q150 262 300 318 Q450 256 600 306 Q800 244 1000 318 V560 H0Z" fill="#c4ecb0"/>
-  <rect x="280" y="488" width="440" height="80" fill="#4fa8ff"/>${waves}
-  <g stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round">
-    <path d="M-10 400 H290 V570 H-10Z" fill="#c68a52"/><path d="M-10 400 H290 V416 H-10Z" fill="#7ccf5b"/>
-    <path d="M710 400 H1010 V570 H710Z" fill="#c68a52"/><path d="M710 400 H1010 V416 H710Z" fill="#7ccf5b"/>
-    <rect x="484" y="436" width="32" height="130" fill="#9aa0a6"/><path d="M500 408 L476 440 L524 440Z" fill="#7d838a"/>
+  <rect x="630" y="460" width="120" height="110" fill="#4fa8ff"/>${waves}
+  <g ${s}>
+    <path d="M-10 400 H640 V570 H-10Z" fill="#c68a52"/><path d="M-10 400 H640 V416 H-10Z" fill="#7ccf5b"/>
+    <path d="M740 400 H1010 V570 H740Z" fill="#c68a52"/><path d="M740 400 H1010 V416 H740Z" fill="#7ccf5b"/>
   </g>
-  <g id="castle" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round">
-    <g class="cpiece" id="c-lt"><rect x="770" y="250" width="60" height="150" fill="#d9d0f0"/><path d="M764 252 L800 186 L836 252Z" fill="#ff7eb6"/><line x1="800" y1="186" x2="800" y2="160"/><path d="M800 160 L824 168 L800 176Z" fill="#ffd23f"/><path d="M790 300 v-16 a10 10 0 0 1 20 0 v16Z" fill="#5a3b2a"/></g>
-    <g class="cpiece" id="c-rt"><rect x="930" y="250" width="60" height="150" fill="#d9d0f0"/><path d="M924 252 L960 186 L996 252Z" fill="#4fa8ff"/><line x1="960" y1="186" x2="960" y2="160"/><path d="M960 160 L984 168 L960 176Z" fill="#ffd23f"/><path d="M950 300 v-16 a10 10 0 0 1 20 0 v16Z" fill="#5a3b2a"/></g>
-    <g class="cpiece" id="c-wall">
-      <rect x="806" y="296" width="148" height="104" fill="#ebe5fa"/>
-      <path d="M806 296 v-14 h16 v14 h14 v-14 h16 v14 h14 v-14 h16 v14 h14 v-14 h16 v14 h14 v-14 h16 v14" fill="#ebe5fa"/>
-      <path d="M850 400 V352 Q880 318 910 352 V400 Z" fill="#3a2618"/>
-      <g clip-path="url(#archclip)" stroke-width="3"><g id="gate" style="transition:transform 1s ease">
-        <rect x="846" y="316" width="68" height="86" fill="#8b5a2b"/>
-        <path d="M858 316 V402 M870 316 V402 M882 316 V402 M894 316 V402 M906 316 V402 M846 340 H914 M846 364 H914 M846 388 H914"/>
-      </g></g>
-      <path id="arch" d="M850 400 V352 Q880 318 910 352 V400" fill="none"/>
-    </g>
+  <g ${s}>
+    <rect x="770" y="250" width="60" height="150" fill="#d9d0f0"/><path d="M764 252 L800 186 L836 252Z" fill="#ff7eb6"/><line x1="800" y1="186" x2="800" y2="160"/><path d="M800 160 L824 168 L800 176Z" fill="#ffd23f"/>
+    <rect x="930" y="250" width="60" height="150" fill="#d9d0f0"/><path d="M924 252 L960 186 L996 252Z" fill="#4fa8ff"/><line x1="960" y1="186" x2="960" y2="160"/><path d="M960 160 L984 168 L960 176Z" fill="#ffd23f"/>
+    <rect x="806" y="296" width="148" height="104" fill="#ebe5fa"/>
+    <path d="M806 296 v-14 h16 v14 h14 v-14 h16 v14 h14 v-14 h16 v14 h14 v-14 h16 v14 h14 v-14 h16 v14" fill="#ebe5fa"/>
+    <path d="M850 400 V352 Q880 318 910 352 V400 Z" fill="#8b5a2b"/>
   </g>
-  <g id="plank" style="transform-origin:500px 400px;transition:transform 1s cubic-bezier(.4,0,.2,1)">
-    <rect x="296" y="392" width="408" height="16" rx="5" fill="#c58b4f" stroke="#2b2b2b" stroke-width="4"/>${boards}
-    <g id="boulder"><path d="M566 392 Q552 346 582 316 Q612 296 642 312 Q670 330 662 364 Q658 388 644 392Z" fill="#a3a9b0" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"/>
-    <circle cx="586" cy="330" r="5" fill="#8a9097"/><circle cx="648" cy="372" r="4" fill="#8a9097"/>
-    <text id="bnum" x="612" y="374" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="54" fill="#fff" stroke="#2b2b2b" stroke-width="6" paint-order="stroke">0</text></g>
+  <g id="wl2" style="transform:translate(${WL2[0]}px,${WL2[1]}px) scale(.9)">${warlockSVG('b')}<g id="wl2splat"></g></g>
+  <!-- catapult -->
+  <g ${s}>
+    <path d="M510 336 L545 290 L580 336Z" fill="#a0652f"/>
+    <rect x="480" y="332" width="130" height="52" rx="8" fill="#c58b4f"/>
+    <circle cx="502" cy="386" r="15" fill="#7b4a26"/><circle cx="588" cy="386" r="15" fill="#7b4a26"/>
+    <circle cx="502" cy="386" r="4" fill="#2b2b2b"/><circle cx="588" cy="386" r="4" fill="#2b2b2b"/>
   </g>
-  <ellipse cx="430" cy="205" rx="124" ry="98" fill="#a06cd5" opacity=".12" stroke="#a06cd5" stroke-width="3" stroke-dasharray="8 8"/>
-  <svg x="0" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg>
+  <text id="bnum" x="545" y="374" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="40" fill="#fff" stroke="#2b2b2b" stroke-width="6" paint-order="stroke">0</text>
+  <g id="arm">
+    <path d="M400 340 L560 296" stroke="#2b2b2b" stroke-width="18" stroke-linecap="round"/><path d="M400 340 L560 296" stroke="#a0652f" stroke-width="10" stroke-linecap="round"/>
+    <path d="M326 336 Q332 386 400 386 Q468 386 474 336 Z" fill="#8b5a2b" ${s}/>
+    <path d="M326 336 H474" stroke="#2b2b2b" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="${PIV[0]}" cy="${PIV[1]}" r="7" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3"/>
+  </g>
+  <g id="armsc"></g>
+  <g id="pl2"><svg x="0" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg></g>
   ${wandG(me().wand,91,369,'wand')}
-  <g id="dlayer" style="transition:opacity .4s"></g>
+  <g id="dlayer"></g>
   <g id="fx"></g>
+  <rect id="wlspot" x="850" y="270" width="40" height="40" fill="none"/>
   </svg>`;
   $('#dlayer').addEventListener('click',onDragonTap);
 }
-function addDragon(state,slot,ci){
+function addScoop(kind,slot){
   const g=document.createElementNS(NS,'g');g.setAttribute('class','bd');g.dataset.i=B.dr.length;
-  g.innerHTML=`<g class="bd-in"><ellipse class="aura" cx="0" cy="-3" rx="30" ry="9" fill="#c9a6ff"/>${dragon(ci).replace('<svg ','<svg x="-25" y="-50" width="50" height="50" ')}
-    <g class="dbadge" style="display:none"><circle cx="17" cy="-46" r="13" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3"/><text x="17" y="-40" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="16" fill="#2b2b2b"></text></g></g>`;
+  g.innerHTML=`<g class="bd-in">${scoopSVG(kind)}<circle r="19" fill="transparent"/>
+    <g class="dbadge" style="display:none"><circle cx="13" cy="-15" r="11" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3"/><text x="13" y="-10" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="14" fill="#2b2b2b"></text></g></g>`;
   $('#dlayer').appendChild(g);
-  const d={el:g,state,slot,order:B.seq++,pre:false,cnum:0};B.dr.push(d);return d;
+  const d={el:g,state:kind==='pre'?'bucket':'pile',slot,order:B.seq++,pre:kind==='pre',cnum:0};B.dr.push(d);return d;
 }
 function setT(d,x,y,a,k,dur,ease){
   d.tx=x;d.ty=y;
   d.el.style.transition=dur?`transform ${dur}s ${ease||'cubic-bezier(.4,0,.2,1)'}, opacity .4s`:'none';
   d.el.style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotate(${a.toFixed(2)}deg) scale(${k})`;
 }
-function layout(dur=.6){
-  B.dr.forEach(d=>d.el.classList.toggle('floating',d.state==='float'));
-  B.dr.filter(d=>d.state==='bank').forEach(d=>{const c=d.slot%3,r=Math.floor(d.slot/3);setT(d,146+c*50+(r%2?10:0),400-r*50,0,1.15,dur)});
-  byState('float').forEach((d,i)=>{const c=i%4,r=Math.floor(i/4);setT(d,362+c*46,268-r*48,0,1,dur)});
-  byState('plank').forEach((d,i)=>{const c=i%4,r=Math.floor(i/4);const [x,y]=rot(374+c*38,392-r*42,B.angle);setT(d,x,y,B.angle,1,dur)});
+const byState=s=>B.dr.filter(d=>d.state===s).sort((a,b)=>(b.pre-a.pre)||(a.order-b.order));
+const countS=s=>B.dr.filter(d=>d.state===s).length;
+function layout(dur=.5){
+  B.dr.filter(d=>d.state==='pile').forEach(d=>{const [x,y]=pileXY(d.slot);setT(d,x,y,0,SK,dur)});
+  byState('bucket').forEach((d,i)=>{const [x,y]=bucketXY(i);setT(d,x,y,0,SK,dur)});
   updateBadges();
 }
-/* counting help: bridge dragons count 1..pre when tapped, lifted dragons keep counting on (pre+1, pre+2, ...) */
 function setBadge(d,n){
-  const b=d.el.querySelector('.dbadge'),sv=d.el.querySelector('svg');
-  if(n){b.style.display='';b.querySelector('text').textContent=n;const sp=WANDS[me().wand].spark;sv.style.filter=`drop-shadow(0 0 6px ${sp}) drop-shadow(0 0 2px ${sp})`}
-  else{b.style.display='none';sv.style.filter=''}
+  const b=d.el.querySelector('.dbadge');
+  if(n){b.style.display='';b.querySelector('text').textContent=n}else b.style.display='none';
 }
 function countAllPre(){B.dr.filter(d=>d.pre).sort((a,b)=>a.order-b.order).forEach(d=>{if(!d.cnum)d.cnum=++B.cpre})}
 function updateBadges(){
-  B.dr.forEach(d=>{
-    if(d.state==='bank'||d.state==='water')setBadge(d,0);
-    else if(d.pre)setBadge(d,d.cnum);
-  });
-  byState('float').forEach((d,i)=>setBadge(d,B.pre+i+1));
-  byState('plank').filter(d=>!d.pre).forEach((d,i)=>setBadge(d,B.pre+i+1));
-}
-function setPlank(instant){
-  const p=$('#plank');
-  if(instant){p.style.transition='none';p.style.transform=`rotate(${B.angle}deg)`;p.getBoundingClientRect();p.style.transition=''}
-  else p.style.transform=`rotate(${B.angle}deg)`;
+  B.dr.forEach(d=>{if(d.state==='pile')setBadge(d,0);else if(d.pre)setBadge(d,d.cnum)});
+  byState('bucket').filter(d=>!d.pre).forEach((d,i)=>setBadge(d,B.pre+i+1));
 }
 function updateEq(result){
-  const f=countS('float'),w=countS('plank'),add=w-B.pre;
-  const g=dragon(0).replace('<svg ','<svg width="34" height="34" '),pu=dragon(1).replace('<svg ','<svg width="34" height="34" ');
-  let h=`<span class="eqb g">${g}${B.pre}</span><span class="op">+</span>`;
-  if(result){
-    const ok=w===B.total;
-    h+=`<span class="eqb p">${pu}${add}</span><span class="op">=</span><span class="eqb ${ok?'ok':'bad'}">${w}</span>`;
-    h+=ok?`<span class="op">🎉</span>`:`<span class="op">≠</span><span class="eqb r">${rockIcon}${B.total}</span>`;
-  }else{
-    h+=`<span class="eqb p">${pu}${f||'?'}</span><span class="op">⚖️</span><span class="eqb r">${rockIcon}${B.total}</span>`;
-  }
+  const n=countS('bucket')-B.pre;
+  let h=`<span class="eqb p" style="background:#ffd0e4">${scoopIcon('pre')}${B.pre}</span><span class="op">+</span>`;
+  if(result){const ok=B.pre+n===B.total;
+    h+=`<span class="eqb g">${scoopIcon('add')}${n}</span><span class="op">=</span><span class="eqb ${ok?'ok':'bad'}">${B.pre+n}</span>`;
+    h+=ok?`<span class="op">🎯</span>`:`<span class="op">≠</span><span class="eqb r">🎯 ${B.total}</span>`;
+  }else h+=`<span class="eqb g">${scoopIcon('add')}${n||'?'}</span><span class="op">→</span><span class="eqb r">🎯 ${B.total}</span>`;
   $('#eq').innerHTML=h;
 }
+function resetArm(){[$('#arm'),$('#armsc')].forEach(e=>{e.getAnimations().forEach(a=>a.cancel());e.style.opacity=1});$('#armsc').innerHTML=''}
 function newBridgeRound(first){
   const [a,b]=BR[B.round];let t;do{t=rand(a,b)}while(t===B.total&&a!==b);
   B.total=t;B.pre=rand(1,Math.max(1,Math.floor(t/2)));
-  const avail=(t-B.pre)+rand(2,3);
-  $('#dlayer').innerHTML='';B.dr=[];B.seq=0;B.cpre=0;
-  const c0=rand(0,5);
-  for(let i=0;i<B.pre;i++){addDragon('plank',0,c0+i).pre=true}
-  for(let s=avail-1;s>=0;s--)addDragon('bank',s,c0+B.pre+s);
-  $('#bnum').textContent=t;$('#gate').style.transform='';resetCastle();$('#boulder').style.opacity=1;$('#fx').innerHTML='';
-  B.angle=angleFor(B.pre);setPlank(true);layout(0);
-  $('#dlayer').style.opacity=1;
+  const avail=Math.min(12-B.pre,(t-B.pre)+rand(2,3));
+  resetArm();$('#dlayer').innerHTML='';B.dr=[];B.seq=0;B.cpre=0;$('#fx').innerHTML='';
+  for(let i=0;i<B.pre;i++)addScoop('pre',0);
+  for(let s=0;s<avail;s++)addScoop('add',s);
+  $('#bnum').textContent=t;$('#wl2splat').innerHTML='';wlAngry('b',false);wlSay('',true,'b');wlLaugh(false,'b');
+  layout(0);$('#scene svg').style.opacity=1;
   updateEq();B.busy=false;$('#btn-drop').disabled=false;
-  const intro=first?'Balance the bridge so the baby dragons can get to the castle! ':'';
-  speak(`${intro}The boulder is ${t}. Tap the dragon${B.pre>1?'s':''} on the bridge to count. Then lift more dragons and keep counting to ${t}!`);
+  const intro=first?'The evil warlock is guarding the castle! Load the catapult with ice cream to splat him! ':'';
+  speak(`${intro}The catapult needs ${t} scoops. Tap the pink scoop${B.pre>1?'s':''} to count. Then load more ice cream and keep counting to ${t}!`);
 }
 function zap(d){
   const w=$('#wand');w.classList.remove('zap');void w.getBBox();w.classList.add('zap');
   const sp=document.createElementNS(NS,'polygon');sp.setAttribute('points',star(0,0,12,5));sp.setAttribute('fill',WANDS[me().wand].spark);sp.setAttribute('stroke','#2b2b2b');sp.setAttribute('stroke-width','2');
   sp.style.transform=`translate(${wandTip(91,369)[0]}px,${wandTip(91,369)[1]}px)`;sp.style.transition='transform .45s ease-out, opacity .45s';
   $('#fx').appendChild(sp);sp.getBoundingClientRect();
-  sp.style.transform=`translate(${d.tx}px,${d.ty-20}px) rotate(180deg)`;sp.style.opacity=0;
+  sp.style.transform=`translate(${d.tx}px,${d.ty-10}px) rotate(180deg)`;sp.style.opacity=0;
   setTimeout(()=>sp.remove(),500);
 }
 function onDragonTap(e){
   const g=e.target.closest('.bd');if(!g||B.busy)return;
   const d=B.dr[+g.dataset.i];
-  if(d.pre&&d.state==='plank'){
+  if(d.pre){
     if(d.cnum)return;
-    d.cnum=++B.cpre;layout(0);zap(d);tone([900,1300],.08,'triangle',.05);
-    speak(B.cpre===B.pre?`${B.cpre}! Now lift more and keep counting!`:String(B.cpre));
+    d.cnum=++B.cpre;updateBadges();zap(d);tone([900,1300],.08,'triangle',.05);
+    speak(B.cpre===B.pre?`${B.cpre}! Now load more and keep counting!`:String(B.cpre));
     return;
   }
-  if(d.state==='bank'){
-    if(countS('float')>=12)return;
-    countAllPre();
-    d.state='float';d.order=++B.seq;layout();zap(d);
-    tone([520,780],.12,'triangle',.07);
-    const n=B.pre+countS('float');speak(n===B.total?`${n}!`:String(n));
-  }else if(d.state==='float'){
-    d.state='bank';layout();tone([420,300],.1,'sine',.07);
-    speak(String(B.pre+countS('float')));
-  }else return;
+  if(d.state==='pile'){
+    if(countS('bucket')>=12)return;
+    countAllPre();d.state='bucket';d.order=++B.seq;
+    const [x,y]=bucketXY(countS('bucket')-1);zap({tx:x,ty:y});
+    layout(.5);tone([520,780],.12,'triangle',.07);
+    const n=countS('bucket');speak(n===B.total?`${n}!`:String(n));
+  }else{
+    d.state='pile';layout(.45);tone([420,300],.1,'sine',.07);
+    speak(String(countS('bucket')));
+  }
   updateEq();
 }
+/* Launch: arm swings, scoops fly. Right → splat the warlock. Wrong → miss, and he zaps us */
 function dropDragons(){
   if(B.busy)return;
-  const fl=byState('float');
-  if(!fl.length){speak('Tap a dragon to lift it with your magic wand!');sfx.oops();return}
-  B.busy=true;$('#btn-drop').disabled=true;
-  fl.forEach(d=>{d.state='plank';d.order=++B.seq});
-  layout(.55);tone([200,140],.2,'sine',.1);
-  later(()=>{B.angle=angleFor(countS('plank'));setPlank();layout(1)},600);
-  later(evaluateBridge,1800);
+  const n=countS('bucket')-B.pre;
+  if(!n){speak('Tap the green ice cream to load it in the catapult!');sfx.oops();return}
+  B.busy=true;$('#btn-drop').disabled=true;countAllPre();updateBadges();
+  const loaded=byState('bucket'),total=loaded.length,ok=total===B.total,over=total>B.total;
+  loaded.forEach(d=>$('#armsc').appendChild(d.el));
+  const sw=[{transform:'rotate(0deg)'},{transform:`rotate(${SWING}deg)`}],o={duration:320,easing:'cubic-bezier(.5,0,1,1)',fill:'forwards'};
+  [$('#arm'),$('#armsc')].forEach(e=>{e.style.transformOrigin=`${PIV[0]}px ${PIV[1]}px`;e.animate(sw,o)});
+  tone([300,600,900],.08,'sawtooth',.05);
+  later(()=>{
+    $('#armsc').style.opacity=0;
+    loaded.forEach((d,i)=>{
+      const g=document.createElementNS(NS,'g'),gi=document.createElementNS(NS,'g');gi.setAttribute('transform',`scale(${SK})`);gi.innerHTML=scoopSVG(d.pre?'pre':'add');g.appendChild(gi);$('#fx').appendChild(g);
+      let ex,ey,h;
+      if(ok){ex=WL2[0]+rand(-22,22);ey=WL2[1]-120+rand(-30,30);h=120}
+      else if(over){ex=1060+rand(0,60);ey=rand(90,200);h=150}
+      else{ex=rand(655,725);ey=500;h=90}
+      const an=g.animate(arcFrames(LAUNCH[0],LAUNCH[1],ex,ey,h,0,360,16),{duration:750,delay:i*70,easing:'linear',fill:'forwards'});
+      an.onfinish=()=>{g.remove();if(ok)splatOn(d.pre?'pre':'add');else if(!over)splash(ex)};
+    });
+  },330);
+  later(()=>{[$('#arm'),$('#armsc')].forEach(e=>e.getAnimations().forEach(a=>a.reverse()))},900);
+  later(()=>evaluateBridge(ok,over,total),330+750+total*70+250);
 }
-function evaluateBridge(){
-  const w=countS('plank'),add=w-B.pre;updateEq(true);
-  if(w===B.total){
-    sfx.yay();confetti(30);
-    speak(`${B.pre} plus ${add} makes ${B.total}! The bridge is level! Go dragons, go!`);
-    later(()=>{$('#gate').style.transform='translateY(-66px)';sfx.step()},1000);
-    const walkers=byState('plank');
-    later(()=>walkers.forEach((d,i)=>later(()=>{d.el.classList.add('running');setT(d,880,402,0,.9,1.9,'linear');later(()=>{d.el.style.opacity=0},1750)},i*220)),1700);
-    const end=1700+walkers.length*220+2300;
-    later(()=>{B.round++;flyShell($('#arch'),'#bprogress',B.round);speak(B.round>=BR.length?'The sapphire egg is complete!':'You got an egg shell!')},end-900);
-    later(()=>{B.round>=BR.length?winBridge():newBridgeRound()},end+(B.round>=BR.length-1?900:600));
+function splatOn(kind){
+  const [c]=FLAV[kind],x=rand(-30,30),y=rand(-150,-40),g=document.createElementNS(NS,'g');
+  g.setAttribute('transform',`translate(${x} ${y}) scale(1.4) translate(${-x} ${-y})`);g.innerHTML=`<path d="M${x-16} ${y} q4 -14 16 -12 q14 -4 16 10 q8 6 0 12 q-2 14 -6 2 q-6 8 -10 0 q-8 10 -12 -2 q-10 2 -4 -10Z" fill="${c}" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>`;
+  $('#wl2splat').appendChild(g);tone([180,120],.1,'sine',.05);
+}
+function wlAngry(pre,on){
+  const g=$(`#${pre}wlangry`);if(g)g.style.opacity=on?1:0;
+}
+function steam(fx,x,y){
+  for(let i=0;i<6;i++){const c=document.createElementNS(NS,'circle'),cx=x+(i%2?24:-24);
+    c.setAttribute('cx',cx);c.setAttribute('cy',y);c.setAttribute('r',10);c.setAttribute('fill','#fff');c.setAttribute('stroke','#2b2b2b');c.setAttribute('stroke-width','2');
+    $(fx).appendChild(c);
+    c.animate([{transform:'translate(0,0) scale(.4)',opacity:1,transformOrigin:`${cx}px ${y}px`},{transform:`translate(${i%2?20:-20}px,-50px) scale(1.4)`,opacity:0,transformOrigin:`${cx}px ${y}px`}],{duration:800,delay:i*160,easing:'ease-out',fill:'forwards'}).onfinish=()=>c.remove()}
+}
+function shakeEl(el,n){el.animate([{transform:'translate(0,0)'},{transform:'translate(-8px,4px)'},{transform:'translate(8px,-4px)'},{transform:'translate(0,0)'}],{duration:300,iterations:n||2})}
+/* hit the player: lightning from (x0,y0) */
+function lightning(fx,x0,y0,x1,y1){
+  let d=`M${x0} ${y0}`;const n=7;
+  for(let i=1;i<n;i++){const t=i/n;d+=` L${(x0+(x1-x0)*t+rand(-28,28)).toFixed(0)} ${(y0+(y1-y0)*t+rand(-28,28)).toFixed(0)}`}
+  d+=` L${x1} ${y1}`;
+  const g=document.createElementNS(NS,'g');
+  g.innerHTML=`<path d="${d}" fill="none" stroke="#2b2b2b" stroke-width="14" stroke-linejoin="round" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#ffe14d" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>`;
+  $(fx).appendChild(g);
+  g.animate([{opacity:1},{opacity:.2},{opacity:1},{opacity:.3},{opacity:1},{opacity:0}],{duration:700,fill:'forwards'}).onfinish=()=>g.remove();
+  const fl=document.createElementNS(NS,'rect');fl.setAttribute('width',1000);fl.setAttribute('height',560);fl.setAttribute('fill','#fff');$(fx).appendChild(fl);
+  fl.animate([{opacity:.8},{opacity:0},{opacity:.5},{opacity:0}],{duration:450,fill:'forwards'}).onfinish=()=>fl.remove();
+  tone([1200,300,900,200],.07,'sawtooth',.03);
+}
+function zapped(fx,pl,x,y){
+  const p=$(pl);p.animate([{transform:'translate(0,0)'},{transform:'translate(-5px,0)'},{transform:'translate(5px,-3px)'},{transform:'translate(-4px,2px)'},{transform:'translate(0,0)'}],{duration:160,iterations:6});
+  for(let i=0;i<10;i++){const a=i*Math.PI/5,sp=document.createElementNS(NS,'polygon');sp.setAttribute('points',star(x,y,9,3.5));sp.setAttribute('fill','#ffe14d');sp.setAttribute('stroke','#2b2b2b');sp.setAttribute('stroke-width','2');
+    $(fx).appendChild(sp);sp.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*70}px,${Math.sin(a)*70}px)`,opacity:0}],{duration:600,delay:120,easing:'ease-out',fill:'forwards'}).onfinish=()=>sp.remove()}
+  puff(x,y-40,'#9a9a9a',4,60,fx);
+}
+function evaluateBridge(ok,over,total){
+  const add=total-B.pre;updateEq(true);
+  const wl=$('#wl2');
+  if(ok){
+    sfx.yay();confetti(30);wlAngry('b',true);wlSay('Grrr!',true,'b');
+    speak(`${B.pre} plus ${add} makes ${B.total}! Splat! Right on the warlock! He is so angry!`);
+    steam('#fx',WL2[0],WL2[1]-200);
+    later(()=>{tone([150,110],.2,'sawtooth',.1);wl.animate([{transform:`translate(${WL2[0]}px,${WL2[1]}px) scale(.9)`},{transform:`translate(${WL2[0]}px,${WL2[1]-24}px) scale(.9)`},{transform:`translate(${WL2[0]}px,${WL2[1]}px) scale(.9)`}],{duration:380,iterations:3})},700);
+    later(()=>{B.round++;flyShell($('#wlspot'),'#bprogress',B.round);speak(B.round>=BR.length?'The sapphire egg is complete!':'You got an egg shell!')},2600);
+    later(()=>{if(B.round>=BR.length)winBridge();else{$('#scene svg').style.opacity=0;later(()=>newBridgeRound(),400)}},4300);
   }else{
     sfx.oops();
-    const heavy=w>B.total;
-    const said=`${B.pre} plus ${add} is ${w}, but the boulder is ${B.total}.`;
-    if(heavy){
-      speak(`Too heavy! ${said} Whoosh! There goes the boulder!`);
-      later(launchBoulder,500);
-      later(()=>speak('Oh no, the castle! Let\'s fix it with magic and try again.'),2600);
-      later(()=>{byState('plank').filter(d=>!d.pre).forEach(d=>{d.state='bank';d.el.classList.add('running')});layout(1.2)},3000);
-      later(rebuildCastle,4300);
-      later(()=>{B.dr.forEach(d=>d.el.classList.remove('running'));$('#dlayer').style.opacity=0},5600);
-      later(()=>newBridgeRound(),6100);
-    }else{
-      speak(`Not enough! ${said} Uh oh, the dragons are slipping!`);
-      const fallers=byState('plank').filter(d=>!d.pre);
-      fallers.forEach((d,i)=>later(()=>{
-        const x=Math.max(320,Math.min(680,d.tx+rand(-20,40)));
-        d.state='water';d.el.classList.remove('floating');
-        setT(d,x,528,rand(150,210),1,.75,'cubic-bezier(.55,0,1,.6)');
-        later(()=>{splash(x);d.el.style.opacity=.7},720);
-      },700+i*160));
-      const back=700+fallers.length*160+1500;
-      later(()=>speak('Splash! The dragons fell in the water. Fly back, little dragons!'),back-900);
-      later(()=>{fallers.forEach(d=>{d.state='bank';d.el.style.opacity=1;d.el.classList.add('running')});layout(1.3)},back);
-      later(()=>{B.dr.forEach(d=>d.el.classList.remove('running'));$('#dlayer').style.opacity=0},back+1600);
-      later(()=>newBridgeRound(),back+2100);
-    }
+    const said=`${B.pre} plus ${add} is ${total}, but the catapult needed ${B.total}.`;
+    speak(`${over?'Too many! It flew right over him!':'Not enough! Splash, it fell in the water!'} ${said}`);
+    later(()=>{wlSay('Ha ha ha!',true,'b');wlLaugh(true,'b')},700);
+    later(()=>{wlLaugh(false,'b');wlSay('Zap!',true,'b');
+      const o=[WL2[0]+51*.9,WL2[1]-136*.9];lightning('#fx',o[0],o[1],60,320);zapped('#fx','#pl2',60,330);
+      speak('Zap! The warlock zapped us with lightning! Let\'s try again.')},4300);
+    later(()=>{wlSay('',true,'b');$('#scene svg').style.opacity=0},7200);
+    later(()=>newBridgeRound(),7700);
   }
 }
-/* boulder catapult, castle crash & magic rebuild, splashes */
-B.anims=[];
-function launchBoulder(){
-  const src=$('#boulder'),c=src.cloneNode(true);c.removeAttribute('id');c.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));
-  const wrap=document.createElementNS(NS,'g'),inner=document.createElementNS(NS,'g');
-  inner.setAttribute('transform','translate(-612 -350)');inner.appendChild(c);wrap.appendChild(inner);$('#fx').appendChild(wrap);
-  src.style.opacity=0;tone([300,500,800],.12,'triangle',.06);
-  const [sx,sy]=rot(612,350,B.angle),ex=880,ey=318,h=300,frames=[];
-  for(let i=0;i<=16;i++){const t=i/16;frames.push({transform:`translate(${sx+(ex-sx)*t}px,${sy+(ey-sy)*t-4*h*t*(1-t)}px) rotate(${B.angle+t*540}deg) scale(${1-.15*t})`})}
-  const an=wrap.animate(frames,{duration:1200,easing:'linear',fill:'forwards'});
-  an.onfinish=()=>{wrap.remove();crashCastle()};
-}
-function crashCastle(){
-  tone([140,90,60,45],.35,'sawtooth',.07);confetti(0);
-  const moves={'c-lt':'translate(-50px,70px) rotate(-38deg)','c-rt':'translate(50px,70px) rotate(38deg)','c-wall':'translate(0px,58px) rotate(9deg)'};
-  Object.entries(moves).forEach(([id,tr])=>B.anims.push($('#'+id).animate([{transform:'none'},{transform:tr,opacity:.9}],{duration:650,easing:'cubic-bezier(.6,0,1,1)',fill:'forwards'})));
-  for(let i=0;i<9;i++){
-    const c=document.createElementNS(NS,'circle'),x=790+rand(0,180),y=380+rand(-20,20);
-    c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r',rand(16,30));c.setAttribute('fill','#e8dccb');c.setAttribute('stroke','#2b2b2b');c.setAttribute('stroke-width','2');
-    $('#fx').appendChild(c);
-    c.animate([{transform:'scale(.2)',opacity:1,transformOrigin:`${x}px ${y}px`},{transform:`translate(${rand(-40,40)}px,${rand(-70,-20)}px) scale(1.4)`,opacity:0,transformOrigin:`${x}px ${y}px`}],{duration:1100,delay:rand(0,200),easing:'ease-out',fill:'forwards'}).onfinish=()=>c.remove();
-  }
-  const sh=$('#scene');sh.animate([{transform:'translate(0,0)'},{transform:'translate(-8px,4px)'},{transform:'translate(8px,-4px)'},{transform:'translate(-5px,2px)'},{transform:'translate(0,0)'}],{duration:400});
-}
-function rebuildCastle(){
-  tone([523,659,784,1047,1319],.16,'triangle',.07);
-  B.anims.forEach(a=>a.reverse());
-  for(let i=0;i<10;i++){
-    const p=document.createElementNS(NS,'polygon'),x=780+rand(0,200),y=200+rand(0,190);
-    p.setAttribute('points',star(x,y,10,4));p.setAttribute('fill','#ffd23f');p.setAttribute('stroke','#2b2b2b');p.setAttribute('stroke-width','2');
-    $('#fx').appendChild(p);
-    p.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1},{opacity:0,transform:'translateY(-30px)'}],{duration:1000,delay:i*60,fill:'forwards'}).onfinish=()=>p.remove();
-  }
-  later(()=>{B.anims.forEach(a=>a.cancel());B.anims=[]},800);
-}
-function resetCastle(){(B.anims||[]).forEach(a=>a.cancel());B.anims=[]}
 function splash(x){
   tone([700,350,200],.14,'sine',.05);
-  const r=document.createElementNS(NS,'ellipse');r.setAttribute('cx',x);r.setAttribute('cy',500);r.setAttribute('rx',10);r.setAttribute('ry',4);r.setAttribute('fill','none');r.setAttribute('stroke','#fff');r.setAttribute('stroke-width','4');
+  const r=document.createElementNS(NS,'ellipse');r.setAttribute('cx',x);r.setAttribute('cy',490);r.setAttribute('rx',10);r.setAttribute('ry',4);r.setAttribute('fill','none');r.setAttribute('stroke','#fff');r.setAttribute('stroke-width','4');
   $('#fx').appendChild(r);
-  r.animate([{rx:10,ry:4,opacity:1},{rx:46,ry:12,opacity:0}],{duration:700,fill:'forwards'}).onfinish=()=>r.remove();
-  for(let i=0;i<6;i++){
-    const d=document.createElementNS(NS,'circle');d.setAttribute('cx',x);d.setAttribute('cy',496);d.setAttribute('r',rand(4,7));d.setAttribute('fill','#cfe9ff');d.setAttribute('stroke','#2b2b2b');d.setAttribute('stroke-width','2');
+  r.animate([{rx:10,ry:4,opacity:1},{rx:40,ry:10,opacity:0}],{duration:700,fill:'forwards'}).onfinish=()=>r.remove();
+  for(let i=0;i<5;i++){
+    const d=document.createElementNS(NS,'circle');d.setAttribute('cx',x);d.setAttribute('cy',486);d.setAttribute('r',rand(4,7));d.setAttribute('fill','#cfe9ff');d.setAttribute('stroke','#2b2b2b');d.setAttribute('stroke-width','2');
     $('#fx').appendChild(d);
-    const dx=rand(-40,40),up=rand(40,80);
+    const dx=rand(-30,30),up=rand(40,70);
     d.animate([{transform:'translate(0,0)'},{transform:`translate(${dx*.6}px,${-up}px)`,offset:.45},{transform:`translate(${dx}px,10px)`,opacity:0}],{duration:750,easing:'ease-out',fill:'forwards'}).onfinish=()=>d.remove();
   }
 }
@@ -1348,28 +1436,30 @@ function winBridge(){
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
   modal(`<div class="rays">${egg('big-egg','','sapphire')}</div>
     <h2>You built a Sapphire Egg!</h2>
-    <p>All the baby dragons made it to the castle! ${txt}</p>
+    <p>The warlock is covered in ice cream! ${txt}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-  speak(`Hooray ${me().name}! All the baby dragons are in the castle! You got a sapphire egg! `+(opened.length?'':gl.say));
+  speak(`Hooray ${me().name}! You splatted the warlock with ice cream! You got a sapphire egg! `+(opened.length?'':gl.say));
   $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
 $('#btn-drop').addEventListener('click',dropDragons);
 $('#bridge-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
 
-/* ---------- LEVEL 3: Warlock's Lava Bridge (subtraction) ---------- */
+/* ---------- LEVEL 3: Warlock's Gargoyles (subtraction) ---------- */
 const LR=[[4,5,1,2],[5,6,1,3],[6,8,2,4],[7,9,2,5],[8,10,3,6]];
-const L={round:0,T:0,k:0,R:0,m:0,busy:false,anims:[]};
-const WL=[510,250];
+const L={round:0,T:0,k:0,R:0,m:0,busy:true,anims:[]};
+const WL=[905,400],WLS=.85,GG=[510,252];
 const track=a=>{L.anims.push(a);return a};
-function warlockSVG(){
+function warlockSVG(pre){
+  pre=pre||'';
   const s='stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"';
-  return `<g class="wl-in">
+  return `<g class="wl-in" id="${pre}wlin">
     <line x1="40" y1="-4" x2="50" y2="-128" stroke="#7b4a26" stroke-width="7" stroke-linecap="round"/>
     <circle cx="51" cy="-136" r="12" fill="#7cf2c8" ${s}/><circle cx="47" cy="-140" r="3" fill="#fff"/>
     <path d="M-42 0 L-26 -92 Q0 -104 26 -92 L42 0 Z" fill="#5b2a86" ${s}/>
     <polygon points="${star(-14,-40,7,3)}" fill="#ffd23f"/><polygon points="${star(16,-62,6,2.5)}" fill="#ffd23f"/><polygon points="${star(-4,-14,5,2)}" fill="#ffd23f"/>
     <circle cx="-30" cy="-60" r="10" fill="#9be07a" ${s}/><circle cx="40" cy="-60" r="10" fill="#9be07a" ${s}/>
     <circle cx="0" cy="-116" r="26" fill="#9be07a" ${s}/>
+    <g id="${pre}wlangry" style="opacity:0;transition:opacity .3s"><circle cx="0" cy="-116" r="24" fill="#ff4d4d" opacity=".55"/></g>
     <path d="M-20 -106 Q-12 -60 0 -56 Q12 -60 20 -106 Q0 -96 -20 -106Z" fill="#e8e8e8" ${s}/>
     <circle cx="-9" cy="-120" r="6" fill="#fff" stroke="#2b2b2b" stroke-width="2"/><circle cx="9" cy="-120" r="6" fill="#fff" stroke="#2b2b2b" stroke-width="2"/>
     <circle cx="-8" cy="-119" r="3" fill="#c0392b"/><circle cx="8" cy="-119" r="3" fill="#c0392b"/>
@@ -1378,14 +1468,35 @@ function warlockSVG(){
     <path d="M-34 -134 L8 -210 L34 -134 Z" fill="#5b2a86" ${s}/><ellipse cx="0" cy="-134" rx="38" ry="8" fill="#4a2270" ${s}/>
     <polygon points="${star(6,-166,9,4)}" fill="#ffd23f" stroke="#2b2b2b" stroke-width="2"/>
   </g>
-  <g id="wlsay" style="opacity:0;transition:opacity .25s">
+  <g id="${pre}wlsay" style="opacity:0;transition:opacity .25s">
     <path d="M44 -196 L28 -180 L58 -190Z" fill="#fff" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"/>
     <rect x="40" y="-236" width="206" height="46" rx="22" fill="#fff" stroke="#2b2b2b" stroke-width="4"/>
-    <text id="wltext" x="143" y="-205" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="22" fill="#2b2b2b">Ha ha!</text>
+    <text id="${pre}wltext" x="143" y="-205" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="22" fill="#2b2b2b">Ha ha!</text>
   </g>`;
 }
-function wlSay(t,flip){$('#wltext').textContent=t;const g=$('#wlsay');g.style.opacity=t?1:0;g.setAttribute('transform',flip?'translate(-290 40)':'')}
-function wlLaugh(on){$('#wl .wl-in').classList.toggle('laugh',on)}
+function wlSay(t,flip,pre){pre=pre||'';const tx=$(`#${pre}wltext`),g=$(`#${pre}wlsay`);if(!g)return;tx.textContent=t;g.style.opacity=t?1:0;g.setAttribute('transform',flip?'translate(-290 40)':'')}
+function wlLaugh(on,pre){const w=$(`#${pre||''}wlin`);if(w)w.classList.toggle('laugh',on)}
+function gargoyleSVG(){
+  const s='stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"';
+  return `<g class="gg-wing gg-wl"><path d="M-22 -70 Q-60 -132 -92 -96 Q-74 -92 -76 -74 Q-60 -80 -58 -62 Q-44 -70 -36 -50 Z" fill="#6f6a80" ${s}/></g>
+    <g class="gg-wing gg-wr"><path d="M22 -70 Q60 -132 92 -96 Q74 -92 76 -74 Q60 -80 58 -62 Q44 -70 36 -50 Z" fill="#6f6a80" ${s}/></g>
+    <path d="M24 -14 Q58 -6 52 -36 Q60 -30 62 -40" fill="none" stroke="#2b2b2b" stroke-width="9" stroke-linecap="round"/><path d="M24 -14 Q58 -6 52 -36 Q60 -30 62 -40" fill="none" stroke="#8a8598" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="0" cy="-42" rx="34" ry="38" fill="#8a8598" ${s}/>
+    <ellipse cx="0" cy="-36" rx="20" ry="24" fill="#a6a1b3"/>
+    <path d="M-26 -52 l10 8 l-4 10 M20 -30 l8 -6" fill="none" stroke="#2b2b2b" stroke-width="2.5" opacity=".5"/>
+    <ellipse cx="-18" cy="-4" rx="15" ry="8" fill="#8a8598" ${s}/><ellipse cx="18" cy="-4" rx="15" ry="8" fill="#8a8598" ${s}/>
+    <path d="M-30 -2 v6 M-22 0 v6 M30 -2 v6 M22 0 v6" stroke="#2b2b2b" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="-30" cy="-46" rx="9" ry="16" fill="#8a8598" ${s} transform="rotate(20 -30 -46)"/><ellipse cx="30" cy="-46" rx="9" ry="16" fill="#8a8598" ${s} transform="rotate(-20 30 -46)"/>
+    <path d="M-16 -116 L-32 -146 L-4 -122Z M16 -116 L32 -146 L4 -122Z" fill="#5c5868" ${s}/>
+    <path d="M-26 -100 L-46 -110 L-28 -88Z M26 -100 L46 -110 L28 -88Z" fill="#8a8598" ${s}/>
+    <circle cx="0" cy="-96" r="28" fill="#8a8598" ${s}/>
+    <circle cx="-11" cy="-100" r="8" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3"/><circle cx="11" cy="-100" r="8" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3"/>
+    <ellipse cx="-11" cy="-100" rx="2.5" ry="5" fill="#c0392b"/><ellipse cx="11" cy="-100" rx="2.5" ry="5" fill="#c0392b"/>
+    <path d="M-22 -114 L-4 -106 M22 -114 L4 -106" stroke="#2b2b2b" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="0" cy="-90" rx="7" ry="4" fill="#6f6a80" stroke="#2b2b2b" stroke-width="2"/>
+    <path d="M-15 -80 Q0 -70 15 -80" fill="#5a2232" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M-10 -79 l3 6 l3 -5Z M10 -79 l-3 6 l-3 -5Z" fill="#fff" stroke="#2b2b2b" stroke-width="1.5"/>`;
+}
 function startLava(){clearB();L.round=0;L.T=0;show('lava');buildLava();renderShell('#lprogress',0,false,'sapphire');newLavaRound(true)}
 function buildLava(){
   const a=avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,'');
@@ -1415,15 +1526,17 @@ function buildLava(){
   <rect x="200" y="430" width="620" height="140" fill="url(#lavag)"/>${bubs}
   <g id="plat"><rect x="330" y="250" width="360" height="28" rx="6" fill="#8a8298" stroke="#2b2b2b" stroke-width="4"/>
     <path d="M370 252 l14 12 l-8 12 M640 252 l-10 14 l12 10" fill="none" stroke="#2b2b2b" stroke-width="3" opacity=".35"/>
-    <circle cx="510" cy="264" r="22" fill="#7cf2c8" stroke="#2b2b2b" stroke-width="4"/>
-    <text id="lnum" x="510" y="274" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="30" fill="#2b2b2b">0</text>
-    <path id="pcracks" d="M420 250 l20 14 l-10 14 M560 250 l-14 16 l16 12 M480 278 l10 -12" fill="none" stroke="#2b2b2b" stroke-width="4" style="opacity:0"/>
+    <circle cx="420" cy="264" r="22" fill="#7cf2c8" stroke="#2b2b2b" stroke-width="4"/>
+    <text id="lnum" x="420" y="274" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="30" fill="#2b2b2b">0</text>
+    <path id="pcracks" d="M460 250 l20 14 l-10 14 M600 250 l-14 16 l16 12 M520 278 l10 -12" fill="none" stroke="#2b2b2b" stroke-width="4" style="opacity:0"/>
   </g>
-  <g id="wl" style="transform:translate(${WL[0]}px,${WL[1]}px)">${warlockSVG()}</g>
+  <g id="gg" style="transform:translate(${GG[0]}px,${GG[1]}px)"><g id="ggs" style="opacity:0">${gargoyleSVG()}</g></g>
+  <g id="wl" style="transform:translate(${WL[0]}px,${WL[1]}px) scale(${WLS})">${warlockSVG()}</g>
   <path d="M200 462 q20 -10 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t20 0 V570 H200Z" fill="#ff7b29"/>
-  <svg x="40" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg>
+  <g id="pl3"><svg x="40" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg></g>
   ${wandG(me().wand,131,369,'wand3')}
   <g id="fx3"></g>
+  <rect id="lspot" x="490" y="440" width="40" height="30" fill="none"/>
   </svg>`;
   $('#pillars').addEventListener('click',onPillarTap);
 }
@@ -1439,7 +1552,7 @@ function updateEq3(res){
 function newLavaRound(first){
   const [ta,tb,ka,kb]=LR[L.round];let T,k;
   do{T=rand(ta,tb);k=rand(ka,Math.min(kb,T-1))}while(T===L.T&&k===L.k);
-  L.T=T;L.k=k;L.R=T-k;L.m=0;L.busy=false;
+  L.T=T;L.k=k;L.R=T-k;L.m=0;L.busy=true;
   L.anims.forEach(a=>a.cancel());L.anims=[];
   const sp=340/T,w=Math.min(40,sp-10);let h='';
   for(let i=0;i<T;i++){const cx=340+sp*(i+.5);
@@ -1450,11 +1563,26 @@ function newLavaRound(first){
     <g class="pbadge"><circle cx="${cx}" cy="384" r="14" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3"/><text x="${cx}" y="390" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="17" fill="#2b2b2b"></text></g></g>`}
   $('#pillars').innerHTML=h;updatePillarBadges();
   $('#lnum').textContent=L.R;$('#pcracks').style.opacity=0;$('#fx3').innerHTML='';
-  $('#wl').style.transform=`translate(${WL[0]}px,${WL[1]}px)`;wlSay('');wlLaugh(false);
+  $('#wl').style.transform=`translate(${WL[0]}px,${WL[1]}px) scale(${WLS})`;$('#wl').style.opacity=1;wlSay('',true);wlLaugh(false);wlAngry('',false);
+  $('#door').style.transform='';
+  const gs=$('#ggs');gs.style.opacity=0;gs.classList.remove('flying');
   $('#lscene svg').style.opacity=1;
-  updateEq3();$('#btn-lzap').disabled=false;
-  const intro=first?`The evil warlock is blocking the door! `:'';
-  speak(`${intro}Count the pillars. There are ${T}. Zap pillars until only ${L.R} ${L.R===1?'is':'are'} left!`);
+  updateEq3();$('#btn-lzap').disabled=true;
+  const intro=first?'The evil warlock is guarding the door! ':'';
+  speak(`${intro}He is summoning a gargoyle! Count the pillars. There are ${T}. Zap pillars until only ${L.R} ${L.R===1?'is':'are'} left!`);
+  summonGargoyle();
+}
+function summonGargoyle(){
+  wlSay('Rise, gargoyle!',true);wlLaugh(true);
+  const o=[WL[0]+51*WLS,WL[1]-136*WLS],beam=document.createElementNS(NS,'path');
+  beam.setAttribute('d',`M${o[0]} ${o[1]} Q${(o[0]+GG[0])/2} ${o[1]-160} ${GG[0]} ${GG[1]-60}`);
+  beam.setAttribute('fill','none');beam.setAttribute('stroke','#c77dff');beam.setAttribute('stroke-width','10');beam.setAttribute('stroke-linecap','round');beam.setAttribute('stroke-dasharray','18 14');
+  later(()=>{$('#fx3').appendChild(beam);tone([300,450,600,800],.1,'square',.05);
+    beam.animate([{strokeDashoffset:0,opacity:0},{opacity:1,offset:.2},{strokeDashoffset:-160,opacity:1,offset:.8},{strokeDashoffset:-200,opacity:0}],{duration:900,fill:'forwards'}).onfinish=()=>beam.remove()},300);
+  later(()=>{poof(GG[0],GG[1]-50,'#b48cff');tone([160,120,90],.25,'sawtooth',.08);
+    const gs=$('#ggs');gs.style.opacity=1;
+    track(gs.animate([{transform:'scale(.1)'},{transform:'scale(1.2)',offset:.7},{transform:'scale(1)'}],{duration:600,easing:'ease-out'}))},1100);
+  later(()=>{wlSay('',true);wlLaugh(false);L.busy=false;$('#btn-lzap').disabled=false},2000);
 }
 function zap3(x,y){
   const w=$('#wand3');w.classList.remove('zap');void w.getBBox();w.classList.add('zap');
@@ -1477,11 +1605,30 @@ function onPillarTap(e){
   updateEq3();
 }
 function arcFrames(x0,y0,x1,y1,h,rot0,rot1,n=14){const f=[];for(let i=0;i<=n;i++){const t=i/n;f.push({transform:`translate(${x0+(x1-x0)*t}px,${y0+(y1-y0)*t-4*h*t*(1-t)}px) rotate(${rot0+(rot1-rot0)*t}deg)`})}return f}
-function poof(x,y,col){
+function poof(x,y,col,fx){
   for(let i=0;i<10;i++){const c=document.createElementNS(NS,'circle'),cx=x+rand(-50,50),cy=y+rand(-20,10);
     c.setAttribute('cx',cx);c.setAttribute('cy',cy);c.setAttribute('r',rand(16,30));c.setAttribute('fill',col);c.setAttribute('stroke','#2b2b2b');c.setAttribute('stroke-width','2');
-    $('#fx3').appendChild(c);
+    $(fx||'#fx3').appendChild(c);
     c.animate([{transform:'scale(.2)',opacity:1,transformOrigin:`${cx}px ${cy}px`},{transform:`translate(${rand(-30,30)}px,${rand(-120,-60)}px) scale(1.5)`,opacity:0,transformOrigin:`${cx}px ${cy}px`}],{duration:1300,delay:rand(0,250),easing:'ease-out',fill:'forwards'}).onfinish=()=>c.remove();}
+}
+/* a fireball thrown in an arc; burns the player when it lands */
+function throwFire(fx,x0,y0,x1,y1,h,onHit){
+  const g=document.createElementNS(NS,'g');
+  g.innerHTML='<path d="M0 -20 Q16 -6 14 6 A14 14 0 1 1 -14 6 Q-16 -6 0 -20Z" fill="#ff7b29" stroke="#2b2b2b" stroke-width="3"/><circle cy="5" r="7" fill="#ffd23f"/>';
+  $(fx).appendChild(g);tone([200,300,450],.12,'sawtooth',.06);
+  g.animate(arcFrames(x0,y0,x1,y1,h,0,-300,18),{duration:900,easing:'linear',fill:'forwards'}).onfinish=()=>{g.remove();onHit&&onHit()};
+}
+function burnPlayer(fx,pl,x,y){
+  tone([500,250,120],.18,'sawtooth',.08);
+  const p=$(pl);p.animate([{transform:'translate(0,0)'},{transform:'translate(0,-26px)',offset:.4},{transform:'translate(0,0)'}],{duration:420,iterations:2});
+  const fl=document.createElementNS(NS,'g');
+  fl.innerHTML=[[-24,0],[0,-24],[24,-4],[-8,40],[16,36]].map(([dx,dy])=>`<path class="flame" d="M${x+dx} ${y+dy-34} Q${x+dx+16} ${y+dy-12} ${x+dx+10} ${y+dy+4} Q${x+dx} ${y+dy+10} ${x+dx-10} ${y+dy+4} Q${x+dx-16} ${y+dy-12} ${x+dx} ${y+dy-34}Z" fill="#ff7b29" stroke="#2b2b2b" stroke-width="3"/><path class="flame" d="M${x+dx} ${y+dy-14} Q${x+dx+7} ${y+dy-4} ${x+dx+4} ${y+dy+4} Q${x+dx} ${y+dy+6} ${x+dx-4} ${y+dy+4} Q${x+dx-7} ${y+dy-4} ${x+dx} ${y+dy-14}Z" fill="#ffd23f"/>`).join('');
+  $(fx).appendChild(fl);
+  fl.animate([{opacity:0},{opacity:1,offset:.1},{opacity:1,offset:.75},{opacity:0}],{duration:2000,fill:'forwards'}).onfinish=()=>fl.remove();
+  const soot=document.createElementNS(NS,'g');
+  soot.innerHTML=`<ellipse cx="${x-12}" cy="${y-18}" rx="12" ry="7" fill="#2b2b2b" opacity=".5"/><ellipse cx="${x+16}" cy="${y+14}" rx="10" ry="6" fill="#2b2b2b" opacity=".45"/><ellipse cx="${x}" cy="${y+40}" rx="14" ry="6" fill="#2b2b2b" opacity=".4"/>`;
+  $(fx).appendChild(soot);soot.animate([{opacity:0},{opacity:1,offset:.2},{opacity:1,offset:.8},{opacity:0}],{duration:3200,fill:'forwards'}).onfinish=()=>soot.remove();
+  later(()=>puff(x,y-50,'#9a9a9a',5,70,fx),700);
 }
 function lavaZap(){
   if(L.busy)return;
@@ -1498,43 +1645,50 @@ function lavaZap(){
 function evaluateLava(sunk){
   const rem=L.T-L.m;updateEq3(true);
   const said=`${L.T} take away ${L.m} is ${rem}.`;
-  const plat=$('#plat'),wl=$('#wl'),left=$$('#pillars .pillar').filter(g=>!g.dataset.gone);
+  const plat=$('#plat'),gg=$('#gg'),left=$$('#pillars .pillar').filter(g=>!g.dataset.gone);
   if(rem===L.R){
     sfx.yay();
-    speak(`${said} Yes! The platform is falling!`);
+    const last=L.round+1>=LR.length;
+    speak(`${said} Yes! The gargoyle is falling into the fire!`);
     track(plat.animate([{transform:'rotate(0)'},{transform:'rotate(-3deg)'},{transform:'rotate(3deg)'},{transform:'rotate(-2deg)'},{transform:'rotate(0)'}],{duration:700}));
     later(()=>{
-      wlSay('Noooo!');
       const fall={duration:1300,easing:'cubic-bezier(.5,0,1,1)',fill:'forwards'};
       track(plat.animate([{transform:'none'},{transform:'translate(20px,360px) rotate(14deg)'}],fall));
       left.forEach(g=>track(g.animate([{transform:'none'},{transform:'translateY(320px)'}],fall)));
-      track(wl.animate([{transform:`translate(${WL[0]}px,${WL[1]}px) rotate(0deg)`},{transform:`translate(${WL[0]+30}px,${WL[1]+520}px) rotate(30deg)`}],fall));
+      track(gg.animate([{transform:`translate(${GG[0]}px,${GG[1]}px) rotate(0deg)`},{transform:`translate(${GG[0]+30}px,${GG[1]+420}px) rotate(40deg)`}],fall));
     },750);
-    later(()=>{wlSay('');poof(530,450,'#b48cff');tone([200,120,80],.3,'sawtooth',.08);speak('Poof! The warlock is gone!')},2000);
-    later(()=>{track($('#door').animate([{transform:'scaleX(1)'},{transform:'scaleX(.12)'}],{duration:900,easing:'ease-in-out',fill:'forwards'}));sfx.step();confetti(30)},3000);
-    later(()=>{L.round++;flyShell($('#door'),'#lprogress',L.round);speak(L.round>=LR.length?'The sapphire egg is complete!':'You got an egg shell!')},4000);
-    later(()=>{if(L.round>=LR.length)winLava();else{$('#lscene svg').style.opacity=0;later(()=>newLavaRound(),400)}},5600);
-  }else if(rem>L.R){
-    sfx.oops();
-    track(plat.animate([{transform:'translateX(0)'},{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}],{duration:350}));
-    wlSay('Ha ha ha!');wlLaugh(true);
-    speak(`Not enough! ${said} We need only ${L.R} left. The warlock is laughing!`);
-    later(()=>{sunk.forEach(a=>a.reverse())},3000);
-    later(()=>{wlLaugh(false);wlSay('');$('#lscene svg').style.opacity=0},4300);
-    later(()=>newLavaRound(),4800);
+    later(()=>{poof(530,450,'#ff9f43');poof(500,440,'#9a9a9a');tone([200,120,80],.3,'sawtooth',.08)},1900);
+    later(()=>{wlAngry('',true);wlSay(last?'Noooo! I\'m outta here!':'Grrr! My gargoyle!',true);
+      track($('#wl').animate([{transform:`translate(${WL[0]}px,${WL[1]}px) scale(${WLS})`},{transform:`translate(${WL[0]}px,${WL[1]-22}px) scale(${WLS})`},{transform:`translate(${WL[0]}px,${WL[1]}px) scale(${WLS})`}],{duration:360,iterations:3}));
+      steam('#fx3',WL[0],WL[1]-190);
+      speak(last?'The warlock ran away!':'The warlock is so angry!')},2400);
+    later(()=>{L.round++;flyShell($('#lspot'),'#lprogress',L.round)},3400);
+    if(last){
+      later(()=>{wlSay('',true);poof(WL[0],WL[1]-90,'#b48cff');$('#wl').style.opacity=0;tone([200,120,80],.3,'sawtooth',.08)},4300);
+      later(()=>{track($('#door').animate([{transform:'scaleX(1)'},{transform:'scaleX(.12)'}],{duration:900,easing:'ease-in-out',fill:'forwards'}));sfx.step();confetti(30);speak('The sapphire egg is complete! The door is open!')},5100);
+      later(winLava,6800);
+    }else later(()=>{$('#lscene svg').style.opacity=0;later(()=>newLavaRound(),400)},5000);
   }else{
     sfx.oops();
-    $('#pcracks').style.opacity=1;
-    speak(`Too many! ${said} We needed ${L.R} left. Oh no, he jumped to safety!`);
-    track(plat.animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:300,iterations:2}));
-    later(()=>{const j=track(wl.animate(arcFrames(WL[0],WL[1],912,400,200,0,0),{duration:950,easing:'linear',fill:'forwards'}));tone([400,700],.12,'triangle',.06);
-      j.onfinish=()=>{wlSay('Ha ha! Too many!',true);wlLaugh(true)}},500);
-    later(()=>{const sink={duration:1600,easing:'ease-in',fill:'forwards'};
-      track(plat.animate([{transform:'none'},{transform:'translate(-10px,320px) rotate(-10deg)'}],sink));
-      left.forEach(g=>track(g.animate([{transform:'none'},{transform:'translateY(320px)'}],sink)));
-      tone([220,160,110],.3,'sawtooth',.1)},1500);
-    later(()=>{wlLaugh(false);wlSay('');$('#lscene svg').style.opacity=0},5200);
-    later(()=>newLavaRound(),5700);
+    const few=rem>L.R,gs=$('#ggs');
+    speak(`${few?'Not enough!':'Too many!'} ${said} We needed ${L.R} left. Look out, the gargoyle is throwing a fireball!`);
+    let from=[GG[0],GG[1]-90];
+    if(few){
+      track(plat.animate([{transform:'translateX(0)'},{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}],{duration:350}));
+    }else{
+      $('#pcracks').style.opacity=1;gs.classList.add('flying');
+      track(gg.animate([{transform:`translate(${GG[0]}px,${GG[1]}px)`},{transform:`translate(${GG[0]}px,${GG[1]-110}px)`}],{duration:700,easing:'ease-out',fill:'forwards'}));
+      from=[GG[0],GG[1]-200];
+      later(()=>{const sink={duration:1600,easing:'ease-in',fill:'forwards'};
+        track(plat.animate([{transform:'none'},{transform:'translate(-10px,320px) rotate(-10deg)'}],sink));
+        left.forEach(g=>track(g.animate([{transform:'none'},{transform:'translateY(320px)'}],sink)));
+        tone([220,160,110],.3,'sawtooth',.1)},600);
+    }
+    later(()=>{wlLaugh(true);wlSay('Ha ha ha!',true)},800);
+    later(()=>throwFire('#fx3',from[0]-30,from[1],95,320,few?110:60,()=>{burnPlayer('#fx3','#pl3',95,330);speak('Ouch! Hot hot hot! Let\'s try again.')}),2600);
+    later(()=>{if(few)sunk.forEach(a=>a.reverse())},4600);
+    later(()=>{wlLaugh(false);wlSay('',true);$('#lscene svg').style.opacity=0},6400);
+    later(()=>newLavaRound(),6900);
   }
 }
 function winLava(){
@@ -1542,18 +1696,52 @@ function winLava(){
   sfx.win();confetti(80);
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
   modal(`<div class="rays">${egg('big-egg','','sapphire')}</div>
-    <h2>You beat the warlock!</h2>
-    <p>The castle door is open and you built a Sapphire Egg! ${txt}</p>
+    <h2>You beat the gargoyles!</h2>
+    <p>The warlock ran away, the castle door is open, and you built a Sapphire Egg! ${txt}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-  speak(`Hooray ${me().name}! You beat the evil warlock! You got a sapphire egg!`);
+  speak(`Hooray ${me().name}! You beat the warlock's gargoyles! You got a sapphire egg!`);
   $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
 $('#btn-lzap').addEventListener('click',lavaZap);
 $('#lava-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
 
-/* ---------- LEVEL 5: Chocolate Golem Puzzle (mixed review: counting, +, −) ---------- */
-const P={ans:[],q:[],placed:[],sel:-1,busy:false,pieces:[],shells:0};
-const BX=350,BY=50,CS=100;
+/* ---------- LEVEL 4: Chocolate Puzzles (mixed review: counting, +, −) ---------- */
+// three puzzles: chocolate car (2×2), chocolate house (3×2), chocolate golem (3×3). Each gives one emerald egg piece.
+const P={ans:[],q:[],placed:[],sel:-1,busy:false,pieces:[],stage:0};
+let BX=350,BY=50;const CS=100;
+function sprinkles(w,h){let spr='';const sc=['#ff7eb6','#4fa8ff','#ffd23f','#5cc96b','#a06cd5'];
+  for(let i=0;i<Math.round(w*h/9000);i++){const x=(i*73+20)%(w-20)+6,y=(i*137+30)%(h-20)+6;spr+=`<rect x="${x}" y="${y}" width="14" height="5" rx="2.5" fill="${sc[i%5]}" transform="rotate(${i*37} ${x+7} ${y+2})"/>`}
+  return `<rect width="${w}" height="${h}" fill="#ffe3ef"/>${spr}`}
+function carArt(alive){
+  const sq=[0,1,2,3].map(i=>`<rect x="${30+i*36}" y="104" width="30" height="34" rx="5" fill="#8b5a33" stroke-width="3"/>`).join('');
+  const wheel=x=>`<g class="${alive?'c-wheel':''}" style="transform-origin:${x}px 160px"><circle cx="${x}" cy="160" r="28" fill="#3a2210"/><circle cx="${x}" cy="160" r="16" fill="#fff6e8"/><circle cx="${x}" cy="160" r="7" fill="#3a2210" stroke-width="3"/><path d="M${x-26} 152 h10 M${x+16} 168 h10" stroke="#fff6e8" stroke-width="3"/></g>`;
+  return `${alive?'':sprinkles(200,200)}
+  <g stroke="#2b2b2b" stroke-width="5" stroke-linejoin="round">
+    <path d="M56 96 Q64 40 100 38 Q140 38 150 96 Z" fill="#8b5a33"/>
+    <path d="M70 92 Q76 54 98 52 V92 Z M108 52 Q132 54 138 92 H108 Z" fill="#bfe9ff" stroke-width="4"/>
+    <path d="M100 38 Q102 22 96 12" fill="none" stroke-width="3"/><circle cx="95" cy="12" r="9" fill="#e74c3c"/>
+    <rect x="12" y="92" width="178" height="58" rx="22" fill="#7b4a26"/>${sq}
+    <path d="M12 112 Q20 92 50 94" fill="none" stroke="#fff6e8" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="180" cy="114" r="9" fill="#ffd23f" stroke-width="3"/><rect x="6" y="114" width="14" height="10" rx="3" fill="#ff7eb6" stroke-width="3"/>
+    ${wheel(54)}${wheel(146)}
+    ${alive?'<circle cx="118" cy="74" r="7" fill="#fff" stroke-width="3"/><circle cx="120" cy="75" r="3" fill="#2b2b2b" stroke="none"/><path d="M150 132 Q160 140 170 132" fill="none" stroke-width="3" stroke-linecap="round"/>':''}
+  </g>`;
+}
+function houseArt(alive){
+  let bricks='';for(let r=0;r<3;r++)for(let c=0;c<5;c++)bricks+=`<rect x="${44+c*44}" y="${104+r*30}" width="38" height="24" rx="5" fill="#8b5a33" stroke-width="2.5"/>`;
+  const win=(x)=>`<rect class="h-win" x="${x}" y="118" width="40" height="36" rx="6" fill="${alive?'#ffe680':'#bfe9ff'}" stroke-width="4"/><path d="M${x+20} 118 V154 M${x} 136 H${x+40}" stroke-width="3"/>`;
+  return `${alive?'':sprinkles(300,200)}
+  <g stroke="#2b2b2b" stroke-width="5" stroke-linejoin="round">
+    <rect x="200" y="20" width="34" height="56" fill="#7b4a26"/><rect x="194" y="12" width="46" height="14" rx="4" fill="#fff6e8"/>
+    <rect x="34" y="96" width="232" height="96" rx="6" fill="#7b4a26"/>${bricks}
+    <path d="M14 104 L150 18 L286 104 Z" fill="#6b3d1e"/>
+    <path d="M14 104 L150 18 L286 104 Q270 118 256 104 Q240 120 226 104 Q210 120 196 104 Q180 120 166 104 Q150 120 136 104 Q120 120 106 104 Q90 120 76 104 Q60 120 46 104 Q30 118 14 104Z" fill="#fff6e8"/>
+    <circle cx="150" cy="60" r="12" fill="#e74c3c" stroke-width="3"/><circle cx="104" cy="86" r="7" fill="#4fa8ff" stroke-width="3"/><circle cx="196" cy="86" r="7" fill="#ffd23f" stroke-width="3"/>
+    ${win(56)}${win(204)}
+    <path d="M124 192 V146 Q150 120 176 146 V192 Z" fill="#ff7eb6"/><circle cx="166" cy="168" r="5" fill="#ffd23f" stroke-width="3"/>
+    ${alive?'<circle cx="138" cy="150" r="6" fill="#fff" stroke-width="3"/><circle cx="162" cy="150" r="6" fill="#fff" stroke-width="3"/><circle cx="139" cy="151" r="2.5" fill="#2b2b2b" stroke="none"/><circle cx="161" cy="151" r="2.5" fill="#2b2b2b" stroke="none"/>':''}
+  </g>`;
+}
 function golemArt(alive){
   const A=c=>alive?`class="${c}"`:'';
   let spr='';const sc=['#ff7eb6','#4fa8ff','#ffd23f','#5cc96b','#a06cd5'];
@@ -1577,6 +1765,11 @@ function golemArt(alive){
     ${alive?'<path d="M110 58 L142 70 M190 58 L158 70" stroke-width="7" stroke-linecap="round"/><path d="M130 110 Q150 96 170 110" fill="none" stroke-width="4" stroke-linecap="round"/>':'<path d="M130 102 Q150 118 170 102" fill="none" stroke-width="4" stroke-linecap="round"/>'}
   </g>`;
 }
+const PUZZLES=[
+  {name:'car',title:'Build the Chocolate Car!',cols:2,rows:2,art:carArt},
+  {name:'house',title:'Build the Chocolate House!',cols:3,rows:2,art:houseArt},
+  {name:'golem',title:'Build the Chocolate Golem!',cols:3,rows:3,art:golemArt}];
+const PZ=()=>PUZZLES[P.stage];
 const DOTS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8],7:[0,2,3,4,5,6,8],8:[0,1,2,3,5,6,7,8],9:[0,1,2,3,4,5,6,7,8]};
 function makeQ(a,prev){
   const types=['dots'];if(a>=2)types.push('add');if(a<=9)types.push('sub');
@@ -1585,8 +1778,8 @@ function makeQ(a,prev){
   if(t==='sub'){const big=rand(a+1,Math.min(10,a+5));return{t,a,txt:`${big}−${big-a}`,say:`${big} take away ${big-a} is ${a}`}}
   return{t,a,say:`there are ${a} dots`};
 }
-function slotXY(s){return[BX+(s%3)*CS,BY+Math.floor(s/3)*CS]}
-function trayXY(j){return[172+j*92,452]}
+function slotXY(s){const c=PZ().cols;return[BX+(s%c)*CS,BY+Math.floor(s/c)*CS]}
+function trayXY(j){return[172+j*92+(9-P.ans.length)*46,452]}
 function qMarkup(s){
   const q=P.q[s],[x,y]=slotXY(s);
   if(q.t==='dots')return DOTS[q.a].map(k=>`<circle cx="${x+25+(k%3)*25}" cy="${y+25+Math.floor(k/3)*25}" r="9" fill="#7b4a26" stroke="#2b2b2b" stroke-width="2"/>`).join('');
@@ -1598,17 +1791,14 @@ function renderSlots(){
 }
 function pieceSetT(p,x,y,k,dur){p.el.style.transition=dur?`transform ${dur}s cubic-bezier(.4,0,.2,1)`:'none';p.el.style.transform=`translate(${x}px,${y}px) scale(${k})`;p.x=x;p.y=y}
 function startPuzzle(){
-  clearB();show('puzzle');
-  const nums=shuffle([1,2,3,4,5,6,7,8,9]);
-  P.ans=nums;P.q=nums.map(a=>makeQ(a));P.placed=Array(9).fill(false);P.sel=-1;P.busy=false;P.shells=0;
-  buildPuzzle();renderShell('#pprogress',0,false,'emerald');updatePrompt();
-  speak("The warlock left a magic puzzle in the castle! Lift a puzzle piece with your wand, then put it where its number belongs.");
+  clearB();show('puzzle');P.stage=0;
+  buildPuzzle();renderShell('#pprogress',0,false,'emerald',3);loadPuzzle(true);
 }
 function castleBricks(){let b='';for(let y=20;y<400;y+=36)for(let x=(y/36%2?-30:0);x<1000;x+=60)b+=`<rect x="${x}" y="${y}" width="60" height="36" fill="none" stroke="#2f2747" stroke-width="3"/>`;return b}
 function buildPuzzle(){
   const a=avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,'');
-  $('#pscene').innerHTML=`<svg viewBox="0 0 1000 560" xmlns="${NS}">
-  <defs><g id="golemArt">${golemArt(false)}</g></defs>
+  $('#pscene').innerHTML=`<svg viewBox="0 0 1000 560" xmlns="${NS}" style="transition:opacity .4s">
+  <defs><g id="pzArt"></g></defs>
   <rect width="1000" height="560" fill="#3f3560"/>${castleBricks()}
   <g stroke="#2b2b2b" stroke-width="3">
     <rect x="34" y="160" width="12" height="40" fill="#7b4a26"/><path class="flame" d="M40 116 Q58 140 50 158 Q40 166 30 158 Q22 140 40 116Z" fill="#ff9f43"/>
@@ -1618,32 +1808,53 @@ function buildPuzzle(){
   <rect x="0" y="400" width="1000" height="160" fill="#6b6178"/><line x1="0" y1="400" x2="1000" y2="400" stroke="#2b2b2b" stroke-width="4"/>
   <path d="M0 470 H1000 M120 400 V470 M300 400 V470 M480 400 V470 M660 400 V470 M840 400 V470" stroke="#2f2747" stroke-width="3"/>
   <rect x="160" y="430" width="840" height="130" rx="18" fill="#a86b3c" stroke="#2b2b2b" stroke-width="4"/>
-  <rect x="${BX-14}" y="${BY-14}" width="${3*CS+28}" height="${3*CS+28}" rx="16" fill="#c58b4f" stroke="#2b2b2b" stroke-width="5"/>
-  <rect x="${BX}" y="${BY}" width="${3*CS}" height="${3*CS}" fill="#fff1e4" stroke="#2b2b2b" stroke-width="3"/>
-  <g transform="translate(730 80)"><rect x="-10" y="-10" width="200" height="226" rx="14" fill="#fff" stroke="#2b2b2b" stroke-width="4"/>
-    <svg width="180" height="180" viewBox="0 0 300 300"><use href="#golemArt"/></svg>
-    <text x="90" y="206" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="20" fill="#2b2b2b">Build me!</text></g>
+  <g id="pboard"></g>
+  <g id="pcard" style="transition:opacity .5s"></g>
   <g id="slots"></g>
   <g id="alive" style="opacity:0;transition:opacity .6s"></g>
+  <g id="wl5" style="opacity:0;transform:translate(850px,400px) scale(.85)">${warlockSVG('p')}</g>
   <svg x="0" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg>
   ${wandG(me().wand,91,369,'wand5')}
   <g id="pieces"></g>
   <g id="fx5"></g>
   </svg>`;
+  $('#pieces').addEventListener('click',onPieceTap);
+  $('#slots').addEventListener('click',onSlotTap);
+}
+function loadPuzzle(first){
+  const z=PZ(),N=z.cols*z.rows,W=z.cols*CS,H=z.rows*CS;
+  BX=500-W/2;BY=z.rows===3?50:90;
+  const nums=shuffle(Array.from({length:N},(_,i)=>i+1));
+  P.ans=nums;P.q=nums.map(a=>makeQ(a));P.placed=Array(N).fill(false);P.sel=-1;P.busy=false;
+  $('#pz-title').textContent=z.title;
+  $('#pzArt').innerHTML=z.art(false);
+  $('#pboard').innerHTML=`<rect x="${BX-14}" y="${BY-14}" width="${W+28}" height="${H+28}" rx="16" fill="#c58b4f" stroke="#2b2b2b" stroke-width="5"/>
+    <rect id="pbrd" x="${BX}" y="${BY}" width="${W}" height="${H}" fill="#fff1e4" stroke="#2b2b2b" stroke-width="3"/>`;
+  const ph=180*H/W;
+  $('#pcard').innerHTML=`<g transform="translate(750 ${z.rows===3?80:110})"><rect x="-10" y="-10" width="200" height="${ph+46}" rx="14" fill="#fff" stroke="#2b2b2b" stroke-width="4"/>
+    <svg width="180" height="${ph}" viewBox="0 0 ${W} ${H}"><use href="#pzArt"/></svg>
+    <text x="90" y="${ph+26}" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="20" fill="#2b2b2b">Build me!</text></g>`;
+  $('#pcard').style.opacity=1;
+  $('#alive').innerHTML='';$('#alive').style.opacity=0;$('#alive').getAnimations().forEach(a=>a.cancel());
+  $('#wl5').style.opacity=0;
+  const pc=$('#pieces');pc.innerHTML='';pc.style.transition='none';pc.style.opacity=1;
   renderSlots();
-  const order=shuffle([0,1,2,3,4,5,6,7,8]);P.pieces=[];
+  const order=shuffle(Array.from({length:N},(_,i)=>i));P.pieces=[];
   order.forEach((cell,j)=>{
     const g=document.createElementNS(NS,'g');g.setAttribute('class','pz');g.dataset.i=cell;
     g.innerHTML=`<g class="pz-in"><ellipse class="aura" cx="50" cy="104" rx="46" ry="10" fill="#c9a6ff"/>
       <rect x="-3" y="-3" width="106" height="106" rx="10" fill="#fff" stroke="#2b2b2b" stroke-width="4"/>
-      <svg width="100" height="100" viewBox="${(cell%3)*100} ${Math.floor(cell/3)*100} 100 100"><use href="#golemArt"/></svg>
+      <svg width="100" height="100" viewBox="${(cell%z.cols)*100} ${Math.floor(cell/z.cols)*100} 100 100"><use href="#pzArt"/></svg>
       <g class="badge"><circle cx="14" cy="14" r="17" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3"/><text x="14" y="22" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="22" fill="#2b2b2b">${P.ans[cell]}</text></g></g>`;
-    $('#pieces').appendChild(g);
+    pc.appendChild(g);
     const p={el:g,cell,home:trayXY(j),num:P.ans[cell]};P.pieces[cell]=p;
     pieceSetT(p,p.home[0],p.home[1],.84,0);
   });
-  $('#pieces').addEventListener('click',onPieceTap);
-  $('#slots').addEventListener('click',onSlotTap);
+  $('#pscene svg').style.opacity=1;
+  updatePrompt();
+  const what={car:'a chocolate car',house:'a chocolate house',golem:'something big'}[z.name];
+  speak(first?`The warlock left magic puzzles in the castle! This one is ${what}. Lift a puzzle piece with your wand, then put it where its number belongs.`
+             :`A new puzzle! This one is ${what}!`);
 }
 function updatePrompt(){
   if(P.sel<0){$('#eq5').innerHTML=`<span class="eqb r">🧩 Tap a piece!</span>`;return}
@@ -1672,14 +1883,11 @@ function onSlotTap(e){
     if(P.ans[s]===p.num){
       p.placed=true;P.placed[s]=true;P.sel=-1;p.el.classList.remove('floating');p.el.classList.add('placed');
       p.el.querySelector('.badge').style.display='none';
-      if(s!==p.cell){/* same number can only be one cell, so s===p.cell */}
       renderSlots();sfx.yay();sparkleAt(x+50,y+50);
-      const n=P.placed.filter(Boolean).length,q=P.q[s];
-      speak(n>=9?`Yes! ${q.say}! The golem is finished!`:`Yes! ${q.say}!`);
-      const sh=Math.floor(n*5/9);
-      if(sh>P.shells){P.shells=sh;flyShell(g,'#pprogress',sh)}
+      const N=P.ans.length,n=P.placed.filter(Boolean).length,q=P.q[s];
+      speak(n>=N?`Yes! ${q.say}! The puzzle is finished!`:`Yes! ${q.say}!`);
       updatePrompt();P.busy=false;
-      if(n>=9){P.busy=true;later(golemAlive,1200)}
+      if(n>=N){P.busy=true;later(puzzleDone,1200)}
     }else{
       sfx.oops();
       const q=P.q[s];
@@ -1702,24 +1910,64 @@ function sparkleAt(x,y){
     $('#fx5').appendChild(p);const a=i*Math.PI/4;
     p.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*60}px,${Math.sin(a)*60}px)`,opacity:0}],{duration:600,easing:'ease-out'}).onfinish=()=>p.remove()}
 }
+function showAlive(){
+  const z=PZ(),W=z.cols*CS,H=z.rows*CS;
+  $('#alive').innerHTML=`<svg x="${BX}" y="${BY}" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" overflow="visible">${z.art(true)}</svg>`;
+  $('#alive').style.opacity=1;const pc=$('#pieces');pc.style.transition='opacity .6s';pc.style.opacity=0;
+}
+function puzzleDone(){
+  const z=PZ();
+  if(z.name==='golem'){golemAlive();return}
+  showAlive();sfx.yay();confetti(30);
+  if(z.name==='car'){
+    $('#eq5').innerHTML=`<span class="eqb ok">🚗 Beep beep!</span>`;
+    speak('You built the chocolate car! Beep beep!');
+    later(()=>{tone([440,440],.12,'square',.12);later(()=>tone([440,440],.12,'square',.12),300)},700);
+    later(()=>{$('#alive').animate([{transform:'translateX(0)'},{transform:'translateX(-20px)',offset:.15},{transform:'translateX(700px)'}],{duration:1600,easing:'ease-in',fill:'forwards'});tone([200,260,320,400],.12,'sawtooth',.05)},1500);
+  }else{
+    $('#eq5').innerHTML=`<span class="eqb ok">🏠 Home sweet home!</span>`;
+    speak('You built the chocolate house! Look, the lights are on!');
+    const cx=BX+217,cy=BY+12;
+    for(let i=0;i<4;i++)later(()=>puff(cx,cy,'#ffffff',3,70,'#fx5'),600+i*500);
+    later(()=>$('#alive').animate([{transform:'translateY(0)'},{transform:'translateY(-14px)'},{transform:'translateY(0)'}],{duration:400,iterations:3}),800);
+  }
+  later(()=>{P.stage++;flyShell($('#pbrd'),'#pprogress',P.stage);speak('You got an emerald egg piece!')},3400);
+  later(()=>{$('#pscene svg').style.opacity=0;later(()=>loadPuzzle(false),450)},5200);
+}
 function golemAlive(){
-  $('#eq5').innerHTML=`<span class="eqb bad">😮 Uh oh… he's alive!</span>`;
-  $('#alive').innerHTML=`<svg x="${BX}" y="${BY}" width="300" height="300" viewBox="0 0 300 300" overflow="visible">${golemArt(true)}</svg>`;
-  $('#alive').style.opacity=1;$('#pieces').style.transition='opacity .6s';$('#pieces').style.opacity=0;
-  sfx.yay();confetti(30);
-  speak("You built the chocolate golem! Uh oh! He came alive! ROAR!");
-  later(()=>{tone([110,90,70],.35,'sawtooth',.12);$('#pscene').animate([{transform:'translate(0,0)'},{transform:'translate(-6px,3px)'},{transform:'translate(6px,-3px)'},{transform:'translate(0,0)'}],{duration:300,iterations:3})},1800);
+  $('#eq5').innerHTML=`<span class="eqb r">🧩 The golem is finished!</span>`;
+  sfx.yay();confetti(20);
+  speak('You built the chocolate golem! Oh no, here comes the warlock!');
+  $('#pcard').style.opacity=0;
+  const wl=$('#wl5'),W=[850,400];
+  later(()=>{poof(W[0],W[1]-90,'#b48cff','#fx5');tone([200,300,500],.15,'square',.06);wl.style.opacity=1;wlSay('Come alive, golem!',true,'p');wlLaugh(true,'p')},1500);
+  later(()=>{
+    const o=[W[0]+51*.85,W[1]-136*.85],gc=[BX+150,BY+150],beam=document.createElementNS(NS,'path');
+    beam.setAttribute('d',`M${o[0]} ${o[1]} Q${(o[0]+gc[0])/2} ${o[1]-150} ${gc[0]} ${gc[1]}`);
+    beam.setAttribute('fill','none');beam.setAttribute('stroke','#c77dff');beam.setAttribute('stroke-width','12');beam.setAttribute('stroke-linecap','round');beam.setAttribute('stroke-dasharray','18 14');
+    $('#fx5').appendChild(beam);tone([300,450,600,800,1000],.1,'square',.05);
+    beam.animate([{strokeDashoffset:0,opacity:0},{opacity:1,offset:.2},{strokeDashoffset:-200,opacity:1,offset:.8},{strokeDashoffset:-250,opacity:0}],{duration:1100,fill:'forwards'}).onfinish=()=>beam.remove();
+    for(let i=0;i<8;i++)later(()=>sparkleAt(gc[0]+rand(-110,110),gc[1]+rand(-110,110)),300+i*90);
+  },2900);
+  later(()=>{
+    showAlive();$('#eq5').innerHTML=`<span class="eqb bad">😮 Uh oh… he's alive!</span>`;
+    speak('ROAR! The warlock brought the golem to life!');
+    tone([110,90,70],.35,'sawtooth',.12);$('#pscene').animate([{transform:'translate(0,0)'},{transform:'translate(-6px,3px)'},{transform:'translate(6px,-3px)'},{transform:'translate(0,0)'}],{duration:300,iterations:3});
+  },4100);
+  later(()=>{wlSay('Ha ha ha!',true,'p')},5200);
+  later(()=>{wlSay('',true,'p');wlLaugh(false,'p');poof(W[0],W[1]-90,'#b48cff','#fx5');wl.style.opacity=0;tone([200,120,80],.3,'sawtooth',.08)},6400);
   later(()=>{const g=$('#alive');g.animate([{transform:'translate(0,0)'},{transform:'translate(120px,-10px)',offset:.25},{transform:'translate(240px,0)',offset:.5},{transform:'translate(360px,-10px)',offset:.75},{transform:'translate(520px,0)',opacity:0}],{duration:1800,fill:'forwards'});
-    speak("He's stomping away into the castle! We'll have to stop him in level five!")},2800);
-  later(winPuzzle,5600);
+    speak("He's stomping away into the castle! We'll have to stop him in level five!")},7000);
+  later(()=>{P.stage++;flyShell($('#pbrd'),'#pprogress',P.stage)},8200);
+  later(winPuzzle,9800);
 }
 function winPuzzle(){
   const opened=awardEgg('easy-4');state.pos='easy-4';save();
   sfx.win();confetti(80);
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open — go stop the golem!`:gl.html;
   modal(`<div class="rays">${egg('big-egg','','emerald')}</div>
-    <h2>You built the Chocolate Golem!</h2>
-    <p>Uh oh — he came alive and stomped off into the castle! You built an Emerald Egg. ${txt}</p>
+    <h2>You built all three puzzles!</h2>
+    <p>The warlock brought the Chocolate Golem to life and he stomped off into the castle! You built an Emerald Egg. ${txt}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
   speak(`Great building, ${me().name}! You got an emerald egg!`);
   $('#m-ok').onclick=()=>toMapAfterWin(opened);
@@ -1819,10 +2067,10 @@ function onTorchTap(e){
   else{tone([420,300],.1,'sine',.07);speak(m?String(m):'zero')}
   updateEq6();
 }
-function puff(x,y,col,n,up){
+function puff(x,y,col,n,up,fx){
   for(let i=0;i<(n||5);i++){const c=document.createElementNS(NS,'circle'),cx=x+rand(-20,20),cy=y+rand(-10,10);
     c.setAttribute('cx',cx);c.setAttribute('cy',cy);c.setAttribute('r',rand(8,16));c.setAttribute('fill',col);c.setAttribute('stroke','#2b2b2b');c.setAttribute('stroke-width','2');
-    $('#fx6').appendChild(c);
+    $(fx||'#fx6').appendChild(c);
     c.animate([{transform:'scale(.3)',opacity:.95,transformOrigin:`${cx}px ${cy}px`},{transform:`translate(${rand(-20,20)}px,${-(up||60)}px) scale(1.4)`,opacity:0,transformOrigin:`${cx}px ${cy}px`}],{duration:1000,delay:rand(0,200),easing:'ease-out',fill:'forwards'}).onfinish=()=>c.remove();}
 }
 function fireball(x0,y0,x1,y1,delay,bounce){
