@@ -287,7 +287,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
   <div class="eq" id="eq"></div>
   <div class="scene" id="scene"></div>
   <div class="drop-row"><button class="btn go" id="btn-drop">🪄 Drop!</button></div>
-  <div class="hint">Tap dragons to lift them with your wand. Make them match the boulder, then tap Drop!</div>
+  <div class="hint">Tap the dragons on the bridge to count them. Then lift more dragons with your wand and keep counting until you reach the boulder's number. Tap Drop!</div>
 </section>
 
 <!-- LEVEL 3: WARLOCK'S LAVA BRIDGE -->
@@ -301,7 +301,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
   <div class="eq" id="eq3"></div>
   <div class="scene" id="lscene"></div>
   <div class="drop-row"><button class="btn go" id="btn-lzap">⚡ Zap!</button></div>
-  <div class="hint">Tap pillars to pick them. Leave the magic number on the platform, then tap Zap!</div>
+  <div class="hint">Count the pillars. Tap pillars to zap them and count how many are left. Stop at the magic number on the platform, then tap Zap!</div>
 </section>
 
 <!-- LEVEL 5: CHOCOLATE GOLEM PUZZLE -->
@@ -526,12 +526,10 @@ function speak(t){
   if(state.muted)return;
   try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=.9;u.pitch=1.25;if(voice)u.voice=voice;speechSynthesis.speak(u)}catch(e){}
 }
-/* ---------- launch-screen music: an original chiptune adventure theme ---------- */
-const MUSIC={on:false,gain:null,timer:null,next:0};
-const BPM=126,BEAT=60/BPM;
+/* ---------- music: original chiptune songs (title, meadow variation, warlock boss) ---------- */
+const MUSIC={on:false,song:null,gain:null,timer:null,next:0};
 function nf(n){if(n==='R')return 0;const m=n.match(/^([A-G])(b|#)?(\d)$/);const base={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]]+(m[2]==='b'?-1:m[2]==='#'?1:0);return 440*Math.pow(2,((+m[3]+1)*12+base-69)/12)}
-// melody: [note, beats]  (16 bars of 4/4, written for this game)
-const MEL=[
+const TITLE_MEL=[
   ['G4',1],['C5',1],['E5',1.5],['D5',.5],  ['D5',1],['B4',1],['G4',2],
   ['A4',1],['C5',1],['E5',1],['A5',1],     ['G5',1.5],['F5',.5],['E5',1],['C5',1],
   ['E5',1],['G5',1],['C6',1.5],['B5',.5],  ['A5',1],['G5',1],['D5',2],
@@ -541,9 +539,53 @@ const MEL=[
   ['C5',1],['E5',1],['A5',1.5],['G5',.5],  ['F5',1],['E5',1],['F5',1],['A5',1],
   ['Bb5',1.5],['A5',.5],['F5',1],['D5',1], ['G5',2],['B4',1],['D5',1]
 ];
-// one chord per bar: [root, third, fifth] (bar 7 splits F then G)
-const CH=[['C','E','G'],['G','B','D'],['A','C','E'],['F','A','C'],['C','E','G'],['G','B','D'],['F','A','C','G','B','D'],['C','E','G'],
+const TITLE_CH=[['C','E','G'],['G','B','D'],['A','C','E'],['F','A','C'],['C','E','G'],['G','B','D'],['F','A','C','G','B','D'],['C','E','G'],
           ['A','C','E'],['F','A','C'],['C','E','G'],['G','B','D'],['A','C','E'],['F','A','C'],['Bb','D','F'],['G','B','D']];
+// boss theme: A minor, driving
+const BOSS_MEL=[
+  ['A4',.5],['A4',.5],['C5',.5],['A4',.5],['E5',1],['D5',.5],['C5',.5],
+  ['D5',.5],['C5',.5],['A4',1],['F4',1],['A4',1],
+  ['B4',.5],['B4',.5],['D5',.5],['B4',.5],['G5',1],['F5',.5],['E5',.5],
+  ['E5',1.5],['D#5',.5],['G#4',1],['B4',1],
+  ['A5',1],['G5',.5],['E5',.5],['C5',1],['E5',1],
+  ['F5',1.5],['E5',.5],['D5',1],['C5',1],
+  ['D5',.5],['F5',.5],['A5',1],['G5',.5],['F5',.5],['E5',1],
+  ['E5',2],['G#5',1],['B5',1]
+];
+const BOSS_CH=[['A','C','E'],['F','A','C'],['G','B','D'],['E','G#','B'],['A','C','E'],['F','A','C'],['D','F','A'],['E','G#','B']];
+// puzzle theme: light music-box tune in F major
+const PUZ_MEL=[
+  ['C5',.5],['F5',.5],['A5',1],['G5',.5],['F5',.5],['C5',1],
+  ['D5',1],['F5',.5],['E5',.5],['D5',2],
+  ['Bb4',.5],['D5',.5],['F5',1],['Bb5',1],['A5',1],
+  ['G5',1.5],['F5',.5],['E5',1],['C5',1],
+  ['A5',.5],['G5',.5],['F5',1],['C5',.5],['D5',.5],['F5',1],
+  ['G5',1],['Bb5',1],['A5',.5],['G5',.5],['F5',1],
+  ['E5',1],['G5',1],['C6',1],['Bb5',1],
+  ['A5',2],['F5',1],['R',1]
+];
+const PUZ_CH=[['F','A','C'],['D','F','A'],['Bb','D','F'],['C','E','G'],['F','A','C'],['G','Bb','D'],['C','E','G'],['F','A','C']];
+// golem boss theme: D minor, heavy and stompy
+const GOLEM_MEL=[
+  ['D5',1],['D5',.5],['F5',.5],['A5',1],['G5',.5],['F5',.5],
+  ['F5',1],['D5',1],['Bb4',1.5],['C5',.5],
+  ['E5',1],['E5',.5],['G5',.5],['C6',1],['Bb5',.5],['A5',.5],
+  ['A5',2],['C#5',1],['E5',1],
+  ['F5',.5],['E5',.5],['D5',.5],['E5',.5],['F5',1],['A5',1],
+  ['Bb5',1.5],['A5',.5],['G5',1],['D5',1],
+  ['F5',1],['D5',1],['E5',1],['G5',1],
+  ['A5',1],['G5',.5],['F5',.5],['E5',1],['C#5',1]
+];
+const GOLEM_CH=[['D','F','A'],['Bb','D','F'],['C','E','G'],['A','C#','E'],['D','F','A'],['G','Bb','D'],['Bb','D','F','C','E','G'],['A','C#','E']];
+const SONGS={
+  title:{bpm:126,mel:TITLE_MEL,ch:TITLE_CH,lead:'square',oct:0,vol:.32,style:'title'},
+  meadow:{bpm:112,mel:TITLE_MEL,ch:TITLE_CH,lead:'triangle',oct:1,vol:.16,style:'meadow'},
+  boss:{bpm:152,mel:BOSS_MEL,ch:BOSS_CH,lead:'square',oct:0,vol:.15,style:'boss'},
+  puzzle:{bpm:100,mel:PUZ_MEL,ch:PUZ_CH,lead:'triangle',oct:0,vol:.17,style:'puzzle'},
+  golem:{bpm:138,mel:GOLEM_MEL,ch:GOLEM_CH,lead:'square',oct:0,vol:.15,style:'golem'}
+};
+const SCREEN_SONG={home:'title',custom:'title',game:'meadow',bridge:'meadow',lava:'boss',puzzle:'puzzle',melt:'golem'};
+function shiftOct(n,o){if(n==='R'||!o)return n;return n.replace(/\d$/,d=>+d+o)}
 function mtone(ctx,dest,f,t,d,type,vol){
   if(!f)return;const o=ctx.createOscillator(),g=ctx.createGain();
   o.type=type;o.frequency.value=f;
@@ -561,46 +603,76 @@ function noise(ctx,dest,t,d,vol,hp){
 }
 function kick(ctx,dest,t){const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(40,t+.12);
   g.gain.setValueAtTime(.7,t);g.gain.exponentialRampToValueAtTime(.0001,t+.16);o.connect(g);g.connect(dest);o.start(t);o.stop(t+.18)}
-function scheduleLoop(t0){
-  const ctx=actx,dst=MUSIC.gain;let t=t0;
-  MEL.forEach(([n,b])=>{mtone(ctx,dst,nf(n),t,b*BEAT,'square',.16);t+=b*BEAT});
-  CH.forEach((c,bar)=>{
+function scheduleLoop(S,t0){
+  const ctx=actx,dst=MUSIC.gain,BEAT=60/S.bpm;let t=t0;
+  S.mel.forEach(([n,b])=>{const f=nf(shiftOct(n,S.oct));mtone(ctx,dst,f,t,b*BEAT,S.lead,S.lead==='triangle'?.3:.16);t+=b*BEAT});
+  S.ch.forEach((c,bar)=>{
     const bt=t0+bar*4*BEAT;
     for(let beat=0;beat<4;beat++){
-      const ch=c.length>3&&beat>=2?c.slice(3):c.slice(0,3);
-      const root=nf(ch[0]+'2'),fifth=nf(ch[2]+'2')*(nf(ch[2]+'2')<root?2:1);
-      mtone(ctx,dst,beat%2?fifth:root,bt+beat*BEAT,BEAT*.9,'triangle',.45);
-      for(let e=0;e<2;e++){const k=(beat*2+e)%4,nt=k===3?ch[1]+'5':ch[k%3]+'4';mtone(ctx,dst,nf(nt),bt+beat*BEAT+e*BEAT/2,BEAT/2*.8,'square',.035)}
-      if(beat%2===0)kick(ctx,dst,bt+beat*BEAT);else noise(ctx,dst,bt+beat*BEAT,.12,.22,1800);
-      noise(ctx,dst,bt+beat*BEAT+BEAT/2,.04,.06,7000);
+      const ch=c.length>3&&beat>=2?c.slice(3):c.slice(0,3),bt2=bt+beat*BEAT;
+      if(S.style==='golem'){
+        // stomping quarter-note bass with a low echo, kick on 1, 3 and the "and" of 4, snare on 2 and 4
+        mtone(ctx,dst,nf(ch[0]+'2'),bt2,BEAT*.8,'sawtooth',.2);mtone(ctx,dst,nf(ch[0]+'1'),bt2,BEAT*.5,'square',.08);
+        mtone(ctx,dst,nf(ch[2]+'3'),bt2+BEAT/2,BEAT/2*.8,'square',.05);
+        if(beat%2===0)kick(ctx,dst,bt2);else noise(ctx,dst,bt2,.16,.3,1300);
+        if(beat===3)kick(ctx,dst,bt2+BEAT/2);
+        noise(ctx,dst,bt2+BEAT/2,.04,.07,7000);
+      }else if(S.style==='puzzle'){
+        // soft bass on 1 and 3, music-box arpeggio, tiny hi-hat
+        if(beat%2===0)mtone(ctx,dst,nf(ch[0]+'3'),bt2,BEAT*1.8,'triangle',.3);
+        for(let e=0;e<2;e++){const k=(beat*2+e)%3;mtone(ctx,dst,nf(ch[k]+(k===0?'5':'4')),bt2+e*BEAT/2,BEAT/2*.7,'sine',.09)}
+        noise(ctx,dst,bt2+BEAT/2,.02,.03,9000);
+      }else if(S.style==='boss'){
+        // galloping octave bass, kick on every beat, snare on 2 and 4, eighth hats
+        const r2=nf(ch[0]+'2'),r3=nf(ch[0]+'3');
+        mtone(ctx,dst,r2,bt2,BEAT/2*.9,'sawtooth',.18);mtone(ctx,dst,r3,bt2+BEAT/2,BEAT/2*.9,'sawtooth',.14);
+        mtone(ctx,dst,nf(ch[1]+'4'),bt2,BEAT*.9,'square',.03);
+        kick(ctx,dst,bt2);if(beat%2)noise(ctx,dst,bt2,.14,.28,1500);
+        noise(ctx,dst,bt2+BEAT/2,.04,.08,7000);
+      }else{
+        const root=nf(ch[0]+'2'),f5=nf(ch[2]+'2'),fifth=f5<root?f5*2:f5;
+        mtone(ctx,dst,beat%2?fifth:root,bt2,BEAT*.9,'triangle',.45);
+        for(let e=0;e<2;e++){const k=(beat*2+e)%4,nt=k===3?ch[1]+'5':ch[k%3]+'4';mtone(ctx,dst,nf(nt),bt2+e*BEAT/2,BEAT/2*.8,'square',S.style==='meadow'?.025:.035)}
+        if(S.style==='title'){if(beat%2===0)kick(ctx,dst,bt2);else noise(ctx,dst,bt2,.12,.22,1800);noise(ctx,dst,bt2+BEAT/2,.04,.06,7000)}
+        else{if(beat===0)kick(ctx,dst,bt2);noise(ctx,dst,bt2+BEAT/2,.03,.04,8000)}
+      }
     }
   });
-  return t0+CH.length*4*BEAT;
+  return t0+S.ch.length*4*BEAT;
 }
-function startMusic(){
-  if(MUSIC.on||state.muted)return;
+function startMusic(name){
+  name=name||'title';
+  if(state.muted)return;
+  if(MUSIC.on&&MUSIC.song===name)return;
+  if(MUSIC.on)stopMusic();
   try{
     actx=actx||new (window.AudioContext||window.webkitAudioContext)();
     if(actx.state==='suspended')actx.resume();
-    MUSIC.on=true;MUSIC.gain=actx.createGain();MUSIC.gain.gain.setValueAtTime(.0001,actx.currentTime);
-    MUSIC.gain.gain.exponentialRampToValueAtTime(.32,actx.currentTime+1);MUSIC.gain.connect(actx.destination);
-    MUSIC.next=scheduleLoop(actx.currentTime+.15);
-    MUSIC.timer=setInterval(()=>{if(MUSIC.on&&actx.currentTime>MUSIC.next-3)MUSIC.next=scheduleLoop(MUSIC.next)},500);
+    const S=SONGS[name];
+    MUSIC.on=true;MUSIC.song=name;MUSIC.gain=actx.createGain();MUSIC.gain.gain.setValueAtTime(.0001,actx.currentTime);
+    MUSIC.gain.gain.exponentialRampToValueAtTime(S.vol,actx.currentTime+1);MUSIC.gain.connect(actx.destination);
+    MUSIC.next=scheduleLoop(S,actx.currentTime+.15);
+    const g=MUSIC.gain;
+    MUSIC.timer=setInterval(()=>{if(MUSIC.on&&MUSIC.gain===g&&actx.currentTime>MUSIC.next-3)MUSIC.next=scheduleLoop(S,MUSIC.next)},500);
   }catch(e){MUSIC.on=false}
 }
 function stopMusic(){
-  if(!MUSIC.on)return;MUSIC.on=false;clearInterval(MUSIC.timer);
-  try{const g=MUSIC.gain,t=actx.currentTime;g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(g.gain.value,t);g.gain.exponentialRampToValueAtTime(.0001,t+.6);setTimeout(()=>g.disconnect(),700)}catch(e){}
+  if(!MUSIC.on)return;MUSIC.on=false;MUSIC.song=null;clearInterval(MUSIC.timer);
+  try{const g=MUSIC.gain,t=actx.currentTime;g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(Math.max(g.gain.value,.0002),t);g.gain.exponentialRampToValueAtTime(.0001,t+.6);setTimeout(()=>g.disconnect(),700)}catch(e){}
 }
-const onLaunch=()=>['s-home','s-custom'].some(id=>$('#'+id).classList.contains('active'));
-// browsers only allow sound after a tap, so the first tap on the launch screen starts the music
-document.addEventListener('pointerdown',()=>{if(onLaunch())startMusic()},true);
+const currentScreen=()=>{const s=document.querySelector('.screen.active');return s?s.id.slice(2):'home'};
+const songForScreen=()=>SCREEN_SONG[currentScreen()]||null;
+window.__musicState=()=>MUSIC.on?MUSIC.song:'off';
+function syncMusic(){const s=songForScreen();if(s)startMusic(s);else stopMusic()}
+// browsers only allow sound after a tap, so the first tap starts the music for the current screen
+document.addEventListener('pointerdown',()=>{if(!MUSIC.on&&songForScreen())startMusic(songForScreen())},true);
+
 
 function renderMute(){$$('.mute-btn').forEach(b=>b.textContent=state.muted?'🔇':'🔊')}
-$$('.mute-btn').forEach(b=>b.addEventListener('click',()=>{state.muted=!state.muted;if(state.muted){try{speechSynthesis.cancel()}catch(e){}stopMusic()}else if(onLaunch())startMusic();save();renderMute();sfx.pop()}));
+$$('.mute-btn').forEach(b=>b.addEventListener('click',()=>{state.muted=!state.muted;if(state.muted){try{speechSynthesis.cancel()}catch(e){}stopMusic()}else syncMusic();save();renderMute();sfx.pop()}));
 
 /* ---------- screens ---------- */
-function show(name){$$('.screen').forEach(s=>s.classList.toggle('active',s.id==='s-'+name));window.scrollTo(0,0);if(name==='home'||name==='custom'){if(actx)startMusic()}else stopMusic()}
+function show(name){$$('.screen').forEach(s=>s.classList.toggle('active',s.id==='s-'+name));window.scrollTo(0,0);if(actx)syncMusic();else stopMusic()}
 
 /* clouds */
 (function(){const c=$('#clouds');for(let i=0;i<5;i++){const d=document.createElement('div');d.className='cloud';const w=rand(90,170);d.style.cssText=`width:${w}px;height:${w*.35}px;top:${rand(4,40)}vh;animation-duration:${rand(40,80)}s;animation-delay:-${rand(0,60)}s`;c.appendChild(d)}})();
@@ -956,7 +1028,7 @@ function buildScene(){
     <circle cx="586" cy="330" r="5" fill="#8a9097"/><circle cx="648" cy="372" r="4" fill="#8a9097"/>
     <text id="bnum" x="612" y="374" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="54" fill="#fff" stroke="#2b2b2b" stroke-width="6" paint-order="stroke">0</text></g>
   </g>
-  <ellipse cx="390" cy="205" rx="124" ry="98" fill="#a06cd5" opacity=".12" stroke="#a06cd5" stroke-width="3" stroke-dasharray="8 8"/>
+  <ellipse cx="430" cy="205" rx="124" ry="98" fill="#a06cd5" opacity=".12" stroke="#a06cd5" stroke-width="3" stroke-dasharray="8 8"/>
   <svg x="0" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg>
   ${wandG(me().wand,91,369,'wand')}
   <g id="dlayer" style="transition:opacity .4s"></g>
@@ -966,9 +1038,10 @@ function buildScene(){
 }
 function addDragon(state,slot,ci){
   const g=document.createElementNS(NS,'g');g.setAttribute('class','bd');g.dataset.i=B.dr.length;
-  g.innerHTML=`<g class="bd-in"><ellipse class="aura" cx="0" cy="-3" rx="30" ry="9" fill="#c9a6ff"/>${dragon(ci).replace('<svg ','<svg x="-25" y="-50" width="50" height="50" ')}</g>`;
+  g.innerHTML=`<g class="bd-in"><ellipse class="aura" cx="0" cy="-3" rx="30" ry="9" fill="#c9a6ff"/>${dragon(ci).replace('<svg ','<svg x="-25" y="-50" width="50" height="50" ')}
+    <g class="dbadge" style="display:none"><circle cx="17" cy="-46" r="13" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3"/><text x="17" y="-40" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="16" fill="#2b2b2b"></text></g></g>`;
   $('#dlayer').appendChild(g);
-  const d={el:g,state,slot,order:B.seq++,pre:false};B.dr.push(d);return d;
+  const d={el:g,state,slot,order:B.seq++,pre:false,cnum:0};B.dr.push(d);return d;
 }
 function setT(d,x,y,a,k,dur,ease){
   d.tx=x;d.ty=y;
@@ -977,9 +1050,25 @@ function setT(d,x,y,a,k,dur,ease){
 }
 function layout(dur=.6){
   B.dr.forEach(d=>d.el.classList.toggle('floating',d.state==='float'));
-  B.dr.filter(d=>d.state==='bank').forEach(d=>{const c=d.slot%3,r=Math.floor(d.slot/3);setT(d,152+c*54+(r%2?12:0),400-r*50,0,1.15,dur)});
-  byState('float').forEach((d,i)=>{const c=i%4,r=Math.floor(i/4);setT(d,318+c*48,268-r*48,0,1,dur)});
-  byState('plank').forEach((d,i)=>{const c=i%4,r=Math.floor(i/4);const [x,y]=rot(322+c*42,392-r*42,B.angle);setT(d,x,y,B.angle,1,dur)});
+  B.dr.filter(d=>d.state==='bank').forEach(d=>{const c=d.slot%3,r=Math.floor(d.slot/3);setT(d,146+c*50+(r%2?10:0),400-r*50,0,1.15,dur)});
+  byState('float').forEach((d,i)=>{const c=i%4,r=Math.floor(i/4);setT(d,362+c*46,268-r*48,0,1,dur)});
+  byState('plank').forEach((d,i)=>{const c=i%4,r=Math.floor(i/4);const [x,y]=rot(374+c*38,392-r*42,B.angle);setT(d,x,y,B.angle,1,dur)});
+  updateBadges();
+}
+/* counting help: bridge dragons count 1..pre when tapped, lifted dragons keep counting on (pre+1, pre+2, ...) */
+function setBadge(d,n){
+  const b=d.el.querySelector('.dbadge'),sv=d.el.querySelector('svg');
+  if(n){b.style.display='';b.querySelector('text').textContent=n;const sp=WANDS[me().wand].spark;sv.style.filter=`drop-shadow(0 0 6px ${sp}) drop-shadow(0 0 2px ${sp})`}
+  else{b.style.display='none';sv.style.filter=''}
+}
+function countAllPre(){B.dr.filter(d=>d.pre).sort((a,b)=>a.order-b.order).forEach(d=>{if(!d.cnum)d.cnum=++B.cpre})}
+function updateBadges(){
+  B.dr.forEach(d=>{
+    if(d.state==='bank'||d.state==='water')setBadge(d,0);
+    else if(d.pre)setBadge(d,d.cnum);
+  });
+  byState('float').forEach((d,i)=>setBadge(d,B.pre+i+1));
+  byState('plank').filter(d=>!d.pre).forEach((d,i)=>setBadge(d,B.pre+i+1));
 }
 function setPlank(instant){
   const p=$('#plank');
@@ -1003,7 +1092,7 @@ function newBridgeRound(first){
   const [a,b]=BR[B.round];let t;do{t=rand(a,b)}while(t===B.total&&a!==b);
   B.total=t;B.pre=rand(1,Math.max(1,Math.floor(t/2)));
   const avail=(t-B.pre)+rand(2,3);
-  $('#dlayer').innerHTML='';B.dr=[];B.seq=0;
+  $('#dlayer').innerHTML='';B.dr=[];B.seq=0;B.cpre=0;
   const c0=rand(0,5);
   for(let i=0;i<B.pre;i++){addDragon('plank',0,c0+i).pre=true}
   for(let s=avail-1;s>=0;s--)addDragon('bank',s,c0+B.pre+s);
@@ -1012,7 +1101,7 @@ function newBridgeRound(first){
   $('#dlayer').style.opacity=1;
   updateEq();B.busy=false;$('#btn-drop').disabled=false;
   const intro=first?'Balance the bridge so the baby dragons can get to the castle! ':'';
-  speak(`${intro}The boulder is ${t}. ${B.pre} dragon${B.pre>1?'s are':' is'} on the bridge. How many more do we need?`);
+  speak(`${intro}The boulder is ${t}. Tap the dragon${B.pre>1?'s':''} on the bridge to count. Then lift more dragons and keep counting to ${t}!`);
 }
 function zap(d){
   const w=$('#wand');w.classList.remove('zap');void w.getBBox();w.classList.add('zap');
@@ -1025,13 +1114,21 @@ function zap(d){
 function onDragonTap(e){
   const g=e.target.closest('.bd');if(!g||B.busy)return;
   const d=B.dr[+g.dataset.i];
+  if(d.pre&&d.state==='plank'){
+    if(d.cnum)return;
+    d.cnum=++B.cpre;layout(0);zap(d);tone([900,1300],.08,'triangle',.05);
+    speak(B.cpre===B.pre?`${B.cpre}! Now lift more and keep counting!`:String(B.cpre));
+    return;
+  }
   if(d.state==='bank'){
     if(countS('float')>=12)return;
+    countAllPre();
     d.state='float';d.order=++B.seq;layout();zap(d);
-    tone([520,780],.12,'triangle',.07);speak(String(countS('float')));
+    tone([520,780],.12,'triangle',.07);
+    const n=B.pre+countS('float');speak(n===B.total?`${n}!`:String(n));
   }else if(d.state==='float'){
     d.state='bank';layout();tone([420,300],.1,'sine',.07);
-    const f=countS('float');speak(f?String(f):'zero');
+    speak(String(B.pre+countS('float')));
   }else return;
   updateEq();
 }
@@ -1237,14 +1334,15 @@ function newLavaRound(first){
     h+=`<g class="pillar" data-x="${cx.toFixed(1)}"><rect class="pbody" x="${cx-w/2}" y="276" width="${w}" height="190" fill="#a59cb5" stroke="#2b2b2b" stroke-width="4"/>
     <line x1="${cx}" y1="294" x2="${cx}" y2="460" stroke="#2b2b2b" stroke-width="2" opacity=".3"/>
     <rect x="${cx-w/2-5}" y="274" width="${w+10}" height="14" rx="3" fill="#c3bbd0" stroke="#2b2b2b" stroke-width="4"/>
-    <path class="pcrack" d="M${cx-w/4} 300 l${w/2.5} 28 l-${w/2.5} 24 l${w/2.5} 28" fill="none" stroke="#2b2b2b" stroke-width="3" opacity="0"/></g>`}
-  $('#pillars').innerHTML=h;
+    <path class="pcrack" d="M${cx-w/4} 300 l${w/2.5} 28 l-${w/2.5} 24 l${w/2.5} 28" fill="none" stroke="#2b2b2b" stroke-width="3" opacity="0"/>
+    <g class="pbadge"><circle cx="${cx}" cy="384" r="14" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3"/><text x="${cx}" y="390" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="17" fill="#2b2b2b"></text></g></g>`}
+  $('#pillars').innerHTML=h;updatePillarBadges();
   $('#lnum').textContent=L.R;$('#pcracks').style.opacity=0;$('#fx3').innerHTML='';
   $('#wl').style.transform=`translate(${WL[0]}px,${WL[1]}px)`;wlSay('');wlLaugh(false);
   $('#lscene svg').style.opacity=1;
   updateEq3();$('#btn-lzap').disabled=false;
   const intro=first?`The evil warlock is blocking the door! `:'';
-  speak(`${intro}There are ${T} pillars. Zap pillars so only ${L.R} ${L.R===1?'is':'are'} left!`);
+  speak(`${intro}Count the pillars. There are ${T}. Zap pillars until only ${L.R} ${L.R===1?'is':'are'} left!`);
 }
 function zap3(x,y){
   const w=$('#wand3');w.classList.remove('zap');void w.getBBox();w.classList.add('zap');
@@ -1252,11 +1350,18 @@ function zap3(x,y){
   $('#fx3').appendChild(sp);
   sp.animate([{transform:`translate(${wandTip(131,369)[0]}px,${wandTip(131,369)[1]}px)`,opacity:1},{transform:`translate(${x}px,${y}px) rotate(180deg)`,opacity:0}],{duration:420,easing:'ease-out'}).onfinish=()=>sp.remove();
 }
+/* counting help: standing pillars are numbered 1..left, and each zap says how many are left */
+function updatePillarBadges(){
+  let n=0;$$('#pillars .pillar').forEach(g=>{const b=g.querySelector('.pbadge');
+    if(g.classList.contains('marked')||g.dataset.gone){b.style.display='none'}else{b.style.display='';b.querySelector('text').textContent=++n}});
+}
 function onPillarTap(e){
   const g=e.target.closest('.pillar');if(!g||L.busy)return;
-  g.classList.toggle('marked');const m=$$('#pillars .pillar.marked').length;
-  if(g.classList.contains('marked')){zap3(+g.dataset.x,330);tone([900,1300],.1,'square',.05);speak(String(m))}
-  else{tone([420,300],.1,'sine',.07);speak(m?String(m):'zero')}
+  g.classList.toggle('marked');updatePillarBadges();
+  const left=L.T-$$('#pillars .pillar.marked').length;
+  if(g.classList.contains('marked')){zap3(+g.dataset.x,330);tone([900,1300],.1,'square',.05)}
+  else tone([420,300],.1,'sine',.07);
+  speak(left===L.R?`${left} left!`:`${left} left`);
   updateEq3();
 }
 function arcFrames(x0,y0,x1,y1,h,rot0,rot1,n=14){const f=[];for(let i=0;i<=n;i++){const t=i/n;f.push({transform:`translate(${x0+(x1-x0)*t}px,${y0+(y1-y0)*t-4*h*t*(1-t)}px) rotate(${rot0+(rot1-rot0)*t}deg)`})}return f}
@@ -1532,6 +1637,7 @@ function torchMarkup(i){
       <path class="flame" d="M${x} 274 Q${x+18} 298 ${x+11} 316 Q${x} 324 ${x-11} 316 Q${x-18} 298 ${x} 274Z" fill="#ff7b29" ${o}/>
       <path class="flame" d="M${x} 292 Q${x+8} 304 ${x+5} 314 Q${x} 318 ${x-5} 314 Q${x-8} 304 ${x} 292Z" fill="#ffd23f"/>
     </g>
+    <g class="tbadge" style="display:none"><circle cx="${x}" cy="372" r="13" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3"/><text x="${x}" y="378" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="16" fill="#2b2b2b"></text></g>
     <rect x="${x-22}" y="268" width="44" height="134" fill="transparent"/>
   </g>`;
 }
@@ -1577,7 +1683,8 @@ function setMelt(s,instant){
   $('#gm-face').style.opacity=s>=5?1:0;
 }
 const litTorches=()=>$$('#torches .torch.lit');
-function setLit(g,on){g.classList.toggle('lit',on);g.querySelector('.tflame').style.opacity=on?1:0}
+function setLit(g,on){g.classList.toggle('lit',on);g.querySelector('.tflame').style.opacity=on?1:0;numberTorches()}
+function numberTorches(){let n=0;$$('#torches .torch').forEach(g=>{const b=g.querySelector('.tbadge');if(g.classList.contains('lit')){b.style.display='';b.querySelector('text').textContent=++n}else b.style.display='none'})}
 function updateEq6(res){
   const m=litTorches().length,q=M.q;
   let h=`<span class="eqb r">${q.txt}</span><span class="op">=</span>`;
