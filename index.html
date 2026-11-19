@@ -280,6 +280,12 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 .vknot.pulse{animation:pulse 1s ease-in-out infinite}
 #vtiles .num{width:clamp(64px,11vw,100px);height:clamp(76px,13vw,116px);font-size:clamp(42px,8vw,68px)}
 #vtiles .num.used{opacity:.25;pointer-events:none}
+.bat-wl,.bat-wr{transform-box:fill-box}
+.bat-wl{transform-origin:100% 30%}.bat-wr{transform-origin:0% 30%}
+.flapping .bat-wl{animation:batL .18s ease-in-out infinite alternate}
+.flapping .bat-wr{animation:batR .18s ease-in-out infinite alternate}
+@keyframes batL{from{transform:rotate(-25deg)}to{transform:rotate(20deg)}}
+@keyframes batR{from{transform:rotate(25deg)}to{transform:rotate(-20deg)}}
 /* MODAL */
 .modal{position:fixed;inset:0;background:rgba(30,30,50,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .modal.hidden{display:none}
@@ -300,6 +306,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 <body>
 <div class="clouds" id="clouds"></div>
 <div class="floaters" id="floaters"></div>
+<svg id="fxlayer" style="position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:70;overflow:visible"></svg>
 
 <!-- HOME -->
 <section id="s-home" class="screen active">
@@ -662,6 +669,53 @@ function wandG(type,hx,hy,id){const w=WANDS[type]||WANDS.wood;return `<g transfo
 function wandTip(hx,hy){const r=WAND_ANGLE*Math.PI/180;return[hx+60*Math.sin(r),hy-60*Math.cos(r)]}
 function avatarWithWand(c){return avatar(c).replace('viewBox="0 0 120 150"','viewBox="-6 0 162 150"').replace(/<\/svg>\s*$/,`${wandG(c.wand,99,117)}</svg>`)}
 function wandIcon(type){return `<svg viewBox="-20 -90 40 100">${(WANDS[type]||WANDS.wood).svg()}</svg>`}
+
+/* ---------- wand magic: each wand shoots its own kind of sparkle ---------- */
+const WFX={
+  wood:()=>`<polygon points="${star(0,0,8,3.4)}" fill="#ffd23f" stroke="#2b2b2b" stroke-width="1.5" stroke-linejoin="round"/>`,
+  bone:()=>`<g fill="#f4f4ea" stroke="#2b2b2b" stroke-width="1.4"><circle cx="-6" cy="-2.2" r="2.6"/><circle cx="-6" cy="2.2" r="2.6"/><circle cx="6" cy="-2.2" r="2.6"/><circle cx="6" cy="2.2" r="2.6"/><rect x="-6" y="-2" width="12" height="4"/></g><rect x="-6" y="-1.3" width="12" height="2.6" fill="#f4f4ea"/><circle r="9" fill="#7cf29a" opacity=".25"/>`,
+  crystal:()=>`<polygon points="0,-10 6,0 0,10 -6,0" fill="#7fe3ff" stroke="#2b2b2b" stroke-width="1.5" stroke-linejoin="round"/><path d="M-2 -5 L0 -8" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>`,
+  fire:()=>`<path d="M0 -11 Q9 -2 5 6 Q0 10 -5 6 Q-9 -2 0 -11Z" fill="#ff7b29" stroke="#2b2b2b" stroke-width="1.5"/><path d="M0 -3 Q3 1 2 5 Q0 7 -2 5 Q-3 1 0 -3Z" fill="#ffd23f"/>`,
+  hotdog:()=>`<path d="M0 -10 Q6 -1 5.5 4 A5.5 5.5 0 1 1 -5.5 4 Q-6 -1 0 -10Z" fill="#e8173a" stroke="#2b2b2b" stroke-width="1.5"/><circle cx="-2" cy="3" r="1.6" fill="#ff9a9a"/>`,
+  churro:()=>Math.random()<.5?`<path d="M0 -8 L2 -2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2 -2Z" fill="#e0a050" stroke="#7b4a26" stroke-width="1.2"/>`:`<circle r="3" fill="#a0522d"/><circle cx="5" cy="4" r="2" fill="#c8823f"/><circle cx="-4" cy="5" r="1.6" fill="#7b4a26"/>`,
+  candycane:()=>`<path d="M0 -8 L1.8 -1.8 L8 0 L1.8 1.8 L0 8 L-1.8 1.8 L-8 0 L-1.8 -1.8Z" fill="${Math.random()<.5?'#fff':'#ffb3c7'}" stroke="#e8173a" stroke-width="1"/><circle cx="6" cy="-6" r="1.4" fill="#fff"/>`
+};
+WFX.hotdog.noSpin=true;WFX.fire.noSpin=true;
+function wandFX(fx,x0,y0,x1,y1,dur,sc){
+  const L=typeof fx==='string'?$(fx):fx;if(!L)return;dur=dur||450;sc=sc||1;
+  const w=me().wand,mk=(html,tr)=>{const g=document.createElementNS(NS,'g');g.innerHTML=html;L.appendChild(g);return g};
+  if(w==='remote'){
+    const a=Math.atan2(y1-y0,x1-x0)*180/Math.PI;
+    for(let i=0;i<3;i++){const g=mk(`<path d="M-2 -11 Q8 0 -2 11" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linecap="round"/><path d="M-2 -11 Q8 0 -2 11" fill="none" stroke="#ff4757" stroke-width="3.5" stroke-linecap="round"/>`);
+      g.style.opacity=0;
+      g.animate([{transform:`translate(${x0}px,${y0}px) rotate(${a}deg) scale(${.5*sc})`,opacity:1},{transform:`translate(${x1}px,${y1}px) rotate(${a}deg) scale(${1.7*sc})`,opacity:.2}],{duration:dur,delay:i*120,easing:'ease-out'}).onfinish=()=>g.remove()}
+    setTimeout(()=>{const r=mk(`<circle r="6" fill="none" stroke="#ff4757" stroke-width="4"/>`);
+      r.animate([{transform:`translate(${x1}px,${y1}px) scale(1)`,opacity:1},{transform:`translate(${x1}px,${y1}px) scale(5)`,opacity:0}],{duration:450,easing:'ease-out'}).onfinish=()=>r.remove()},dur+200);
+    return;
+  }
+  if(w==='fishing'){
+    const mx=(x0+x1)/2,my=Math.max(y0,y1)+40;
+    const line=mk(`<path d="M${x0} ${y0} Q${mx} ${my} ${x1} ${y1}" pathLength="1" fill="none" stroke="#2b2b2b" stroke-width="2.5" stroke-dasharray="1 1" stroke-dashoffset="1"/>`),p=line.querySelector('path');
+    p.animate([{strokeDashoffset:1},{strokeDashoffset:0,offset:.45},{strokeDashoffset:0,offset:.7},{strokeDashoffset:1}],{duration:dur+500,easing:'ease-in-out',fill:'forwards'}).onfinish=()=>line.remove();
+    const hook=mk(`<path d="M0 -10 V4 A5 5 0 0 1 -10 4" fill="none" stroke="#9aa0a6" stroke-width="3" stroke-linecap="round"/><circle cy="-12" r="4" fill="#e8173a" stroke="#2b2b2b" stroke-width="1.5"/>`);
+    hook.style.opacity=0;
+    hook.animate([{transform:`translate(${x0}px,${y0}px)`,opacity:0},{transform:`translate(${x1}px,${y1}px)`,opacity:1,offset:.45},{transform:`translate(${x1}px,${y1+4}px)`,opacity:1,offset:.7},{transform:`translate(${x0}px,${y0}px)`,opacity:0}],{duration:dur+500,easing:'ease-in-out'}).onfinish=()=>hook.remove();
+    setTimeout(()=>{for(let i=0;i<6;i++){const d=mk(`<circle r="3.5" fill="#cfe9ff" stroke="#2b2b2b" stroke-width="1.5"/>`),a=-Math.PI/2+(i-2.5)*.45;
+      d.animate([{transform:`translate(${x1}px,${y1}px)`,opacity:1},{transform:`translate(${x1+Math.cos(a)*30}px,${y1+Math.sin(a)*30}px)`,opacity:0}],{duration:450,easing:'ease-out'}).onfinish=()=>d.remove()}},(dur+500)*.45);
+    return;
+  }
+  const P=WFX[w]||WFX.wood,spin=!P.noSpin;
+  // the main shot plus a little trail behind it
+  for(let i=0;i<5;i++){const g=mk(P()),k=(i?1-i*.13:1.6)*sc,jx=i?rand(-10,10):0,jy=i?rand(-10,10):0,r0=spin?rand(0,90):0,r1=spin?r0+240:0;
+    g.style.opacity=0;
+    g.animate([{transform:`translate(${x0}px,${y0}px) rotate(${r0}deg) scale(${k*.6})`,opacity:1},{transform:`translate(${x1+jx}px,${y1+jy}px) rotate(${r1}deg) scale(${k})`,opacity:i?.6:1}],{duration:dur,delay:i*45,easing:'ease-out'}).onfinish=()=>g.remove()}
+  // a puff at the wand tip
+  for(let i=0;i<3;i++){const g=mk(P());g.style.opacity=0;
+    g.animate([{transform:`translate(${x0}px,${y0}px) scale(${.5*sc})`,opacity:1},{transform:`translate(${x0+rand(-18,18)*sc}px,${y0-rand(14,30)*sc}px) scale(${.8*sc})`,opacity:0}],{duration:420,delay:i*60,easing:'ease-out'}).onfinish=()=>g.remove()}
+  // a burst where it lands
+  setTimeout(()=>{for(let i=0;i<7;i++){const g=mk(P()),a=i*Math.PI*2/7+Math.random()*.4,dd=rand(26,44)*sc;
+    g.animate([{transform:`translate(${x1}px,${y1}px) scale(${.6*sc})`,opacity:1},{transform:`translate(${x1+Math.cos(a)*dd}px,${y1+Math.sin(a)*dd+(w==='hotdog'?14*sc:0)}px) rotate(${spin?rand(-180,180):0}deg) scale(${.9*sc})`,opacity:0}],{duration:520,easing:'ease-out'}).onfinish=()=>g.remove()}},dur);
+}
 
 /* ---------- dragons & eggs ---------- */
 const DCOL=[['#5cc96b','#d4f7bf'],['#a06cd5','#ead9fc'],['#ff7eb6','#ffdcec'],['#4fa8ff','#d3e9ff'],['#ff9f43','#ffe4c2'],['#20c4b0','#c9f6ef']];
@@ -1312,7 +1366,7 @@ function newChest(first){
   [0,1,2].forEach(fillPen);
   activateDial();
   const cn=CNAME[G.cols[0]];
-  speak(first?`This treasure chest has a secret number lock! Count each color of baby dragons to find the numbers. How many ${cn} dragons?`
+  speak(first?`Welcome to Dragon Meadow! The baby dragons found three treasure chests. Each one hides a piece of a golden egg! This chest has a secret number lock! Count each color of baby dragons to find the numbers. How many ${cn} dragons?`
              :`A new treasure chest! How many ${cn} dragons?`);
 }
 function fillPen(i){
@@ -1342,11 +1396,7 @@ function domZap(toEl,bsel){
     const r=sv.getBoundingClientRect(),[tx,ty]=wandTip(99,117);
     const sx=r.left+(tx+6)/162*r.width,sy=r.top+ty/150*r.height;
     const t=toEl.getBoundingClientRect(),ex=t.left+t.width/2,ey=t.top+t.height/2;
-    const d=document.createElement('div');d.className='shard';d.style.width='34px';d.style.height='34px';d.style.transition='transform .35s ease-out, opacity .35s';
-    d.innerHTML=`<svg viewBox="-17 -17 34 34"><polygon points="${star(0,0,15,6)}" fill="${WANDS[me().wand].spark}" stroke="#2b2b2b" stroke-width="2" stroke-linejoin="round"/></svg>`;
-    d.style.left=(sx-17)+'px';d.style.top=(sy-17)+'px';document.body.appendChild(d);d.getBoundingClientRect();
-    d.style.transform=`translate(${ex-sx}px,${ey-sy}px) rotate(200deg) scale(1.2)`;
-    setTimeout(()=>{d.style.opacity=0},300);setTimeout(()=>d.remove(),700);
+    wandFX('#fxlayer',sx,sy,ex,ey,380,1.5);
     const w=sv.querySelector('.wand-sw');if(w){w.classList.remove('zap');void w.getBBox();w.classList.add('zap')}
   }catch(e){}
 }
@@ -1427,9 +1477,9 @@ function winGame(){
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
   modal(`<div class="rays">${egg('big-egg','','gold')}</div>
     <h2>You built a Golden Egg!</h2>
-    <p>You opened all three treasure chests! ${txt}</p>
+    <p>You opened all three treasure chests! But look — the evil warlock is guarding the baby dragons' castle across the river! ${txt}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-  speak(`Hooray ${me().name}! You opened all three chests and built a golden egg! `+(opened.length?'':gl.say));
+  speak(`Hooray ${me().name}! You opened all three chests and built a golden egg! But oh no, an evil warlock took over the baby dragons' castle! `+(opened.length?'':gl.say));
   $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
 $('#game-back').addEventListener('click',()=>{sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
@@ -1552,16 +1602,12 @@ function newBridgeRound(first){
   $('#bnum').textContent=t;$('#wl2splat').innerHTML='';wlAngry('b',false);wlSay('',true,'b');wlLaugh(false,'b');
   layout(0);$('#scene svg').style.opacity=1;
   updateEq();B.busy=false;$('#btn-drop').disabled=false;
-  const intro=first?'The evil warlock is guarding the castle! Load the catapult with ice cream to splat him! ':'';
+  const intro=first?'The baby dragons want to go home, but the evil warlock is guarding their castle! Load the catapult with ice cream to splat him! ':'';
   speak(`${intro}The catapult needs ${t} scoops. Tap the pink scoop${B.pre>1?'s':''} to count. Then load more ice cream and keep counting to ${t}!`);
 }
 function zap(d){
   const w=$('#wand');w.classList.remove('zap');void w.getBBox();w.classList.add('zap');
-  const sp=document.createElementNS(NS,'polygon');sp.setAttribute('points',star(0,0,12,5));sp.setAttribute('fill',WANDS[me().wand].spark);sp.setAttribute('stroke','#2b2b2b');sp.setAttribute('stroke-width','2');
-  sp.style.transform=`translate(${wandTip(91,369)[0]}px,${wandTip(91,369)[1]}px)`;sp.style.transition='transform .45s ease-out, opacity .45s';
-  $('#fx').appendChild(sp);sp.getBoundingClientRect();
-  sp.style.transform=`translate(${d.tx}px,${d.ty-10}px) rotate(180deg)`;sp.style.opacity=0;
-  setTimeout(()=>sp.remove(),500);
+  const [tx,ty]=wandTip(91,369);wandFX('#fx',tx,ty,d.tx,d.ty-10,420);
 }
 function onDragonTap(e){
   const g=e.target.closest('.bd');if(!g||B.busy)return;
@@ -1684,9 +1730,9 @@ function winBridge(){
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
   modal(`<div class="rays">${egg('big-egg','','sapphire')}</div>
     <h2>You built a Sapphire Egg!</h2>
-    <p>The warlock is covered in ice cream! ${txt}</p>
+    <p>The warlock is covered in ice cream! He ran inside the castle to call his gargoyles. Let's go after him! ${txt}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-  speak(`Hooray ${me().name}! You splatted the warlock with ice cream! You got a sapphire egg! `+(opened.length?'':gl.say));
+  speak(`Hooray ${me().name}! You splatted the warlock with ice cream! You got a sapphire egg! He ran inside the castle. Let's go after him! `+(opened.length?'':gl.say));
   $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
 $('#btn-drop').addEventListener('click',dropDragons);
@@ -1816,7 +1862,7 @@ function newLavaRound(first){
   const gs=$('#ggs');gs.style.opacity=0;gs.classList.remove('flying');
   $('#lscene svg').style.opacity=1;
   updateEq3();$('#btn-lzap').disabled=true;
-  const intro=first?'The evil warlock is guarding the door! ':'';
+  const intro=first?'We are inside the castle! The warlock is guarding the door to his secret room! ':'';
   speak(`${intro}He is summoning a gargoyle! Count the pillars. There are ${T}. Zap pillars until only ${L.R} ${L.R===1?'is':'are'} left!`);
   summonGargoyle();
 }
@@ -1834,9 +1880,7 @@ function summonGargoyle(){
 }
 function zap3(x,y){
   const w=$('#wand3');w.classList.remove('zap');void w.getBBox();w.classList.add('zap');
-  const sp=document.createElementNS(NS,'polygon');sp.setAttribute('points',star(0,0,12,5));sp.setAttribute('fill',WANDS[me().wand].spark);sp.setAttribute('stroke','#2b2b2b');sp.setAttribute('stroke-width','2');
-  $('#fx3').appendChild(sp);
-  sp.animate([{transform:`translate(${wandTip(131,369)[0]}px,${wandTip(131,369)[1]}px)`,opacity:1},{transform:`translate(${x}px,${y}px) rotate(180deg)`,opacity:0}],{duration:420,easing:'ease-out'}).onfinish=()=>sp.remove();
+  const [tx,ty]=wandTip(131,369);wandFX('#fx3',tx,ty,x,y,420);
 }
 /* counting help: standing pillars are numbered 1..left, and each zap says how many are left */
 function updatePillarBadges(){
@@ -1945,9 +1989,9 @@ function winLava(){
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
   modal(`<div class="rays">${egg('big-egg','','sapphire')}</div>
     <h2>You beat the gargoyles!</h2>
-    <p>The warlock ran away, the castle door is open, and you built a Sapphire Egg! ${txt}</p>
+    <p>The warlock ran away, the castle door is open, and you built a Sapphire Egg! Behind the door is the warlock's secret puzzle room… ${txt}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-  speak(`Hooray ${me().name}! You beat the warlock's gargoyles! You got a sapphire egg!`);
+  speak(`Hooray ${me().name}! You beat the warlock's gargoyles! You got a sapphire egg! Behind the door is the warlock's secret puzzle room!`);
   $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
 $('#btn-lzap').addEventListener('click',lavaZap);
@@ -2101,7 +2145,7 @@ function loadPuzzle(first){
   $('#pscene svg').style.opacity=1;
   updatePrompt();
   const what={car:'a chocolate car',house:'a chocolate house',golem:'something big'}[z.name];
-  speak(first?`The warlock left magic puzzles in the castle! This one is ${what}. Lift a puzzle piece with your wand, then put it where its number belongs.`
+  speak(first?`This is the warlock's secret puzzle room! He left magic puzzles here. Let's build them! This one is ${what}. Lift a puzzle piece with your wand, then put it where its number belongs.`
              :`A new puzzle! This one is ${what}!`);
 }
 function updatePrompt(){
@@ -2148,10 +2192,7 @@ function onSlotTap(e){
 }
 function zapAt(wid,fxid,hx,hy,x,y){
   const w=$('#'+wid);if(w){w.classList.remove('zap');void w.getBBox();w.classList.add('zap')}
-  const [tx,ty]=wandTip(hx,hy),sp=document.createElementNS(NS,'polygon');
-  sp.setAttribute('points',star(0,0,12,5));sp.setAttribute('fill',WANDS[me().wand].spark);sp.setAttribute('stroke','#2b2b2b');sp.setAttribute('stroke-width','2');
-  $('#'+fxid).appendChild(sp);
-  sp.animate([{transform:`translate(${tx}px,${ty}px)`,opacity:1},{transform:`translate(${x}px,${y}px) rotate(180deg)`,opacity:0}],{duration:420,easing:'ease-out'}).onfinish=()=>sp.remove();
+  const [tx,ty]=wandTip(hx,hy);wandFX('#'+fxid,tx,ty,x,y,420);
 }
 function sparkleAt(x,y){
   for(let i=0;i<8;i++){const p=document.createElementNS(NS,'polygon');p.setAttribute('points',star(x,y,9,4));p.setAttribute('fill','#ffd23f');p.setAttribute('stroke','#2b2b2b');p.setAttribute('stroke-width','2');
@@ -2217,7 +2258,7 @@ function winPuzzle(){
     <h2>You built all three puzzles!</h2>
     <p>The warlock brought the Chocolate Golem to life and he stomped off into the castle! You built an Emerald Egg. ${txt}</p>
     <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-  speak(`Great building, ${me().name}! You got an emerald egg!`);
+  speak(`Great building, ${me().name}! You got an emerald egg! Now let's find that chocolate golem!`);
   $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
 $('#puzzle-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
@@ -2283,8 +2324,8 @@ function buildMelt(){
   </g>
   <g id="wl6" style="transform:translate(${WL6[0]}px,${WL6[1]}px) scale(.7)">${warlockSVG('m')}</g>
   <g id="torches">${torches}</g>
-  <g id="pl6"><svg x="0" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg></g>
-  ${wandG(me().wand,91,369,'wand6')}
+  <g id="pl6"><svg x="0" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg>
+  ${wandG(me().wand,91,369,'wand6')}</g>
   <g id="fx6"></g>
   </svg>`;
   $('#torches').addEventListener('click',onTorchTap);
@@ -2409,17 +2450,53 @@ function meltWin(){
     speak('The warlock is so angry! He is running away!')},900);
   later(()=>{wlSay('',true,'m');const f=[];for(let i=0;i<=8;i++){const t=i/8;f.push({transform:`translate(${W[0]+t*560}px,${W[1]-(i%2?16:0)}px) scale(-.7,.7)`})}
     wl.animate(f,{duration:1500,easing:'ease-in',fill:'forwards'});tone([500,400,300,200],.08,'square',.05)},2600);
-  later(()=>{
+  later(batArrives,4400);
+}
+function batSVG(){
+  const o='stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"';
+  return `<g class="bat-wl"><path d="M-14 -4 Q-40 -34 -74 -20 Q-66 -8 -70 4 Q-56 -2 -50 10 Q-40 0 -30 12 Q-24 0 -14 6Z" fill="#7d5ba6" ${o}/></g>
+    <g class="bat-wr"><path d="M14 -4 Q40 -34 74 -20 Q66 -8 70 4 Q56 -2 50 10 Q40 0 30 12 Q24 0 14 6Z" fill="#7d5ba6" ${o}/></g>
+    <path d="M-16 -18 L-22 -44 L-4 -26Z M16 -18 L22 -44 L4 -26Z" fill="#9b7bc4" ${o}/><path d="M-15 -24 L-18 -36 L-9 -27Z M15 -24 L18 -36 L9 -27Z" fill="#ffb3d1"/>
+    <ellipse cx="0" cy="0" rx="22" ry="24" fill="#9b7bc4" ${o}/><ellipse cx="0" cy="6" rx="13" ry="14" fill="#cdb8e8"/>
+    <circle cx="-8" cy="-6" r="6" fill="#fff" stroke="#2b2b2b" stroke-width="2"/><circle cx="8" cy="-6" r="6" fill="#fff" stroke="#2b2b2b" stroke-width="2"/>
+    <circle cx="-7" cy="-5" r="3" fill="#2b2b2b"/><circle cx="9" cy="-5" r="3" fill="#2b2b2b"/><circle cx="-6" cy="-7" r="1.1" fill="#fff"/><circle cx="10" cy="-7" r="1.1" fill="#fff"/>
+    <path d="M-6 6 Q0 11 6 6" fill="none" stroke="#2b2b2b" stroke-width="2.5" stroke-linecap="round"/><path d="M-4 7 l1.5 4 l1.5 -3.5 M1 7.5 l1.5 3.5 l1.5 -4" fill="#fff" stroke="#2b2b2b" stroke-width="1"/>
+    <path id="bat-tongue" d="M-3 9 Q0 20 3 9Z" fill="#ff7eb6" stroke="#2b2b2b" stroke-width="1.5" style="opacity:0"/>
+    <ellipse cx="-14" cy="3" rx="4" ry="2.5" fill="#ff7eb6" opacity=".6"/><ellipse cx="14" cy="3" rx="4" ry="2.5" fill="#ff7eb6" opacity=".6"/>
+    <g id="batsay" style="opacity:0;transition:opacity .25s" transform="translate(-260 -40)"><rect x="0" y="-60" width="220" height="44" rx="20" fill="#fff" stroke="#2b2b2b" stroke-width="4"/><path d="M200 -18 L226 -2 L210 -20Z" fill="#fff" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"/>
+      <text id="batsayt" x="110" y="-31" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="20" fill="#2b2b2b">Mmm!</text></g>`;
+}
+function batSay(t){const g=$('#batsay');if(!g)return;$('#batsayt').textContent=t;g.style.opacity=t?1:0}
+/* a friendly bat smells the chocolate puddle, slurps it up, and leads us to the Crystal Caves */
+function batArrives(){
+  const b=document.createElementNS(NS,'g');b.id='bat';b.innerHTML=`<g id="bat-in">${batSVG()}</g>`;$('#fx6').appendChild(b);
+  const P=[GC[0],GY+270],fly=b.animate([{transform:'translate(1080px,-60px) scale(1.4)'},{transform:'translate(900px,140px) scale(1.4)',offset:.4},{transform:`translate(${P[0]+60}px,${P[1]-90}px) scale(1.4)`}],{duration:1800,easing:'ease-out',fill:'forwards'});
+  b.classList.add('flapping');tone([1400,1800],.05,'sine',.03);
+  speak('Look! A little bat smelled the chocolate puddle!');
+  later(()=>batSay('Mmm! Chocolate!'),1900);
+  later(()=>{batSay('');b.animate([{transform:`translate(${P[0]+60}px,${P[1]-90}px) scale(1.4)`},{transform:`translate(${P[0]+10}px,${P[1]-34}px) scale(1.4)`}],{duration:500,fill:'forwards'});
+    $('#bat-tongue').style.opacity=1;
+    for(let k=0;k<4;k++)later(()=>{tone([300,520],.08,'sine',.08);const pd=$('#gm-puddle'),rx=+pd.getAttribute('rx'),ry=+pd.getAttribute('ry');pd.setAttribute('rx',Math.max(40,rx-26));pd.setAttribute('ry',Math.max(8,ry-4));
+      $('#gm-face').style.opacity=k>=2?0:1},600+k*450);
+    speak('Slurp! Slurp! He loves chocolate!')},2900);
+  later(()=>{$('#bat-tongue').style.opacity=0;b.animate([{transform:`translate(${P[0]+10}px,${P[1]-34}px) scale(1.4)`},{transform:`translate(${P[0]-60}px,${P[1]-150}px) scale(1.4)`}],{duration:600,fill:'forwards'});
+    batSay("Thanks! I'm Flutter!");speak("Yum! Thank you! I'm Flutter the bat! I live in the Crystal Caves. They're full of sparkly gems! Follow me, I'll show you the way!")},5300);
+  later(()=>{batSay('Follow me!')},10500);
+  later(()=>{batSay('');b.animate([{transform:`translate(${P[0]-60}px,${P[1]-150}px) scale(1.4)`},{transform:'translate(1100px,120px) scale(1.4)'}],{duration:1600,easing:'ease-in',fill:'forwards'});
+    [$('#pl6')].forEach(e=>e&&e.animate([{transform:'translate(0,0)'},{transform:'translate(250px,-12px)',offset:.25},{transform:'translate(500px,0)',offset:.5},{transform:'translate(750px,-12px)',offset:.75},{transform:'translate(1100px,0)'}],{duration:2400,easing:'linear',fill:'forwards'}));
+    speak("Let's go to the Crystal Caves!")},12000);
+  later(meltReward,14600);
+}
+function meltReward(){
     const opened=awardEgg('easy-5');state.pos='easy-5';save();
     sfx.win();confetti(80);
     const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
     modal(`<div class="rays">${egg('big-egg','','ruby')}</div>
       <h2>You melted the Chocolate Golem!</h2>
-      <p>He's a yummy chocolate puddle now, and the warlock ran away! You finished <b>Dragon Meadow</b> and built a <b>Ruby Egg</b>! ${txt}</p>
+      <p>The warlock ran away, and Flutter the bat slurped up the chocolate! You finished <b>Dragon Meadow</b> and built a <b>Ruby Egg</b>. Flutter is leading you to the <b>Crystal Caves</b> — coming soon! ${txt}</p>
       <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-    speak(`Hooray ${me().name}! You melted the chocolate golem and the warlock ran away! You finished Dragon Meadow and got a ruby egg!`);
+    speak(`Hooray ${me().name}! You melted the chocolate golem and got a ruby egg! You finished Dragon Meadow! Flutter the bat is taking you to the Crystal Caves!`);
     $('#m-ok').onclick=()=>toMapAfterWin(opened);
-  },4400);
 }
 $('#btn-fire').addEventListener('click',fireTorches);
 $('#melt-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
@@ -2695,10 +2772,7 @@ function newYPrompt(first,avoid,pre){
 }
 function wandToCrab(){
   const w=$('#wand7');if(w){w.classList.remove('zap');void w.getBBox();w.classList.add('zap')}
-  const [tx,ty]=wandTip(101,409),sp=document.createElementNS(NS,'polygon');
-  sp.setAttribute('points',star(0,0,12,5));sp.setAttribute('fill',WANDS[me().wand].spark);sp.setAttribute('stroke','#2b2b2b');sp.setAttribute('stroke-width','2');
-  $('#fx7').appendChild(sp);
-  sp.animate([{transform:`translate(${tx}px,${ty}px)`,opacity:1},{transform:`translate(${YHOME[0]}px,${YHOME[1]-60}px) rotate(180deg)`,opacity:0}],{duration:380,easing:'ease-out'}).onfinish=()=>sp.remove();
+  const [tx,ty]=wandTip(101,409);wandFX('#fx7',tx,ty,YHOME[0],YHOME[1]-60,380);
   $('#yglow').style.opacity=1;later(()=>$('#yglow').style.opacity=0,700);
   tone([520,780],.1,'triangle',.06);
 }
@@ -3039,7 +3113,7 @@ function qAnswer(b){
   if(v===L){
     b.classList.add('right');sfx.yay();Q.k=Math.min(4,Q.k+1);Q.streak++;
     const i=Q.open;Q.open++;Q.round++;
-    flyLetter(b,$(`#qlock${i}`),L,()=>openLock(i));
+    flyLetter(b,$(`#qlock${i}`),L,()=>openLock(i));{const [tx,ty]=wandTip(131,259);wandFX('#fx9',tx,ty,QLX(i),232,600)}
     speak(Q.open<QLOCKS?`Yes! ${w.w} starts with ${L}! ${QLOCKS-Q.open} lock${QLOCKS-Q.open===1?'':'s'} left.`:`Yes! ${w.w} starts with ${L}! That's the last lock!`);
     later(()=>{if(Q.open>=QLOCKS)freeCrab();else qNext()},Q.open>=QLOCKS?1800:3000);
   }else{
@@ -3216,7 +3290,7 @@ function vWordDone(){
     const wd=$('#wand10');if(wd){wd.classList.remove('zap');void wd.getBBox();wd.classList.add('zap')}
     const [kx,ky]=VKNOTS[i],[tx,ty]=wandTip(121,225),beam=document.createElementNS(NS,'path');
     beam.setAttribute('d',`M${tx} ${ty} Q${(tx+kx)/2} ${Math.min(ty,ky)-120} ${kx} ${ky}`);beam.setAttribute('fill','none');beam.setAttribute('stroke',WANDS[me().wand].spark);beam.setAttribute('stroke-width','10');beam.setAttribute('stroke-linecap','round');beam.setAttribute('stroke-dasharray','16 12');
-    $('#fx10').appendChild(beam);tone([500,800,1100],.08,'square',.05);
+    $('#fx10').appendChild(beam);tone([500,800,1100],.08,'square',.05);wandFX('#fx10',tx,ty,kx,ky,650);
     beam.animate([{opacity:0,strokeDashoffset:0},{opacity:1,offset:.2},{opacity:1,strokeDashoffset:-150,offset:.8},{opacity:0,strokeDashoffset:-180}],{duration:800,fill:'forwards'}).onfinish=()=>beam.remove();
     later(()=>{const k=$(`#vknot${i}`);k.classList.remove('pulse');
       k.animate([{transform:'scale(1)',opacity:1},{transform:'scale(1.8)',opacity:0}],{duration:400,fill:'forwards'});
@@ -3251,6 +3325,7 @@ function freeDolphin(){
   later(()=>{flyShell($('#vspot'),'#vprogress',1);const g=$('#vgem');if(g)g.remove()},9500);
   later(()=>{dSay('Hop on! Let\'s go!');speak("Splash says: Hop on! I'll take you under the sea to the Coral Reef! Your magic wand will make bubble helmets so you can breathe!")},10300);
   later(()=>{const wd=$('#wand10');if(wd){wd.classList.remove('zap');void wd.getBBox();wd.classList.add('zap')}
+    {const [tx,ty]=wandTip(121,225);wandFX('#fx10',tx,ty,85,200,350);setTimeout(()=>wandFX('#fx10',tx,ty,225,222,350),200)}
     const b=$('#vbubbles');b.style.transition='opacity .6s';b.style.opacity=1;tone([700,900,1200,1500],.1,'sine',.05);sparkleV(85,200);sparkleV(225,222)},13600);
   later(()=>{dSay('');$('#vwalk').animate([{transform:'translate(0,0)'},{transform:'translate(150px,-60px)',offset:.5},{transform:'translate(290px,10px)'}],{duration:900,fill:'forwards'})},15000);
   later(()=>{$('#vwalk').animate([{transform:'translate(290px,10px)'},{transform:'translate(420px,220px)',opacity:0}],{duration:1200,easing:'ease-in',fill:'forwards'});
