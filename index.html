@@ -266,6 +266,20 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 .qlock.pulse{animation:pulse 1s ease-in-out infinite}
 .qsh,.qsh2{transform-box:fill-box;transform-origin:0% 100%}
 #qchoices .num{font-size:clamp(34px,6.5vw,54px)}
+.vspell{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:16px;transition:opacity .3s}
+.vspell.off{opacity:.45;pointer-events:none}
+.vrow{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center}
+.vpic{width:clamp(84px,14vw,120px);height:clamp(84px,14vw,120px);background:#fff;border:5px solid var(--ink);border-radius:24px;box-shadow:0 6px 0 var(--ink);display:flex;align-items:center;justify-content:center;font-size:clamp(52px,9vw,78px)}
+.vslots{display:flex;gap:10px}
+.vslot{width:clamp(70px,12vw,104px);height:clamp(84px,14vw,120px);border:5px dashed var(--ink);border-radius:20px;background:#ffffffb0;display:flex;align-items:center;justify-content:center;font-size:clamp(48px,9vw,80px);font-weight:700}
+.vslot .ghost{transition:opacity .3s}
+.vslot.on{border-style:solid;background:#fff;animation:pulse 1.1s ease-in-out infinite}
+.vslot.fill{border-style:solid;background:#c9f6d0}
+.vslot.win{background:#7be07b}
+.vknot{transform-box:fill-box;transform-origin:center}
+.vknot.pulse{animation:pulse 1s ease-in-out infinite}
+#vtiles .num{width:clamp(64px,11vw,100px);height:clamp(76px,13vw,116px);font-size:clamp(42px,8vw,68px)}
+#vtiles .num.used{opacity:.25;pointer-events:none}
 /* MODAL */
 .modal{position:fixed;inset:0;background:rgba(30,30,50,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .modal.hidden{display:none}
@@ -467,6 +481,23 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
   <div class="scene" id="qscene"></div>
   <div class="choices" id="qchoices" style="margin-top:18px"></div>
   <div class="hint">Look at the picture and listen to the word. Tap the letter the word starts with to open a lock. Tap 🔊 to hear the word again.</div>
+</section>
+
+<!-- LETTERSCAPE LEVEL 5: FREE THE DOLPHIN -->
+<section id="s-dolphin" class="screen">
+  <div class="topbar">
+    <button class="icon-btn" id="dolphin-back" aria-label="Back to map">🗺️</button>
+    <div class="shell-wrap" id="vprogress"></div>
+    <button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button>
+  </div>
+  <div class="game-title">Free the dolphin!</div>
+  <div class="eq" id="eq10"></div>
+  <div class="scene" id="vscene"></div>
+  <div class="vspell off" id="vspell">
+    <div class="vrow"><div class="vpic" id="vpic">🐬</div><div class="vslots" id="vslots"></div></div>
+    <div class="choices" id="vtiles"></div>
+  </div>
+  <div class="hint">Look at the picture and listen. Tap the letters in order to spell the word. Each word you spell zaps a knot in the net! Tap 🔊 to hear the word again.</div>
 </section>
 
 <!-- STORE -->
@@ -727,7 +758,7 @@ const GAMES={
             {id:'reef',tier:'Medium',name:'Medium · Coral Reef',color:'#8fd8ef',tile:'#1ea7c9',y:310,xs:[840,660,480,300,120]},
             {id:'ship',tier:'Hard',name:'Hard · Pirate Ship',color:'#7fa6d9',tile:'#a0522d',y:120,xs:[120,300,480,660,840]}],
     levelEgg:{'beach-1':'topaz','beach-2':'amethyst','beach-3':'amethyst','beach-4':'aqua','beach-5':'diamond'},
-    built:{'beach-1':true,'beach-2':true,'beach-3':true,'beach-4':true},
+    built:{'beach-1':true,'beach-2':true,'beach-3':true,'beach-4':true,'beach-5':true},
     req:{'beach-2':{topaz:3},'beach-3':{topaz:3,amethyst:3},'beach-4':{topaz:3,amethyst:6},'beach-5':{topaz:3,amethyst:6,aqua:3}},
     from:{topaz:'Level 1',amethyst:'Levels 2 and 3',aqua:'Level 4',diamond:'Level 5'}}
 };
@@ -844,7 +875,7 @@ const SONGS={
   puzzle:{bpm:100,mel:PUZ_MEL,ch:PUZ_CH,lead:'triangle',oct:0,vol:.17,style:'puzzle'},
   golem:{bpm:138,mel:GOLEM_MEL,ch:GOLEM_CH,lead:'square',oct:0,vol:.15,style:'golem'}
 };
-const SCREEN_SONG={home:'title',custom:'title',store:'title',game:'meadow',bridge:'meadow',lava:'boss',puzzle:'puzzle',melt:'golem',letters:'meadow',crab:'meadow',pbridge:'meadow',rescue:'meadow'};
+const SCREEN_SONG={home:'title',custom:'title',store:'title',game:'meadow',bridge:'meadow',lava:'boss',puzzle:'puzzle',melt:'golem',letters:'meadow',crab:'meadow',pbridge:'meadow',rescue:'meadow',dolphin:'meadow'};
 function shiftOct(n,o){if(n==='R'||!o)return n;return n.replace(/\d$/,d=>+d+o)}
 function mtone(ctx,dest,f,t,d,type,vol){
   if(!f)return;const o=ctx.createOscillator(),g=ctx.createGain();
@@ -1217,7 +1248,7 @@ function tileClick(t){
     else speak('That space is locked. Finish the space before it first!');return}
   sfx.step();state.pos=l.id;save();moveToken(l);
   setTimeout(()=>{
-    if(BUILT[l.id]){({'easy-1':startGame,'easy-2':startBridge,'easy-3':startLava,'easy-4':startPuzzle,'easy-5':startMelt,'beach-1':startLetters,'beach-2':startCrab,'beach-3':startPirate,'beach-4':startRescue})[l.id]()}
+    if(BUILT[l.id]){({'easy-1':startGame,'easy-2':startBridge,'easy-3':startLava,'easy-4':startPuzzle,'easy-5':startMelt,'beach-1':startLetters,'beach-2':startCrab,'beach-3':startPirate,'beach-4':startRescue,'beach-5':startDolphin})[l.id]()}
     else{
       const golem=l.id==='easy-5';
       modal(`<div class="rays">${egg('big-egg','',LEVEL_EGG[l.id]||GAME.def)}</div><h2>${l.world.tier} Level ${l.n}</h2>
@@ -2792,7 +2823,7 @@ function pirateSVG(pre,stand){
     <path d="M-26 -114 Q0 -150 26 -114Z" fill="#2b2b2b" ${o}/><path d="M-32 -112 Q0 -128 32 -112" fill="none" stroke="#ffd23f" stroke-width="3"/>
     ${stand?'':`<path d="M-60 -6 H64 Q58 30 0 34 Q-58 30 -60 -6Z" fill="#8b5a2b" ${o}/><path d="M-56 4 H60" stroke="#6b4220" stroke-width="3"/>`}
   </g>
-  <g id="${pre||'z'}say" style="opacity:0;transition:opacity .25s"${stand?' transform="translate(-200 -40)"':''}><path d="${stand?'M180 -126 L196 -100 L206 -126Z':'M40 -120 L60 -100 L58 -128Z'}" fill="#fff" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"/>
+  <g id="${pre||'z'}say" style="opacity:0;transition:opacity .25s"${stand||pre==='s'?' transform="translate(-200 -40)"':''}><path d="${stand||pre==='s'?'M180 -126 L196 -100 L206 -126Z':'M40 -120 L60 -100 L58 -128Z'}" fill="#fff" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"/>
     <rect x="50" y="-170" width="220" height="48" rx="22" fill="#fff" stroke="#2b2b2b" stroke-width="4"/>
     <text id="${pre||'z'}sayt" x="160" y="-138" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="22" fill="#2b2b2b">Arr!</text></g>`;
 }
@@ -3076,6 +3107,175 @@ function winRescue(){
   speak(`Hooray ${me().name}! You rescued the crab and found an aquamarine gem! `+(opened.length?'':gl.say));
   $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
+/* ---------- LETTERSCAPE LEVEL 5: Free the Dolphin (spell 3-letter words, adaptive) ---------- */
+const VW1=[['cat','🐱'],['hat','🎩'],['bat','🦇'],['map','🗺️'],['van','🚐']];
+const VW2=[['dog','🐶'],['pig','🐷'],['sun','☀️'],['bus','🚌'],['bed','🛏️'],['cup','☕'],['box','📦'],['fox','🦊'],['bug','🐛'],['hen','🐔'],['web','🕸️'],['jet','✈️'],['rat','🐀'],['leg','🦵']];
+const VKNOTS=[[520,232],[600,212],[680,232],[540,328],[660,328]],VWORDS=5;
+const V={k:0,done:0,pos:0,word:null,used:[],miss:0,busy:true,ghost:true,recent:[]};
+function startDolphin(){
+  clearB();show('dolphin');
+  Object.assign(V,{k:0,done:0,pos:0,word:null,used:[],miss:0,busy:true,ghost:true,recent:[]});
+  buildDolphin();renderShell('#vprogress',0,false,'diamond',1);
+  $('#vspell').classList.add('off');$('#vslots').innerHTML='';$('#vtiles').innerHTML='';$('#vpic').textContent='🐬';
+  $('#eq10').innerHTML=`<span class="eqb r">🐬 Help the dolphin!</span>`;
+  speak('Look! The pirate caught a baby dolphin in his fishing net!');
+  later(()=>{zSay('Arr! Me dolphin now!','s');zLaugh(true,'s')},1600);
+  later(()=>{zSay('','s');dSay('Help me, please!')},3600);
+  later(()=>{dSay('');speak('Your magic wand can break the knots! Spell each word with the letters, and the wand will zap a knot!')},5600);
+  later(()=>{V.busy=false;$('#vspell').classList.remove('off');vNext()},10600);
+}
+function dolphinSVG(){
+  const o='stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"';
+  return `<g id="dol-in">
+    <path d="M70 -6 Q96 -30 112 -14 Q98 -10 92 4 Q104 20 96 30 Q84 14 68 10Z" fill="#5aa6d6" ${o}/>
+    <path d="M-86 4 Q-70 -44 -10 -48 Q50 -50 76 -4 Q60 26 0 30 Q-50 32 -86 4Z" fill="#6cb8e6" ${o}/>
+    <path d="M-60 12 Q-20 30 40 18 Q10 32 -30 26 Q-52 22 -60 12Z" fill="#dff3ff"/>
+    <path d="M-4 -46 Q8 -78 30 -80 Q22 -60 26 -44Z" fill="#5aa6d6" ${o}/>
+    <path d="M-86 4 Q-112 6 -116 14 Q-100 20 -80 14" fill="#6cb8e6" ${o}/>
+    <path d="M-20 22 Q-6 40 10 44 Q6 30 6 22Z" fill="#5aa6d6" ${o}/>
+    <circle cx="-56" cy="-10" r="7" fill="#fff" stroke="#2b2b2b" stroke-width="2.5"/><circle cx="-57" cy="-10" r="3.5" fill="#2b2b2b"/><circle cx="-56" cy="-12" r="1.3" fill="#fff"/>
+    <path id="dol-mouth" d="M-104 12 Q-92 18 -80 12" fill="none" stroke="#2b2b2b" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="-70" cy="2" rx="6" ry="4" fill="#ff9fc4" opacity=".7"/>
+  </g>
+  <g id="dsay" style="opacity:0;transition:opacity .25s"><rect x="-210" y="-140" width="200" height="46" rx="22" fill="#fff" stroke="#2b2b2b" stroke-width="4"/><path d="M-70 -96 L-60 -74 L-44 -96Z" fill="#fff" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"/>
+    <text id="dsayt" x="-110" y="-110" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="21" fill="#2b2b2b">Help!</text></g>`;
+}
+function dSay(t){const g=$('#dsay');if(!g)return;$('#dsayt').textContent=t;g.style.opacity=t?1:0}
+function buildDolphin(){
+  const a=avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,''),o='stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"';
+  let waves='';for(let y=170;y<430;y+=46)for(let x=(y%92?300:330);x<1000;x+=70)waves+=`<path d="M${x} ${y} q12 -8 24 0 t24 0" fill="none" stroke="#fff" stroke-width="3" opacity=".55"/>`;
+  let net='';for(let x=500;x<=700;x+=25)net+=`<line x1="${x}" y1="205" x2="${x+(x-600)*.15}" y2="345"/>`;for(let y=205;y<=345;y+=23)net+=`<path d="M${492-(y-205)*.1} ${y} Q600 ${y+12} ${708+(y-205)*.1} ${y}"/>`;
+  const knots=VKNOTS.map(([x,y],i)=>`<g id="vknot${i}" class="vknot"><circle cx="${x}" cy="${y}" r="13" fill="#e74c3c" stroke="#2b2b2b" stroke-width="3"/><path d="M${x-6} ${y-4} L${x+6} ${y+4} M${x-6} ${y+4} L${x+6} ${y-4}" stroke="#2b2b2b" stroke-width="2.5"/></g>`).join('');
+  const crab=crabSVG().replace(/id="y/g,'id="v');
+  $('#vscene').innerHTML=`<svg viewBox="0 0 1000 430" xmlns="${NS}">
+  <rect width="1000" height="430" fill="#bfe9ff"/><circle cx="120" cy="60" r="32" fill="#ffd23f" ${o}/>
+  <rect y="150" width="1000" height="280" fill="#4fb3e8"/>${waves}
+  <path d="M-10 250 Q140 236 250 256 Q300 268 340 320 L360 440 H-10Z" fill="#ffe3a3" ${o}/>
+  <g id="vwalk">
+    <g transform="translate(225 262) scale(.5)"><g id="vcrab">${crab}</g></g>
+    <g id="vbubbles" style="opacity:0"><circle cx="85" cy="200" r="64" fill="#e8fbff" opacity=".35" stroke="#7fd3ff" stroke-width="4"/><circle cx="225" cy="222" r="46" fill="#e8fbff" opacity=".35" stroke="#7fd3ff" stroke-width="4"/>
+      <path d="M50 170 q10 -14 26 -16" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><path d="M205 200 q8 -10 18 -12" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/></g>
+    <svg x="30" y="118" width="110" height="138" viewBox="0 0 120 150">${a}</svg>
+    ${wandG(me().wand,121,225,'wand10')}
+  </g>
+  <g id="vdol" style="transform:translate(600px,282px)">${dolphinSVG()}</g>
+  <g id="vnet" stroke="#7b4a26" stroke-width="3" fill="none" opacity=".95">${net}</g>
+  <path id="vrope" d="M708 250 Q780 300 840 296" fill="none" stroke="#7b4a26" stroke-width="4"/>
+  <g id="vknots">${knots}</g>
+  <g id="vpir" style="transform:translate(870px,350px) scale(.8)">${pirateSVG('s')}</g>
+  <g id="fx10"></g>
+  <rect id="vspot" x="580" y="230" width="40" height="40" fill="none"/>
+  </svg>`;
+  $('#vdol').animate([{transform:'translate(600px,282px) rotate(-3deg)'},{transform:'translate(600px,286px) rotate(3deg)'}],{duration:500,iterations:Infinity,direction:'alternate'});
+}
+function vPick(){
+  const pool=(V.done<2?VW1:VW1.concat(VW2)).filter(w=>!V.recent.includes(w[0]));
+  const w=pool[rand(0,pool.length-1)];V.recent=[w[0],...V.recent].slice(0,6);return w;
+}
+function vNext(){
+  const [w,e]=vPick();V.word=w;V.pos=0;V.miss=0;
+  $('#vpic').textContent=e;
+  const ABC='abcdefghijklmnoprstuvw',extra=[];
+  while(extra.length<V.k){const c=ABC[rand(0,ABC.length-1)];if(!w.includes(c)&&!extra.includes(c))extra.push(c)}
+  $('#vslots').innerHTML=[...w].map((c,i)=>`<div class="vslot ${i===0?'on':''}" data-i="${i}"><span class="ghost" style="opacity:${V.ghost?.25:0}">${c}</span></div>`).join('');
+  const colors=['#ff7eb6','#4fa8ff','#ffd23f','#ff9f43','#a06cd5','#20c4b0'];shuffle(colors);
+  $('#vtiles').innerHTML=shuffle([...w,...extra]).map((c,i)=>`<button class="num vtile" data-v="${c}" style="background:${colors[i]};animation-delay:${.1+i*.07}s">${c}</button>`).join('');
+  $$('#vtiles .vtile').forEach(b=>b.addEventListener('click',()=>vTap(b)));
+  $$('#vknots .vknot').forEach((g,i)=>g.classList.toggle('pulse',i===V.done));
+  $('#eq10').innerHTML=`<button class="eqb r ysay-btn" id="vsay-btn" aria-label="Hear the word again">🔊</button><span class="eqb g">🪢 × ${VWORDS-V.done}</span>`;
+  $('#vsay-btn').onclick=()=>vSay();
+  V.busy=false;vSay(true);
+}
+function vSay(first){const w=V.word;if(!w)return;const s=[...w].map(c=>c.toUpperCase()).join(', ');
+  speak(V.ghost?`${first?'':''}${w}! Let's spell ${w}. ${s}. ${w}!`:`${w}! Spell ${w}!`)}
+function vTap(b){
+  if(V.busy||b.disabled)return;
+  const c=b.dataset.v,need=V.word[V.pos],slot=$(`#vslots .vslot[data-i="${V.pos}"]`);
+  if(c===need){
+    b.disabled=true;b.classList.add('used');tone([600,900],.07,'triangle',.05);
+    slot.classList.remove('on');slot.classList.add('fill');slot.innerHTML=`<span>${c}</span>`;
+    slot.animate([{transform:'scale(1.3)'},{transform:'scale(1)'}],{duration:250});
+    V.pos++;
+    if(V.pos<3){$(`#vslots .vslot[data-i="${V.pos}"]`).classList.add('on');speak(c.toUpperCase())}
+    else vWordDone();
+  }else{
+    sfx.oops();V.miss++;b.animate([{transform:'translateX(0)'},{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'translateX(0)'}],{duration:300});
+    const gh=slot.querySelector('.ghost');if(gh)gh.style.opacity=.45;
+    speak(`That's ${c.toUpperCase()}. ${V.word} needs ${need.toUpperCase()} next.`);
+    if(V.miss===1){zSay('Arr arr!','s');zLaugh(true,'s');later(()=>zSay('','s'),1400)}
+    if(V.miss>=2)$$('#vslots .ghost').forEach(g=>g.style.opacity=.45);
+  }
+}
+function vWordDone(){
+  V.busy=true;const w=V.word,i=V.done;
+  $$('#vslots .vslot').forEach(s=>s.classList.add('win'));sfx.yay();
+  speak(`${[...w].map(c=>c.toUpperCase()).join(', ')}. ${w}! Zap!`);
+  // adaptive: no mistakes → one more extra letter and no ghost letters; mistakes → fewer letters and ghosts back
+  if(V.miss===0){V.k=Math.min(3,V.k+1);V.ghost=false}else{V.k=Math.max(0,V.k-1);V.ghost=true}
+  later(()=>{
+    const wd=$('#wand10');if(wd){wd.classList.remove('zap');void wd.getBBox();wd.classList.add('zap')}
+    const [kx,ky]=VKNOTS[i],[tx,ty]=wandTip(121,225),beam=document.createElementNS(NS,'path');
+    beam.setAttribute('d',`M${tx} ${ty} Q${(tx+kx)/2} ${Math.min(ty,ky)-120} ${kx} ${ky}`);beam.setAttribute('fill','none');beam.setAttribute('stroke',WANDS[me().wand].spark);beam.setAttribute('stroke-width','10');beam.setAttribute('stroke-linecap','round');beam.setAttribute('stroke-dasharray','16 12');
+    $('#fx10').appendChild(beam);tone([500,800,1100],.08,'square',.05);
+    beam.animate([{opacity:0,strokeDashoffset:0},{opacity:1,offset:.2},{opacity:1,strokeDashoffset:-150,offset:.8},{opacity:0,strokeDashoffset:-180}],{duration:800,fill:'forwards'}).onfinish=()=>beam.remove();
+    later(()=>{const k=$(`#vknot${i}`);k.classList.remove('pulse');
+      k.animate([{transform:'scale(1)',opacity:1},{transform:'scale(1.8)',opacity:0}],{duration:400,fill:'forwards'});
+      tone([300,150],.12,'sawtooth',.06);sparkleV(kx,ky);
+      V.done++;$('#vnet').setAttribute('opacity',(.95-V.done*.13).toFixed(2));
+      $('#eq10').innerHTML=`<span class="eqb ${V.done>=VWORDS?'ok':'g'}">🪢 × ${VWORDS-V.done}</span>`;
+      if(V.done<VWORDS){zSay(['Arr! Me net!','Stop that!','No no no!','Blast it!'][rand(0,3)],'s');later(()=>zSay('','s'),1400)}
+    },700);
+  },900);
+  later(()=>{if(V.done>=VWORDS)freeDolphin();else vNext()},3400);
+}
+function sparkleV(x,y){for(let k=0;k<8;k++){const p=document.createElementNS(NS,'polygon');p.setAttribute('points',star(x,y,9,4));p.setAttribute('fill','#ffd23f');p.setAttribute('stroke','#2b2b2b');p.setAttribute('stroke-width','2');
+  $('#fx10').appendChild(p);const a=k*Math.PI/4;p.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*50}px,${Math.sin(a)*50}px)`,opacity:0}],{duration:600,easing:'ease-out'}).onfinish=()=>p.remove()}}
+function freeDolphin(){
+  $('#vspell').classList.add('off');$('#vtiles').innerHTML='';
+  speak('You broke all the knots! The dolphin is free!');
+  $('#vnet').animate([{transform:'translateY(0)',opacity:.3},{transform:'translateY(120px)',opacity:0}],{duration:900,fill:'forwards'});
+  $('#vrope').style.opacity=0;
+  const d=$('#vdol');d.getAnimations().forEach(a=>a.cancel());
+  $('#dol-mouth').setAttribute('d','M-104 10 Q-92 22 -80 10');
+  later(()=>{d.animate(arcFrames(600,282,760,300,190,0,-20,16),{duration:900,fill:'forwards'});tone([523,659,784,1047],.12,'triangle',.06)},900);
+  later(()=>{zSay('Whoa!','s');qSplashAt(800,330);
+    $('#vpir').animate([{transform:'translate(870px,350px) scale(.8) rotate(0)'},{transform:'translate(880px,350px) scale(.8) rotate(25deg)',offset:.3},{transform:'translate(1150px,360px) scale(.8) rotate(10deg)'}],{duration:1800,easing:'ease-in',fill:'forwards'});
+    speak("Splash! The dolphin splashed the pirate! He's rowing back to his ship!")},1900);
+  later(()=>{zSay('I\'ll get ye at me ship!','s')},2600);
+  later(()=>{zSay('','s');d.animate([{transform:'translate(760px,300px) rotate(-20deg)'},{transform:'translate(420px,300px) rotate(0)'}],{duration:1100,fill:'forwards'});
+    dSay('Thank you! I\'m Splash!');speak("Thank you! I'm Splash the dolphin! I have a present for you!")},4600);
+  later(()=>{dSay('');d.animate([{transform:'translate(420px,300px)'},{transform:'translate(420px,470px)'}],{duration:500,fill:'forwards'})},7600);
+  later(()=>{d.animate([{transform:'translate(420px,470px)'},{transform:'translate(420px,300px)'}],{duration:500,fill:'forwards'});
+    const g=document.createElementNS(NS,'g');g.innerHTML=egg('',`x="-25" y="-30" width="50" height="62"`,'diamond');$('#fx10').appendChild(g);g.id='vgem';
+    g.animate(arcFrames(380,290,600,180,80,0,360,14),{duration:800,fill:'forwards'});sfx.yay();confetti(40);speak('A sparkly diamond!')},8300);
+  later(()=>{flyShell($('#vspot'),'#vprogress',1);const g=$('#vgem');if(g)g.remove()},9500);
+  later(()=>{dSay('Hop on! Let\'s go!');speak("Splash says: Hop on! I'll take you under the sea to the Coral Reef! Your magic wand will make bubble helmets so you can breathe!")},10300);
+  later(()=>{const wd=$('#wand10');if(wd){wd.classList.remove('zap');void wd.getBBox();wd.classList.add('zap')}
+    const b=$('#vbubbles');b.style.transition='opacity .6s';b.style.opacity=1;tone([700,900,1200,1500],.1,'sine',.05);sparkleV(85,200);sparkleV(225,222)},13600);
+  later(()=>{dSay('');$('#vwalk').animate([{transform:'translate(0,0)'},{transform:'translate(150px,-60px)',offset:.5},{transform:'translate(290px,10px)'}],{duration:900,fill:'forwards'})},15000);
+  later(()=>{$('#vwalk').animate([{transform:'translate(290px,10px)'},{transform:'translate(420px,220px)',opacity:0}],{duration:1200,easing:'ease-in',fill:'forwards'});
+    d.animate([{transform:'translate(420px,300px) rotate(0)'},{transform:'translate(560px,480px) rotate(30deg)',opacity:0}],{duration:1200,easing:'ease-in',fill:'forwards'});
+    for(let k=0;k<4;k++)later(()=>qSplashAt(480+k*30,340),300+k*200);speak('Down we go!')},16100);
+  later(winDolphin,18000);
+}
+function qSplashAt(x,y){
+  tone([700,350,200],.14,'sine',.05);
+  for(let i=0;i<6;i++){const d=document.createElementNS(NS,'circle');d.setAttribute('cx',x);d.setAttribute('cy',y);d.setAttribute('r',rand(4,8));d.setAttribute('fill','#cfe9ff');d.setAttribute('stroke','#2b2b2b');d.setAttribute('stroke-width','2');
+    $('#fx10').appendChild(d);const dx=rand(-40,40);
+    d.animate([{transform:'translate(0,0)'},{transform:`translate(${dx*.6}px,-60px)`,offset:.45},{transform:`translate(${dx}px,10px)`,opacity:0}],{duration:750,easing:'ease-out',fill:'forwards'}).onfinish=()=>d.remove()}
+}
+function winDolphin(){
+  const opened=awardEgg('beach-5');state.pos='beach-5';save();
+  sfx.win();confetti(80);
+  modal(`<div class="rays">${egg('big-egg','','diamond')}</div>
+    <h2>You found the Diamond!</h2>
+    <p>You spelled every word and freed Splash the dolphin! You finished <b>Sunny Beach</b>. Splash is taking you under the sea to the <b>Coral Reef</b> — coming soon!</p>
+    <button class="btn go" id="m-ok">🗺️ To the map</button>`);
+  speak(`Hooray ${me().name}! You freed Splash the dolphin and found a diamond! You finished Sunny Beach!`);
+  $('#m-ok').onclick=()=>toMapAfterWin(opened);
+}
+$('#dolphin-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
+
 $('#rescue-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
 
 $('#pbridge-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
