@@ -180,6 +180,25 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 @keyframes smokeUp{0%{transform:translateY(0) scale(.5);opacity:0}20%{opacity:.85}100%{transform:translateY(-46px) scale(1.4);opacity:0}}
 .lava-glow{animation:lavaGlow 1.6s ease-in-out infinite alternate}
 @keyframes lavaGlow{from{opacity:.4}to{opacity:1}}
+/* STORE */
+.chip.locked{opacity:.55;background:#e8e8e8}
+.store-box{background:#fff;border:5px solid var(--ink);border-radius:28px;box-shadow:0 8px 0 var(--ink);padding:14px 18px;margin-top:16px;width:100%;max-width:980px}
+.store-box h3{margin:0 0 10px;font-size:24px}
+.price-note{font-size:17px;font-weight:600;opacity:.7}
+.trades{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.trade{display:flex;align-items:center;gap:6px;font-size:24px;font-weight:700;background:#f6f1ff;border:4px solid var(--ink);border-radius:20px;padding:6px 14px;box-shadow:0 5px 0 var(--ink)}
+.trade:disabled{opacity:.4;pointer-events:none}
+.trade svg{width:30px;height:38px}
+.store-cat{margin:6px 0 12px}
+.store-cat h4{margin:4px 0 8px;font-size:20px}
+.store-row{display:flex;gap:14px;flex-wrap:wrap}
+.item{width:170px;background:var(--paper);border:4px solid var(--ink);border-radius:22px;box-shadow:0 5px 0 var(--ink);padding:8px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px}
+.item .av{width:110px;height:auto}
+.item .nm{font-weight:700;font-size:18px}
+.item .btn{font-size:17px;padding:6px 12px;border-radius:14px;box-shadow:0 4px 0 var(--ink);display:flex;align-items:center;gap:4px}
+.item .btn svg{width:20px;height:26px}
+.item .btn:disabled{opacity:.45;pointer-events:none}
+.item.owned{background:#e6f9e6}
 /* EGG SHELL PROGRESS */
 .shell-wrap{display:flex;align-items:center;gap:8px;background:#fff;border:4px solid var(--ink);border-radius:30px;padding:2px 16px 2px 8px;box-shadow:0 4px 0 var(--ink);font-size:24px;font-weight:700}
 .shell-egg{width:54px;height:68px;display:block}
@@ -217,6 +236,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
   <div class="avatars" id="home-avatars"></div>
   <div class="home-actions">
     <button class="btn" id="btn-custom">✏️ Customize</button>
+    <button class="btn" id="btn-store">🛒 Store</button>
     <button class="btn go" id="btn-play">▶ Play!</button>
   </div>
 </section>
@@ -331,6 +351,24 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
   <div class="hint">Tap torches to light them with your wand. Light the answer, then tap Fire!</div>
 </section>
 
+<!-- STORE -->
+<section id="s-store" class="screen">
+  <div class="topbar">
+    <button class="icon-btn" id="store-home" aria-label="Home">🏠</button>
+    <div class="pill" id="store-eggs"></div>
+    <button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button>
+  </div>
+  <h2 class="screen-title">🛒 Store</h2>
+  <div class="store-box">
+    <h3>Trade eggs</h3>
+    <div class="trades" id="trades"></div>
+  </div>
+  <div class="store-box">
+    <h3>Unlock new things <span class="price-note">— each costs 1 red ruby egg</span></h3>
+    <div id="store-items"></div>
+  </div>
+</section>
+
 <div id="modal" class="modal hidden"><div class="modal-card" id="modal-card"></div></div>
 
 <script>
@@ -347,9 +385,9 @@ const store={
 
 /* ---------- characters ---------- */
 const PRESETS=[
-  {name:'Papa', skin:'#e2b48c',hairStyle:'slick',hair:'#1b1b1b',eyes:'#4a2c17',shirt:'#2f6fd6',pants:'#3b3b4f',hat:'none',wand:'wood'},
-  {name:'Mommy',skin:'#f6d3b3',hairStyle:'long', hair:'#f4d35e',eyes:'#2e86de',shirt:'#e84393',pants:'#5b4a8a',hat:'none',wand:'crystal'},
-  {name:'Alex', skin:'#fde4d0',hairStyle:'bangs',hair:'#7b4a26',eyes:'#6b3e1f',shirt:'#27ae60',pants:'#2d4a7a',hat:'none',wand:'fire'}
+  {name:'Papa', skin:'#e2b48c',hairStyle:'slick',hair:'#1b1b1b',eyes:'#4a2c17',shirt:'#2f6fd6',pants:'#3b3b4f',hat:'none',paint:'none',wand:'wood'},
+  {name:'Mommy',skin:'#f6d3b3',hairStyle:'long', hair:'#f4d35e',eyes:'#2e86de',shirt:'#e84393',pants:'#5b4a8a',hat:'none',paint:'none',wand:'crystal'},
+  {name:'Alex', skin:'#fde4d0',hairStyle:'bangs',hair:'#7b4a26',eyes:'#6b3e1f',shirt:'#27ae60',pants:'#2d4a7a',hat:'none',paint:'none',wand:'fire'}
 ];
 const OPTS=[
   {key:'skin',label:'Skin',type:'color',vals:['#fde4d0','#f6d3b3','#e2b48c','#e0ac69','#c68642','#8d5524','#5a3519']},
@@ -358,11 +396,38 @@ const OPTS=[
   {key:'eyes',label:'Eyes',type:'color',vals:['#6b3e1f','#4a2c17','#2e86de','#27ae60','#8a6d3b','#7f8c8d']},
   {key:'shirt',label:'Jacket',type:'color',vals:['#2f6fd6','#e84393','#27ae60','#f39c12','#e74c3c','#8e44ad','#16a085','#f4d35e']},
   {key:'pants',label:'Pants',type:'color',vals:['#3b3b4f','#2d4a7a','#5b4a8a','#7b4a26','#6d6d6d','#1e8449']},
-  {key:'hat',label:'Hat',type:'chip',vals:[['none','No hat'],['beanie','Beanie'],['cap','Cap'],['crown','Crown']]},
-  {key:'wand',label:'Magic wand',type:'wand',vals:['wood','bone','crystal','fire']}
+  {key:'hat',label:'Hat',type:'chip',vals:[['none','No hat'],['beanie','Beanie'],['cap','Cap'],['crown','Crown'],['santa','Santa hat'],['reindeer','Reindeer antlers'],['catears','Cat ears']]},
+  {key:'paint',label:'Face paint',type:'chip',vals:[['none','No paint'],['warrior','Warrior'],['skeleton','Skeleton'],['cat','Cat']]},
+  {key:'wand',label:'Magic wand',type:'wand',vals:['wood','bone','crystal','fire','hotdog','churro','remote']}
 ];
-const NEW_CHAR={name:'',skin:'#f6d3b3',hairStyle:'short',hair:'#7b4a26',eyes:'#6b3e1f',shirt:'#f39c12',pants:'#2d4a7a',hat:'none',wand:'wood'};
+const NEW_CHAR={name:'',skin:'#f6d3b3',hairStyle:'short',hair:'#7b4a26',eyes:'#6b3e1f',shirt:'#f39c12',pants:'#2d4a7a',hat:'none',paint:'none',wand:'wood'};
+/* store items: each costs 1 ruby (red) egg */
+const STORE=[
+  {cat:'Wands',items:[['wand','hotdog','Hot Dog wand'],['wand','churro','Churro wand'],['wand','remote','Remote control']]},
+  {cat:'Face paint',items:[['paint','warrior','Warrior paint'],['paint','skeleton','Skeleton paint'],['paint','cat','Cat paint']]},
+  {cat:'Hats',items:[['hat','santa','Santa hat'],['hat','reindeer','Reindeer antlers'],['hat','catears','Cat ears']]}
+];
+const STORE_KEYS=new Set(STORE.flatMap(c=>c.items.map(([k,v])=>k+':'+v)));
+const PRICE=1; // ruby eggs
+const isLocked=(k,v)=>STORE_KEYS.has(k+':'+v)&&!(state.progress.owned||{})[k+':'+v];
 
+/* face paint, drawn on the face (under = before the eyes, over = after the mouth) */
+function paintUnder(c){
+  if(c.paint==='warrior')return `<path d="M20 50 Q60 22 100 50 L100 58 Q60 34 20 58Z" fill="#ffd23f" stroke="#2b2b2b" stroke-width="2"/>
+    <ellipse cx="60" cy="61" rx="40" ry="15" fill="#2e86de" stroke="#2b2b2b" stroke-width="2"/>
+    <path d="M20 70 L40 74 L20 78Z M22 82 L40 82 L26 88Z M100 70 L80 74 L100 78Z M98 82 L80 82 L94 88Z" fill="#e74c3c" stroke="#2b2b2b" stroke-width="1.5" stroke-linejoin="round"/>`;
+  if(c.paint==='skeleton')return `<ellipse cx="60" cy="62" rx="44" ry="38" fill="#f4f4f4"/>
+    <ellipse cx="47" cy="60" rx="18" ry="16" fill="#2b2b2b"/><ellipse cx="73" cy="60" rx="18" ry="16" fill="#2b2b2b"/>`;
+  if(c.paint==='cat')return `<ellipse cx="34" cy="78" rx="8" ry="5" fill="#ff9fc4" opacity=".8"/><ellipse cx="86" cy="78" rx="8" ry="5" fill="#ff9fc4" opacity=".8"/>`;
+  return '';
+}
+function paintOver(c){
+  if(c.paint==='skeleton')return `<path d="M60 70 L55 78 L65 78Z" fill="#2b2b2b"/>
+    <rect x="46" y="84" width="28" height="9" rx="2" fill="#fff" stroke="#2b2b2b" stroke-width="2.5"/><path d="M53 84 V93 M60 84 V93 M67 84 V93" stroke="#2b2b2b" stroke-width="2"/>`;
+  if(c.paint==='cat')return `<path d="M55 72 L65 72 L60 78Z" fill="#ff7eb6" stroke="#2b2b2b" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M44 76 L18 70 M44 80 L16 80 M44 84 L18 90 M76 76 L102 70 M76 80 L104 80 M76 84 L102 90" stroke="#2b2b2b" stroke-width="2.5" stroke-linecap="round"/>`;
+  return '';
+}
 function avatar(c){
   const o='#2b2b2b', sw='stroke="'+o+'" stroke-width="3" stroke-linejoin="round"';
   let back='',front='',hat='';
@@ -382,6 +447,13 @@ function avatar(c){
     hat=`<path d="M15 48 Q16 6 60 6 Q104 6 105 48 Z" fill="${c.shirt}" ${sw}/><rect x="10" y="40" width="100" height="15" rx="7" fill="#fff" ${sw}/><circle cx="60" cy="6" r="9" fill="#fff" ${sw}/>`;
   }else if(c.hat==='cap'){
     hat=`<path d="M17 46 Q17 8 60 8 Q103 8 103 46 Z" fill="${c.shirt}" ${sw}/><path d="M58 40 L118 42 Q118 54 104 54 L58 50Z" fill="${c.shirt}" ${sw}/><circle cx="60" cy="9" r="4" fill="#fff" ${sw}/>`;
+  }else if(c.hat==='santa'){
+    hat=`<path d="M18 46 Q30 4 70 6 Q100 10 112 40 L100 46 Q92 24 76 20 Q100 34 102 46 Z" fill="#e74c3c" ${sw}/><rect x="12" y="38" width="96" height="16" rx="8" fill="#fff" ${sw}/><circle cx="106" cy="44" r="9" fill="#fff" ${sw}/>`;
+  }else if(c.hat==='reindeer'){
+    const ant=(x,d)=>`<path d="M${x} 30 Q${x+d*4} 14 ${x+d*2} 0 M${x+d*3} 14 Q${x+d*12} 10 ${x+d*16} 2 M${x+d*2} 6 Q${x-d*6} 2 ${x-d*8} -6" fill="none" stroke="#2b2b2b" stroke-width="9" stroke-linecap="round"/><path d="M${x} 30 Q${x+d*4} 14 ${x+d*2} 0 M${x+d*3} 14 Q${x+d*12} 10 ${x+d*16} 2 M${x+d*2} 6 Q${x-d*6} 2 ${x-d*8} -6" fill="none" stroke="#8b5a2b" stroke-width="5" stroke-linecap="round"/>`;
+    hat=ant(38,-1)+ant(82,1)+`<path d="M24 32 Q60 14 96 32" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linecap="round"/><path d="M24 32 Q60 14 96 32" fill="none" stroke="#e74c3c" stroke-width="4" stroke-linecap="round"/>`;
+  }else if(c.hat==='catears'){
+    hat=`<path d="M22 40 L24 4 L50 26 Z" fill="${c.hair==='#f4d35e'?'#7b4a26':'#2b2b2b'}" ${sw}/><path d="M29 32 L30 14 L43 26 Z" fill="#ff9fc4"/><path d="M98 40 L96 4 L70 26 Z" fill="${c.hair==='#f4d35e'?'#7b4a26':'#2b2b2b'}" ${sw}/><path d="M91 32 L90 14 L77 26 Z" fill="#ff9fc4"/><path d="M24 34 Q60 16 96 34" fill="none" stroke="#2b2b2b" stroke-width="5" stroke-linecap="round"/>`;
   }else if(c.hat==='crown'){
     hat=`<path d="M30 32 L32 4 L46 20 L60 0 L74 20 L88 4 L90 32 Z" fill="#ffd23f" ${sw}/><circle cx="60" cy="24" r="4" fill="#e74c3c"/><circle cx="42" cy="26" r="3" fill="#2e86de"/><circle cx="78" cy="26" r="3" fill="#27ae60"/>`;
   }
@@ -393,11 +465,13 @@ function avatar(c){
   <line x1="60" y1="100" x2="60" y2="126" stroke="${o}" stroke-width="2" opacity=".45"/>
   <circle cx="21" cy="117" r="9" fill="${c.shirt}" ${sw}/><circle cx="99" cy="117" r="9" fill="${c.shirt}" ${sw}/>
   <ellipse cx="60" cy="62" rx="46" ry="40" fill="${c.skin}" ${sw}/>
+  ${paintUnder(c)}
   <ellipse cx="47" cy="60" rx="14" ry="12" fill="#fff" ${sw}/><ellipse cx="73" cy="60" rx="14" ry="12" fill="#fff" ${sw}/>
   <circle cx="51" cy="62" r="5" fill="${c.eyes}"/><circle cx="69" cy="62" r="5" fill="${c.eyes}"/>
   <circle cx="51" cy="62" r="2.4" fill="${o}"/><circle cx="69" cy="62" r="2.4" fill="${o}"/>
   <circle cx="52.5" cy="60.5" r="1.1" fill="#fff"/><circle cx="70.5" cy="60.5" r="1.1" fill="#fff"/>
   <path d="M50 83 Q60 92 70 83" fill="none" stroke="${o}" stroke-width="3" stroke-linecap="round"/>
+  ${paintOver(c)}
   ${front}${hat}
   </svg>`;
 }
@@ -408,6 +482,9 @@ const WANDS={
   wood:{name:'Wood',spark:'#ffd23f',svg:()=>`<path d="M-3.5 6 L-2 -50 L2 -50 L3.5 6Z" fill="#8b5a2b" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/><path d="M-1 -10 q2 -8 0 -16 M1 -30 q-2 -6 0 -12" fill="none" stroke="#5a3218" stroke-width="1.5"/><rect x="-4.5" y="-4" width="9" height="10" rx="2" fill="#5a3218" stroke="#2b2b2b" stroke-width="2.5"/><polygon points="${star(0,-60,14,6)}" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>`},
   bone:{name:'Bone',spark:'#9bff7a',svg:()=>`<rect x="-3.5" y="-48" width="7" height="50" rx="3" fill="#f5efdc" stroke="#2b2b2b" stroke-width="3"/><circle cx="-4.5" cy="4" r="5.5" fill="#f5efdc" stroke="#2b2b2b" stroke-width="3"/><circle cx="4.5" cy="4" r="5.5" fill="#f5efdc" stroke="#2b2b2b" stroke-width="3"/><circle cx="-4.5" cy="-48" r="5.5" fill="#f5efdc" stroke="#2b2b2b" stroke-width="3"/><circle cx="4.5" cy="-48" r="5.5" fill="#f5efdc" stroke="#2b2b2b" stroke-width="3"/><circle cx="0" cy="-62" r="11" fill="#9bff7a" stroke="#2b2b2b" stroke-width="3"/><circle cx="-3.5" cy="-65.5" r="3.2" fill="#fff"/>`},
   crystal:{name:'Crystal',spark:'#7cf2ff',svg:()=>`<rect x="-3" y="-46" width="6" height="52" rx="3" fill="#c9d6e3" stroke="#2b2b2b" stroke-width="3"/><path d="M-3 -6 L3 -12 M-3 -18 L3 -24 M-3 -30 L3 -36" stroke="#4fa8ff" stroke-width="2.5"/><polygon points="0,-80 12,-60 0,-44 -12,-60" fill="#7cf2ff" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/><path d="M-5 -62 L0 -72" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`},
+  hotdog:{name:'Hot Dog',spark:'#ffd23f',svg:()=>`<rect x="-7.5" y="-56" width="15" height="62" rx="7" fill="#e8b56a" stroke="#2b2b2b" stroke-width="3"/><rect x="-4.5" y="-66" width="9" height="76" rx="4.5" fill="#d1453b" stroke="#2b2b2b" stroke-width="3"/><path d="M0 -60 l3 5 l-3 5 l3 5 l-3 5 l3 5 l-3 5 l3 5 l-3 5 l3 5 l-3 5" fill="none" stroke="#ffd23f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`},
+  churro:{name:'Churro',spark:'#e0a050',svg:()=>`<rect x="-5.5" y="-66" width="11" height="72" rx="5" fill="#d9963f" stroke="#2b2b2b" stroke-width="3"/><path d="M-2.5 -62 V2 M2.5 -62 V2" stroke="#a8682a" stroke-width="2"/><circle cx="-3" cy="-50" r="1.2" fill="#fff"/><circle cx="2" cy="-40" r="1.2" fill="#fff"/><circle cx="-2" cy="-28" r="1.2" fill="#fff"/><circle cx="3" cy="-16" r="1.2" fill="#fff"/><circle cx="-1" cy="-58" r="1.2" fill="#fff"/><path d="M-6 -6 h12" stroke="#2b2b2b" stroke-width="2"/>`},
+  remote:{name:'Remote',spark:'#ff4757',svg:()=>`<rect x="-9" y="-58" width="18" height="64" rx="6" fill="#3a3a44" stroke="#2b2b2b" stroke-width="3"/><circle cx="0" cy="-62" r="4.5" fill="#ff4757" stroke="#2b2b2b" stroke-width="2"/><circle cx="0" cy="-62" r="9" fill="#ff4757" opacity=".25"/><circle cx="0" cy="-44" r="4" fill="#ff4757"/><circle cx="-4" cy="-32" r="2.5" fill="#4fa8ff"/><circle cx="4" cy="-32" r="2.5" fill="#5cc96b"/><circle cx="-4" cy="-24" r="2.5" fill="#ffd23f"/><circle cx="4" cy="-24" r="2.5" fill="#a06cd5"/><rect x="-5" y="-14" width="10" height="4" rx="2" fill="#9a9a9a"/>`},
   fire:{name:'Fire',spark:'#ff7b29',svg:()=>`<rect x="-3.5" y="-46" width="7" height="52" rx="3" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3"/><path d="M-3.5 -4 L3.5 -12 M-3.5 -18 L3.5 -26 M-3.5 -32 L3.5 -40" stroke="#e74c3c" stroke-width="3"/><path class="flame" d="M0 -84 Q15 -66 10 -54 Q0 -44 -10 -54 Q-15 -66 0 -84Z" fill="#ff7b29" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/><path class="flame" d="M0 -70 Q7 -60 4 -54 Q0 -50 -4 -54 Q-7 -60 0 -70Z" fill="#ffd23f"/>`}
 };
 const WAND_ANGLE=32;
@@ -500,6 +577,7 @@ if(state.sel>=state.chars.length)state.sel=0;
 if(state.progress.done&&state.progress.done['easy-5']&&!state.progress.done['easy-4']){state.progress.done['easy-4']=true;delete state.progress.done['easy-5'];if(state.pos==='easy-5')state.pos='easy-4'}
 if(!state.progress.gems){state.progress.gems={gold:state.progress.eggs||0,sapphire:0,emerald:0}}  // older saves counted only golden eggs
 EGG_ORDER.forEach(t=>{state.progress.gems[t]=state.progress.gems[t]||0});
+state.progress.owned=state.progress.owned||{};state.progress.opened=state.progress.opened||{};
 if(!state.progress.done)state.progress.done={};
 const me=()=>state.chars[state.sel];
 function save(){store.set('chars2',state.chars);store.set('sel',state.sel);store.set('progress',state.progress);store.set('muted',state.muted);store.set('pos',state.pos)}
@@ -584,7 +662,7 @@ const SONGS={
   puzzle:{bpm:100,mel:PUZ_MEL,ch:PUZ_CH,lead:'triangle',oct:0,vol:.17,style:'puzzle'},
   golem:{bpm:138,mel:GOLEM_MEL,ch:GOLEM_CH,lead:'square',oct:0,vol:.15,style:'golem'}
 };
-const SCREEN_SONG={home:'title',custom:'title',game:'meadow',bridge:'meadow',lava:'boss',puzzle:'puzzle',melt:'golem'};
+const SCREEN_SONG={home:'title',custom:'title',store:'title',game:'meadow',bridge:'meadow',lava:'boss',puzzle:'puzzle',melt:'golem'};
 function shiftOct(n,o){if(n==='R'||!o)return n;return n.replace(/\d$/,d=>+d+o)}
 function mtone(ctx,dest,f,t,d,type,vol){
   if(!f)return;const o=ctx.createOscillator(),g=ctx.createGain();
@@ -711,10 +789,12 @@ function renderCustom(){
   $('#cust-name').value=c.name;
   $('#cust-opts').innerHTML=OPTS.map(o=>`<div class="opt-row"><h3>${o.label}</h3><div class="swatches">${
     o.type==='color'?o.vals.map(v=>`<button class="sw ${c[o.key]===v?'on':''}" style="background:${v}" data-k="${o.key}" data-v="${v}" aria-label="${o.label} ${v}"></button>`).join('')
-    :o.type==='wand'?o.vals.map(v=>`<button class="chip wandchip ${c[o.key]===v?'on':''}" data-k="${o.key}" data-v="${v}">${wandIcon(v)}${WANDS[v].name}</button>`).join('')
-    :o.vals.map(([v,l])=>`<button class="chip ${c[o.key]===v?'on':''}" data-k="${o.key}" data-v="${v}">${l}</button>`).join('')
+    :o.type==='wand'?o.vals.map(v=>`<button class="chip wandchip ${c[o.key]===v?'on':''} ${isLocked(o.key,v)?'locked':''}" data-k="${o.key}" data-v="${v}">${wandIcon(v)}${isLocked(o.key,v)?'🔒 ':''}${WANDS[v].name}</button>`).join('')
+    :o.vals.map(([v,l])=>`<button class="chip ${c[o.key]===v?'on':''} ${isLocked(o.key,v)?'locked':''}" data-k="${o.key}" data-v="${v}">${isLocked(o.key,v)?'🔒 ':''}${l}</button>`).join('')
   }</div></div>`).join('');
-  $$('#cust-opts [data-k]').forEach(b=>b.addEventListener('click',()=>{c[b.dataset.k]=b.dataset.v;if(!ED.create)save();sfx.pop();
+  $$('#cust-opts [data-k]').forEach(b=>b.addEventListener('click',()=>{
+    if(isLocked(b.dataset.k,b.dataset.v)){sfx.oops();speak('That one is locked. Get it in the store with a ruby egg!');return}
+    c[b.dataset.k]=b.dataset.v;if(!ED.create)save();sfx.pop();
     if(b.dataset.k==='wand'){tone([660,990,1320],.12,'triangle',.06);speak(WANDS[b.dataset.v].name+' wand!')}
     renderCustom()}));
 }
@@ -736,6 +816,35 @@ $('#btn-done').addEventListener('click',()=>{
   if(ED.create){state.chars[3]=ED.c;state.sel=3}
   save();sfx.yay();speak('Looking great, '+me().name+'!');renderHome();show('home')});
 
+
+/* ---------- STORE ---------- */
+const TRADES=[['gold','sapphire'],['sapphire','emerald'],['emerald','ruby']];
+function openStore(){renderStore();show('store');speak('Welcome to the store! Trade your eggs, and unlock cool things with ruby eggs!')}
+function renderStore(){
+  const g=state.progress.gems,c=me();
+  $('#store-eggs').innerHTML=EGG_ORDER.map(t=>egg('','',t)+`<span>×${g[t]}</span>`).join('<span style="width:6px"></span>');
+  $('#trades').innerHTML=TRADES.map(([a,b],i)=>`<button class="trade" data-i="${i}" ${g[a]<3?'disabled':''} aria-label="Trade 3 ${EGG_TYPES[a].name} for 1 ${EGG_TYPES[b].name}">3 ${egg('','',a)} → 1 ${egg('','',b)}</button>`).join('');
+  $('#store-items').innerHTML=STORE.map(cat=>`<div class="store-cat"><h4>${cat.cat}</h4><div class="store-row">${cat.items.map(([k,v,label])=>{
+    const owned=!!state.progress.owned[k+':'+v],wearing=c[k]===v,preview=Object.assign({},c,{[k]:v});
+    return `<div class="item ${owned?'owned':''}">${avatarWithWand(preview)}<div class="nm">${label}</div>${
+      owned?`<button class="btn" data-wear="${k}:${v}">${wearing?'✔ Wearing':'Wear it'}</button>`
+           :`<button class="btn go" data-buy="${k}:${v}" ${g.ruby<PRICE?'disabled':''}>🔓 ${PRICE} ${egg('','','ruby')}</button>`}</div>`}).join('')}</div></div>`).join('');
+  $$('#trades .trade').forEach(b=>b.addEventListener('click',()=>{
+    const [a,bb]=TRADES[+b.dataset.i];if(g[a]<3)return;
+    g[a]-=3;g[bb]++;save();tone([523,659,784,1047],.14,'triangle',.07);confetti(15);
+    speak(`You traded 3 ${EGG_TYPES[a].name} eggs for 1 ${EGG_TYPES[bb].name} egg!`);renderStore()}));
+  $$('#store-items [data-buy]').forEach(b=>b.addEventListener('click',()=>{
+    if(g.ruby<PRICE){sfx.oops();speak('You need a ruby egg!');return}
+    const key=b.dataset.buy,[k,v]=key.split(':');
+    g.ruby-=PRICE;state.progress.owned[key]=true;c[k]=v;save();sfx.win();confetti(40);
+    const label=STORE.flatMap(x=>x.items).find(x=>x[0]===k&&x[1]===v)[2];
+    speak(`You unlocked the ${label}! You're wearing it now!`);renderStore()}));
+  $$('#store-items [data-wear]').forEach(b=>b.addEventListener('click',()=>{
+    const [k,v]=b.dataset.wear.split(':');c[k]=c[k]===v?(k==='wand'?(PRESETS[state.sel]||NEW_CHAR).wand:'none'):v;save();sfx.pop();renderStore()}));
+}
+$('#btn-store').addEventListener('click',()=>{sfx.pop();openStore()});
+$('#store-home').addEventListener('click',()=>{sfx.pop();renderHome();show('home')});
+
 /* ---------- MAP ---------- */
 const WORLDS=[{id:'easy',name:'Easy · Dragon Meadow',color:'#9be07a',tile:'#5cc96b',y:500,xs:[120,300,480,660,840]},
               {id:'medium',name:'Medium · Crystal Caves',color:'#b9a6f2',tile:'#8e6ee0',y:310,xs:[840,660,480,300,120]},
@@ -752,9 +861,12 @@ const REQ={ // eggs needed to open a level (the level before must be finished to
 const prereqOf=id=>{const i=LEVELS.findIndex(l=>l.id===id);return PREREQ[id]||(i>0?LEVELS[i-1].id:null)};
 const gems=()=>state.progress.gems;
 const missingFor=id=>{const r=REQ[id]||{};return EGG_ORDER.filter(t=>r[t]&&gems()[t]<r[t]).map(t=>({t,need:r[t],have:gems()[t],more:r[t]-gems()[t]}))};
-const unlocked=id=>{const i=LEVELS.findIndex(l=>l.id===id);if(i===0)return true;const prev=!!state.progress.done[prereqOf(id)];return prev&&missingFor(id).length===0};
+const unlocked=id=>{if(state.progress.opened[id])return true;const i=LEVELS.findIndex(l=>l.id===id);if(i===0)return true;const prev=!!state.progress.done[prereqOf(id)];return prev&&missingFor(id).length===0};
+// once a level opens it stays open, even after eggs are traded in the store
+function markOpened(){let ch=false;LEVELS.forEach(l=>{if(!state.progress.opened[l.id]&&unlocked(l.id)){state.progress.opened[l.id]=true;ch=true}});if(ch)save()}
 const openSet=()=>LEVELS.filter(l=>unlocked(l.id)).map(l=>l.id);
-function awardEgg(id){const before=openSet();state.progress.done[id]=true;const t=LEVEL_EGG[id]||'gold';state.progress.gems[t]++;save();return openSet().filter(x=>!before.includes(x))}
+function awardEgg(id){const before=openSet();state.progress.done[id]=true;const t=LEVEL_EGG[id]||'gold';state.progress.gems[t]++;save();const now=openSet();markOpened();return now.filter(x=>!before.includes(x))}
+markOpened();
 function goal(){const g=LEVELS.find(l=>REQ[l.id]&&!unlocked(l.id));if(!g)return null;const miss=missingFor(g.id);return{id:g.id,n:g.n,miss,met:miss.length===0,prevDone:!!state.progress.done[prereqOf(g.id)]}}
 const EGG_FROM={gold:'Level 1',sapphire:'Levels 2 and 3',emerald:'Level 4',ruby:'Level 5'};
 function listJoin(a){return a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1]}
@@ -880,7 +992,7 @@ function modal(html){$('#modal-card').innerHTML=html;$('#modal').classList.remov
 function closeModal(){$('#modal').classList.add('hidden');sfx.pop()}
 
 /* ---------- GAME: Baby Dragon Count ---------- */
-const ROUNDS=[[1,5],[2,8],[4,12],[7,16],[10,20]];
+const ROUNDS=[[1,4],[2,6],[3,8],[5,9],[6,10]];
 const G={round:0,answer:0,counted:0,locked:false,wrong:0};
 function startGame(){
   G.round=0;G.answer=0;
@@ -903,7 +1015,7 @@ function nextRound(){
   setBubble("Let's count!");
   // choices
   const k=G.round<2?3:4,set=new Set([n]);
-  while(set.size<k){const v=n+rand(1,4)*(Math.random()<.5?-1:1);if(v>=1&&v<=20)set.add(v)}
+  while(set.size<k){const v=n+rand(1,4)*(Math.random()<.5?-1:1);if(v>=1&&v<=10)set.add(v)}
   const colors=['#ff7eb6','#4fa8ff','#ffd23f','#ff9f43','#a06cd5','#20c4b0'];shuffle(colors);
   $('#choices').innerHTML=shuffle([...set]).map((v,i)=>`<button class="num" data-v="${v}" style="background:${colors[i]};animation-delay:${.2+i*.08}s">${v}</button>`).join('');
   $$('#choices .num').forEach(b=>b.addEventListener('click',()=>answer(b)));
