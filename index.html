@@ -246,6 +246,9 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 @keyframes floatUp{0%{transform:translate(0,0) rotate(-8deg)}50%{transform:translate(var(--sw),-60vh) rotate(8deg)}100%{transform:translate(0,-125vh) rotate(-8deg)}}
 .map-logo{font-size:clamp(32px,6vw,52px);margin:8px 0 0}
 .trades{row-gap:14px}
+.yb{transition:filter .2s}
+.yb:hover{filter:brightness(1.08)}
+.ysay-btn{cursor:pointer;font-family:inherit}
 /* MODAL */
 .modal{position:fixed;inset:0;background:rgba(30,30,50,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .modal.hidden{display:none}
@@ -408,6 +411,19 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
   <div class="hint">Each lock shows a little letter. Tap the big letter that matches it. Tap a lock or the sign to hear the letter. Match all three to open the chest!</div>
 </section>
 
+<!-- LETTERSCAPE LEVEL 2: GIANT CRAB BOULDER SMASH -->
+<section id="s-crab" class="screen">
+  <div class="topbar">
+    <button class="icon-btn" id="crab-back" aria-label="Back to map">🗺️</button>
+    <div class="shell-wrap" id="cprogress"></div>
+    <button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button>
+  </div>
+  <div class="game-title">Smash the boulders!</div>
+  <div class="eq" id="eq7"></div>
+  <div class="scene" id="cscene"></div>
+  <div class="hint">Listen for the letter. Tap the boulder with that letter and your wand sends the giant crab to smash it. Smash every boulder to reach the treasure chest!</div>
+</section>
+
 <!-- STORE -->
 <section id="s-store" class="screen">
   <div class="topbar">
@@ -454,16 +470,16 @@ const OPTS=[
   {key:'eyes',label:'Eyes',type:'color',vals:['#6b3e1f','#4a2c17','#2e86de','#27ae60','#8a6d3b','#7f8c8d']},
   {key:'shirt',label:'Jacket',type:'color',vals:CLOTH},
   {key:'pants',label:'Pants',type:'color',vals:CLOTH},
-  {key:'hat',label:'Hat',type:'chip',vals:[['none','No hat'],['beanie','Beanie'],['cap','Cap'],['crown','Crown'],['santa','Santa hat'],['reindeer','Reindeer antlers'],['catears','Cat ears'],['candy','Candy basket']]},
-  {key:'paint',label:'Face paint',type:'chip',vals:[['none','No paint'],['warrior','Warrior'],['skeleton','Skeleton'],['cat','Cat'],['ninja','Ninja']]},
-  {key:'wand',label:'Magic wand',type:'wand',vals:['wood','bone','crystal','fire','hotdog','churro','remote','fishing']}
+  {key:'hat',label:'Hat',type:'chip',vals:[['none','No hat'],['beanie','Beanie'],['cap','Cap'],['crown','Crown'],['santa','Santa hat'],['reindeer','Reindeer antlers'],['catears','Cat ears'],['candy','Candy basket'],['tophat','Top hat']]},
+  {key:'paint',label:'Face paint',type:'chip',vals:[['none','No paint'],['warrior','Warrior'],['skeleton','Skeleton'],['cat','Cat'],['ninja','Ninja'],['robot','Robot']]},
+  {key:'wand',label:'Magic wand',type:'wand',vals:['wood','bone','crystal','fire','hotdog','churro','remote','fishing','candycane']}
 ];
 const NEW_CHAR={name:'',skin:'#f6d3b3',hairStyle:'short',hair:'#7b4a26',eyes:'#6b3e1f',shirt:'#f39c12',pants:'#2d4a7a',hat:'none',paint:'none',wand:'wood'};
 /* store items: each costs 1 ruby (red) egg */
 const STORE=[
-  {cat:'Wands',items:[['wand','hotdog','Hot Dog wand'],['wand','churro','Churro wand'],['wand','remote','Remote control'],['wand','fishing','Fishing pole']]},
-  {cat:'Face paint',items:[['paint','warrior','Warrior paint'],['paint','skeleton','Skeleton paint'],['paint','cat','Cat paint'],['paint','ninja','Ninja mask']]},
-  {cat:'Hats',items:[['hat','santa','Santa hat'],['hat','reindeer','Reindeer antlers'],['hat','catears','Cat ears'],['hat','candy','Halloween candy basket']]}
+  {cat:'Wands',items:[['wand','hotdog','Hot Dog wand'],['wand','churro','Churro wand'],['wand','remote','Remote control'],['wand','fishing','Fishing pole'],['wand','candycane','Candy cane']]},
+  {cat:'Face paint',items:[['paint','warrior','Warrior paint'],['paint','skeleton','Skeleton paint'],['paint','cat','Cat paint'],['paint','ninja','Ninja mask'],['paint','robot','Robot face']]},
+  {cat:'Hats',items:[['hat','santa','Santa hat'],['hat','reindeer','Reindeer antlers'],['hat','catears','Cat ears'],['hat','candy','Halloween candy basket'],['hat','tophat','Top hat']]}
 ];
 const STORE_KEYS=new Set(STORE.flatMap(c=>c.items.map(([k,v])=>k+':'+v)));
 const PRICE=1; // ruby eggs
@@ -476,6 +492,8 @@ function paintUnder(c){
     <path d="M20 70 L40 74 L20 78Z M22 82 L40 82 L26 88Z M100 70 L80 74 L100 78Z M98 82 L80 82 L94 88Z" fill="#e74c3c" stroke="#2b2b2b" stroke-width="1.5" stroke-linejoin="round"/>`;
   if(c.paint==='skeleton')return `<ellipse cx="60" cy="62" rx="44" ry="38" fill="#f4f4f4"/>
     <ellipse cx="47" cy="60" rx="18" ry="16" fill="#2b2b2b"/><ellipse cx="73" cy="60" rx="18" ry="16" fill="#2b2b2b"/>`;
+  if(c.paint==='robot')return `<ellipse cx="60" cy="62" rx="44.5" ry="38.5" fill="#b8c2cc"/><path d="M22 48 H98" stroke="#8a96a3" stroke-width="2"/><circle cx="24" cy="80" r="3" fill="#6d7a87"/><circle cx="96" cy="80" r="3" fill="#6d7a87"/><circle cx="30" cy="40" r="2.5" fill="#6d7a87"/><circle cx="90" cy="40" r="2.5" fill="#6d7a87"/>
+    <rect x="30" y="47" width="60" height="26" rx="8" fill="#2b2b2b" opacity=".85"/>`;
   if(c.paint==='ninja')return `<ellipse cx="60" cy="62" rx="44.5" ry="38.5" fill="#23232b"/><rect x="18" y="46" width="84" height="28" rx="13" fill="${c.skin}" stroke="#2b2b2b" stroke-width="2"/>`;
   if(c.paint==='cat')return `<ellipse cx="34" cy="78" rx="8" ry="5" fill="#ff9fc4" opacity=".8"/><ellipse cx="86" cy="78" rx="8" ry="5" fill="#ff9fc4" opacity=".8"/>`;
   return '';
@@ -483,6 +501,9 @@ function paintUnder(c){
 function paintOver(c){
   if(c.paint==='skeleton')return `<path d="M60 70 L55 78 L65 78Z" fill="#2b2b2b"/>
     <rect x="46" y="84" width="28" height="9" rx="2" fill="#fff" stroke="#2b2b2b" stroke-width="2.5"/><path d="M53 84 V93 M60 84 V93 M67 84 V93" stroke="#2b2b2b" stroke-width="2"/>`;
+  if(c.paint==='robot')return `<rect x="44" y="82" width="32" height="12" rx="3" fill="#2b2b2b"/><path d="M50 82 V94 M56 82 V94 M62 82 V94 M68 82 V94" stroke="#7cf2c8" stroke-width="2"/>
+    <rect x="12" y="54" width="8" height="18" rx="3" fill="#8a96a3" stroke="#2b2b2b" stroke-width="2"/><rect x="100" y="54" width="8" height="18" rx="3" fill="#8a96a3" stroke="#2b2b2b" stroke-width="2"/>
+    <circle cx="51" cy="62" r="7" fill="none" stroke="#7cf2c8" stroke-width="2" opacity=".9"/><circle cx="69" cy="62" r="7" fill="none" stroke="#7cf2c8" stroke-width="2" opacity=".9"/>`;
   if(c.paint==='ninja')return `<path d="M20 76 Q60 70 100 76 Q100 96 60 102 Q20 96 20 76Z" fill="#23232b"/><path d="M40 88 Q60 84 80 88 M46 95 Q60 92 74 95" fill="none" stroke="#4a4a58" stroke-width="2" stroke-linecap="round"/>
     <path d="M17 40 Q60 26 103 40 L102 48 Q60 34 18 48Z" fill="#e74c3c" stroke="#2b2b2b" stroke-width="2"/><path d="M101 42 L116 34 L112 44 L118 52 L102 48Z" fill="#e74c3c" stroke="#2b2b2b" stroke-width="2" stroke-linejoin="round"/>`;
   if(c.paint==='cat')return `<path d="M55 72 L65 72 L60 78Z" fill="#ff7eb6" stroke="#2b2b2b" stroke-width="2" stroke-linejoin="round"/>
@@ -515,6 +536,8 @@ function avatar(c){
     hat=ant(38,-1)+ant(82,1)+`<path d="M24 32 Q60 14 96 32" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linecap="round"/><path d="M24 32 Q60 14 96 32" fill="none" stroke="#e74c3c" stroke-width="4" stroke-linecap="round"/>`;
   }else if(c.hat==='catears'){
     hat=`<path d="M22 40 L24 4 L50 26 Z" fill="${c.hair==='#f4d35e'?'#7b4a26':'#2b2b2b'}" ${sw}/><path d="M29 32 L30 14 L43 26 Z" fill="#ff9fc4"/><path d="M98 40 L96 4 L70 26 Z" fill="${c.hair==='#f4d35e'?'#7b4a26':'#2b2b2b'}" ${sw}/><path d="M91 32 L90 14 L77 26 Z" fill="#ff9fc4"/><path d="M24 34 Q60 16 96 34" fill="none" stroke="#2b2b2b" stroke-width="5" stroke-linecap="round"/>`;
+  }else if(c.hat==='tophat'){
+    hat=`<ellipse cx="60" cy="34" rx="46" ry="9" fill="#1f1f24" ${sw}/><path d="M36 34 V6 Q60 0 84 6 V34 Z" fill="#1f1f24" ${sw}/><rect x="36" y="22" width="48" height="9" fill="#e74c3c" ${sw}/><ellipse cx="60" cy="6" rx="24" ry="5" fill="#2e2e36" ${sw}/><path d="M44 12 V18" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".25"/>`;
   }else if(c.hat==='candy'){
     hat=`<g transform="translate(12 12) scale(.8)"><path d="M34 16 Q60 -14 86 16" fill="none" stroke="#2b2b2b" stroke-width="6" stroke-linecap="round"/><path d="M34 16 Q60 -14 86 16" fill="none" stroke="#1f1f24" stroke-width="3" stroke-linecap="round"/>
       <line x1="46" y1="12" x2="41" y2="-2" stroke="#2b2b2b" stroke-width="3"/><circle cx="40" cy="-4" r="7" fill="#ff7eb6" ${sw}/><path d="M35 -6 Q40 -2 45 -6" fill="none" stroke="#fff" stroke-width="2"/>
@@ -554,6 +577,7 @@ const WANDS={
   hotdog:{name:'Hot Dog',spark:'#ffd23f',svg:()=>`<rect x="-7.5" y="-56" width="15" height="62" rx="7" fill="#e8b56a" stroke="#2b2b2b" stroke-width="3"/><rect x="-4.5" y="-66" width="9" height="76" rx="4.5" fill="#d1453b" stroke="#2b2b2b" stroke-width="3"/><path d="M0 -60 l3 5 l-3 5 l3 5 l-3 5 l3 5 l-3 5 l3 5 l-3 5 l3 5 l-3 5" fill="none" stroke="#ffd23f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`},
   churro:{name:'Churro',spark:'#e0a050',svg:()=>`<rect x="-5.5" y="-66" width="11" height="72" rx="5" fill="#d9963f" stroke="#2b2b2b" stroke-width="3"/><path d="M-2.5 -62 V2 M2.5 -62 V2" stroke="#a8682a" stroke-width="2"/><circle cx="-3" cy="-50" r="1.2" fill="#fff"/><circle cx="2" cy="-40" r="1.2" fill="#fff"/><circle cx="-2" cy="-28" r="1.2" fill="#fff"/><circle cx="3" cy="-16" r="1.2" fill="#fff"/><circle cx="-1" cy="-58" r="1.2" fill="#fff"/><path d="M-6 -6 h12" stroke="#2b2b2b" stroke-width="2"/>`},
   fishing:{name:'Fishing pole',spark:'#4fc3f7',svg:()=>`<path d="M0 -72 Q20 -70 22 -40" fill="none" stroke="#2b2b2b" stroke-width="1.5"/><path d="M-3 6 L-1.2 -72 L1.2 -72 L3 6Z" fill="#7b4a26" stroke="#2b2b2b" stroke-width="2.5" stroke-linejoin="round"/><rect x="-4.5" y="-12" width="9" height="20" rx="4" fill="#d9a66b" stroke="#2b2b2b" stroke-width="2.5"/><circle cx="7" cy="-18" r="6" fill="#b9b9b9" stroke="#2b2b2b" stroke-width="2.5"/><circle cx="7" cy="-18" r="2" fill="#2b2b2b"/><circle cx="0" cy="-72" r="2.5" fill="#d1d1d1" stroke="#2b2b2b" stroke-width="1.5"/><path d="M22 -40 v3" stroke="#2b2b2b" stroke-width="1.5"/><path d="M15 -30 Q22 -40 29 -30 Q22 -22 15 -30Z M29 -30 L34 -35 L34 -25Z" fill="#ff9f43" stroke="#2b2b2b" stroke-width="2" stroke-linejoin="round"/><circle cx="19" cy="-31" r="1.2" fill="#2b2b2b"/>`},
+  candycane:{name:'Candy cane',spark:'#ff4d6d',svg:()=>`<path d="M0 8 V-56 Q0 -72 -12 -72 Q-24 -72 -24 -60" fill="none" stroke="#2b2b2b" stroke-width="13" stroke-linecap="round"/><path d="M0 8 V-56 Q0 -72 -12 -72 Q-24 -72 -24 -60" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round"/><path d="M0 8 V-56 Q0 -72 -12 -72 Q-24 -72 -24 -60" fill="none" stroke="#e8173a" stroke-width="8" stroke-dasharray="6 6"/><path d="M-2 -60 Q-4 -66 -10 -67" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".7"/>`},
   remote:{name:'Remote',spark:'#ff4757',svg:()=>`<rect x="-9" y="-58" width="18" height="64" rx="6" fill="#3a3a44" stroke="#2b2b2b" stroke-width="3"/><circle cx="0" cy="-62" r="4.5" fill="#ff4757" stroke="#2b2b2b" stroke-width="2"/><circle cx="0" cy="-62" r="9" fill="#ff4757" opacity=".25"/><circle cx="0" cy="-44" r="4" fill="#ff4757"/><circle cx="-4" cy="-32" r="2.5" fill="#4fa8ff"/><circle cx="4" cy="-32" r="2.5" fill="#5cc96b"/><circle cx="-4" cy="-24" r="2.5" fill="#ffd23f"/><circle cx="4" cy="-24" r="2.5" fill="#a06cd5"/><rect x="-5" y="-14" width="10" height="4" rx="2" fill="#9a9a9a"/>`},
   fire:{name:'Fire',spark:'#ff7b29',svg:()=>`<rect x="-3.5" y="-46" width="7" height="52" rx="3" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3"/><path d="M-3.5 -4 L3.5 -12 M-3.5 -18 L3.5 -26 M-3.5 -32 L3.5 -40" stroke="#e74c3c" stroke-width="3"/><path class="flame" d="M0 -84 Q15 -66 10 -54 Q0 -44 -10 -54 Q-15 -66 0 -84Z" fill="#ff7b29" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/><path class="flame" d="M0 -70 Q7 -60 4 -54 Q0 -50 -4 -54 Q-7 -60 0 -70Z" fill="#ffd23f"/>`}
 };
@@ -614,7 +638,7 @@ function egg(cls,attrs,type){
 const SHELL_Y=[160,118,92,66,40,-12];
 function zig(y){const p=[];for(let x=-6,k=0;x<=126;x+=12,k++)p.push(`${x},${y+(k%2?5:-5)}`);return p}
 function shellEgg(n,newIdx,type,total){
-  total=total||5;const Y=total===3?[160,104,56,-12]:SHELL_Y,T=EGG_TYPES[type]||EGG_TYPES.gold;
+  total=total||5;const Y=total===3?[160,104,56,-12]:total===1?[160,-12]:SHELL_Y,T=EGG_TYPES[type]||EGG_TYPES.gold;
   const c=T.c,id='sh'+(eggN++),EGG=T.gem?GEM_PATH:'M60 8 C96 8 112 70 110 96 C108 128 86 144 60 144 C34 144 12 128 10 96 C8 70 24 8 60 8Z';
   let bands='',cracks='';
   for(let i=0;i<total;i++){
@@ -658,7 +682,7 @@ const GAMES={
             {id:'reef',tier:'Medium',name:'Medium · Coral Reef',color:'#8fd8ef',tile:'#1ea7c9',y:310,xs:[840,660,480,300,120]},
             {id:'ship',tier:'Hard',name:'Hard · Pirate Ship',color:'#7fa6d9',tile:'#a0522d',y:120,xs:[120,300,480,660,840]}],
     levelEgg:{'beach-1':'topaz','beach-2':'amethyst','beach-3':'amethyst','beach-4':'aqua','beach-5':'diamond'},
-    built:{'beach-1':true},
+    built:{'beach-1':true,'beach-2':true},
     req:{'beach-2':{topaz:3},'beach-3':{topaz:3,amethyst:3},'beach-4':{topaz:3,amethyst:6},'beach-5':{topaz:3,amethyst:6,aqua:3}},
     from:{topaz:'Level 1',amethyst:'Levels 2 and 3',aqua:'Level 4',diamond:'Level 5'}}
 };
@@ -775,7 +799,7 @@ const SONGS={
   puzzle:{bpm:100,mel:PUZ_MEL,ch:PUZ_CH,lead:'triangle',oct:0,vol:.17,style:'puzzle'},
   golem:{bpm:138,mel:GOLEM_MEL,ch:GOLEM_CH,lead:'square',oct:0,vol:.15,style:'golem'}
 };
-const SCREEN_SONG={home:'title',custom:'title',store:'title',game:'meadow',bridge:'meadow',lava:'boss',puzzle:'puzzle',melt:'golem',letters:'meadow'};
+const SCREEN_SONG={home:'title',custom:'title',store:'title',game:'meadow',bridge:'meadow',lava:'boss',puzzle:'puzzle',melt:'golem',letters:'meadow',crab:'meadow'};
 function shiftOct(n,o){if(n==='R'||!o)return n;return n.replace(/\d$/,d=>+d+o)}
 function mtone(ctx,dest,f,t,d,type,vol){
   if(!f)return;const o=ctx.createOscillator(),g=ctx.createGain();
@@ -1148,7 +1172,7 @@ function tileClick(t){
     else speak('That space is locked. Finish the space before it first!');return}
   sfx.step();state.pos=l.id;save();moveToken(l);
   setTimeout(()=>{
-    if(BUILT[l.id]){({'easy-1':startGame,'easy-2':startBridge,'easy-3':startLava,'easy-4':startPuzzle,'easy-5':startMelt,'beach-1':startLetters})[l.id]()}
+    if(BUILT[l.id]){({'easy-1':startGame,'easy-2':startBridge,'easy-3':startLava,'easy-4':startPuzzle,'easy-5':startMelt,'beach-1':startLetters,'beach-2':startCrab})[l.id]()}
     else{
       const golem=l.id==='easy-5';
       modal(`<div class="rays">${egg('big-egg','',LEVEL_EGG[l.id]||GAME.def)}</div><h2>${l.world.tier} Level ${l.n}</h2>
@@ -2512,6 +2536,181 @@ function winLetters(){
   speak(`Hooray ${me().name}! You matched all the letters and found a topaz gem! `+(opened.length?'':gl.say));
   $('#m-ok').onclick=()=>toMapAfterWin(opened);
 }
+/* ---------- LETTERSCAPE LEVEL 2: Giant Crab Boulder Smash (letter recognition) ---------- */
+// 9 boulders piled on a buried chest: bottom row 4, middle 3, top 2. Only boulders with nothing on top get prompted.
+const YB=[[482,395],[574,395],[666,395],[758,395],[528,318],[620,318],[712,318],[574,241],[666,241]];
+const YON={4:[0,1],5:[1,2],6:[2,3],7:[4,5],8:[5,6]}; // boulder -> boulders it rests on
+const YHOME=[250,440];
+const Y={lets:[],gone:[],target:-1,busy:false,hurt:false};
+function startCrab(){
+  clearB();show('crab');
+  const ABC=shuffle([...'ABCDEFGHIJKLMNOPRSTUW']);Y.lets=ABC.slice(0,9);Y.gone=Array(9).fill(false);Y.target=-1;Y.busy=true;Y.at=null;Y.dy=Array(9).fill(0);
+  buildCrab();renderShell('#cprogress',0,false,'amethyst',1);
+  speak('A treasure chest is buried under the boulders! Your magic wand controls the giant crab. Tap the boulder with the right letter, and the crab will smash it!');
+  later(()=>{Y.busy=false;newYPrompt(true)},5200);
+}
+function crabSVG(){
+  const o='stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"',c='#ff6b4a',d='#e0482c';
+  const legs=[-1,1].map(s=>[0,1,2].map(i=>`<path d="M${s*40} ${-30+i*10} Q${s*(70+i*8)} ${-40+i*12} ${s*(82+i*6)} ${-2}" fill="none" stroke="#2b2b2b" stroke-width="11" stroke-linecap="round"/><path d="M${s*40} ${-30+i*10} Q${s*(70+i*8)} ${-40+i*12} ${s*(82+i*6)} ${-2}" fill="none" stroke="${d}" stroke-width="6" stroke-linecap="round"/>`).join('')).join('');
+  const claw=(s,id)=>`<g id="${id}" class="yclaw" style="transform-origin:${s*46}px -60px">
+      <path d="M${s*46} -60 Q${s*70} -96 ${s*78} -120" fill="none" stroke="#2b2b2b" stroke-width="16" stroke-linecap="round"/><path d="M${s*46} -60 Q${s*70} -96 ${s*78} -120" fill="none" stroke="${c}" stroke-width="10" stroke-linecap="round"/>
+      <g class="ypincer"><path d="M${s*60} -124 Q${s*62} -170 ${s*96} -170 Q${s*112} -150 ${s*100} -132 Q${s*92} -150 ${s*82} -142 Q${s*96} -128 ${s*92} -112 Q${s*66} -102 ${s*60} -124Z" class="yclawf" fill="${c}" ${o}/>
+      <path d="M${s*70} -150 Q${s*76} -158 ${s*86} -156" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".6"/></g></g>`;
+  return `<g class="ycrab-in">${legs}
+    ${claw(-1,'yclawL')}${claw(1,'yclawR')}
+    <ellipse cx="0" cy="-42" rx="62" ry="40" fill="${c}" ${o}/>
+    <ellipse cx="0" cy="-30" rx="40" ry="18" fill="#ff9a7a" opacity=".7"/>
+    <path d="M-16 -78 L-20 -104 M16 -78 L20 -104" stroke="#2b2b2b" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="-21" cy="-110" r="13" fill="#fff" ${o}/><circle cx="21" cy="-110" r="13" fill="#fff" ${o}/>
+    <circle cx="-18" cy="-109" r="5.5" fill="#2b2b2b"/><circle cx="24" cy="-109" r="5.5" fill="#2b2b2b"/>
+    <circle cx="-16" cy="-112" r="2" fill="#fff"/><circle cx="26" cy="-112" r="2" fill="#fff"/>
+    <path id="ymouth" d="M-14 -40 Q0 -28 14 -40" fill="none" stroke="#2b2b2b" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="-34" cy="-50" rx="8" ry="5" fill="#ff7eb6" opacity=".6"/><ellipse cx="34" cy="-50" rx="8" ry="5" fill="#ff7eb6" opacity=".6"/>
+    <g id="yglow" style="opacity:0;transition:opacity .3s"><ellipse cx="0" cy="-42" rx="72" ry="50" fill="none" stroke="${WANDS[me().wand].spark}" stroke-width="6" stroke-dasharray="10 8"/></g>
+  </g>
+  <g id="ysay" style="opacity:0;transition:opacity .25s"><rect x="-150" y="-226" width="130" height="44" rx="20" fill="#fff" stroke="#2b2b2b" stroke-width="4"/><path d="M-50 -184 L-30 -166 L-40 -186Z" fill="#fff" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"/>
+    <text id="ysayt" x="-85" y="-196" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="22" fill="#2b2b2b">Ouch!</text></g>`;
+}
+function boulderSVG(i){
+  const [x,y]=YB[i],r=46,j=[0,1,2,3,4,5,6,7].map(k=>{const a=k*Math.PI/4+.3,rr=r+(k*37%9)-4;return `${(x+Math.cos(a)*rr).toFixed(1)},${(y+Math.sin(a)*rr*.92).toFixed(1)}`}).join(' ');
+  return `<g class="yb" data-i="${i}" style="cursor:pointer;transform-origin:${x}px ${y}px">
+    <polygon points="${j}" fill="#a3a9b0" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M${x-28} ${y-20} q8 -10 20 -8" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".5"/>
+    <circle cx="${x+24}" cy="${y+22}" r="5" fill="#8a9097"/><circle cx="${x-26}" cy="${y+18}" r="3.5" fill="#8a9097"/>
+    <text x="${x}" y="${y+17}" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="50" fill="#fff" stroke="#2b2b2b" stroke-width="6" paint-order="stroke">${Y.lets[i]}</text></g>`;
+}
+function buildCrab(){
+  const a=avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,''),o='stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"';
+  let waves='';for(let x=0;x<1000;x+=60)waves+=`<path d="M${x} 186 q15 -10 30 0 t30 0" fill="none" stroke="#fff" stroke-width="4" opacity=".7"/>`;
+  $('#cscene').innerHTML=`<svg viewBox="0 0 1000 470" xmlns="${NS}" style="transition:opacity .4s">
+  <rect width="1000" height="470" fill="#bfe9ff"/><circle cx="900" cy="56" r="34" fill="#ffd23f" ${o}/>
+  <rect y="130" width="1000" height="90" fill="#4fb3e8"/>${waves}
+  <path d="M0 212 Q120 198 250 212 T500 212 T750 212 T1000 212 V470 H0Z" fill="#ffe3a3" stroke="#2b2b2b" stroke-width="4"/>
+  <g id="ychest" ${o}>
+    <rect x="520" y="370" width="200" height="72" rx="8" fill="#8b5a2b"/><rect x="540" y="370" width="14" height="72" fill="#ffd23f"/><rect x="686" y="370" width="14" height="72" fill="#ffd23f"/>
+    <rect x="605" y="380" width="30" height="28" rx="5" fill="#ffd23f"/>
+    <g id="ygem" style="opacity:0">${egg('',`x="580" y="300" width="80" height="100"`,'amethyst')}</g>
+    <g id="ylid" style="transform-origin:720px 370px"><path d="M520 370 V350 Q520 322 620 322 Q720 322 720 350 V370Z" fill="#a0652f"/><path d="M547 370 V328 M693 370 V328" stroke="#ffd23f" stroke-width="13"/><path d="M520 370 V350 Q520 322 620 322 Q720 322 720 350 V370Z" fill="none"/></g>
+  </g>
+  <g id="ybould">${YB.map((_,i)=>boulderSVG(i)).join('')}</g>
+  <g id="ycrab" style="transform:translate(${YHOME[0]}px,${YHOME[1]}px)">${crabSVG()}</g>
+  <g id="pl7"><svg x="10" y="302" width="110" height="138" viewBox="0 0 120 150">${a}</svg></g>
+  ${wandG(me().wand,101,409,'wand7')}
+  <g id="fx7"></g>
+  <rect id="yspot" x="600" y="330" width="40" height="40" fill="none"/>
+  </svg>`;
+  $('#ybould').addEventListener('click',onBoulderTap);
+}
+const yExposed=()=>YB.map((_,i)=>i).filter(i=>!Y.gone[i]&&!Object.entries(YON).some(([up,below])=>!Y.gone[+up]&&below.includes(i)));
+function yLeft(){return Y.gone.filter(g=>!g).length}
+function updateEq7(){
+  const l=Y.target>=0?Y.lets[Y.target]:'',w=l?WORDS[l.toLowerCase()]:null;
+  $('#eq7').innerHTML=(l?`<button class="eqb r ysay-btn" aria-label="Hear the letter again">🔊</button><span class="eqb g" style="font-size:clamp(34px,7vw,54px)">${l}${l.toLowerCase()}</span><span class="eqb p">${w[0]} ${w[1]}</span>`:'')+
+    `<span class="eqb r">🪨 × ${yLeft()}</span>`;
+  const b=$('#eq7 .ysay-btn');if(b)b.onclick=()=>sayY();
+}
+function sayY(){const l=Y.lets[Y.target];if(l)speak(`Find the letter ${l}! ${sayWord(l.toLowerCase())}.`)}
+function newYPrompt(first,avoid,pre){
+  const ex=yExposed().filter(i=>i!==avoid);const pool=ex.length?ex:yExposed();
+  Y.target=pool[rand(0,pool.length-1)];updateEq7();
+  $$('#ybould .yb').forEach(g=>g.classList.remove('yhint'));
+  const l=Y.lets[Y.target];
+  speak(`${pre||''} Find the letter ${l}! ${sayWord(l.toLowerCase())}.`);
+}
+function wandToCrab(){
+  const w=$('#wand7');if(w){w.classList.remove('zap');void w.getBBox();w.classList.add('zap')}
+  const [tx,ty]=wandTip(101,409),sp=document.createElementNS(NS,'polygon');
+  sp.setAttribute('points',star(0,0,12,5));sp.setAttribute('fill',WANDS[me().wand].spark);sp.setAttribute('stroke','#2b2b2b');sp.setAttribute('stroke-width','2');
+  $('#fx7').appendChild(sp);
+  sp.animate([{transform:`translate(${tx}px,${ty}px)`,opacity:1},{transform:`translate(${YHOME[0]}px,${YHOME[1]-60}px) rotate(180deg)`,opacity:0}],{duration:380,easing:'ease-out'}).onfinish=()=>sp.remove();
+  $('#yglow').style.opacity=1;later(()=>$('#yglow').style.opacity=0,700);
+  tone([520,780],.1,'triangle',.06);
+}
+function crabLeap(to,dur){
+  const c=$('#ycrab'),from=Y.at||YHOME;Y.at=to;
+  return c.animate(arcFrames(from[0],from[1],to[0],to[1],110,0,0,14),{duration:dur,easing:'linear',fill:'forwards'});
+}
+function onBoulderTap(e){
+  const g=e.target.closest('.yb');if(!g||Y.busy||Y.target<0)return;
+  const i=+g.dataset.i;if(Y.gone[i])return;
+  Y.busy=true;wandToCrab();
+  const [bx,by0]=YB[i],by=by0+Y.dy[i],spot=[bx-78,Math.min(452,by+124)];
+  later(()=>{crabLeap(spot,600);tone([300,500],.08,'square',.05)},350);
+  if(i===Y.target)later(()=>smashBoulder(i,g),1000);
+  else later(()=>hurtClaw(i,g),1000);
+}
+function claws(){return [$('#yclawL'),$('#yclawR')]}
+function smashBoulder(i,g){
+  claws().forEach((c,k)=>c.animate([{transform:'rotate(0)'},{transform:`rotate(${k?-25:25}deg)`},{transform:'rotate(0)'}],{duration:260,iterations:2}));
+  tone([180,90,60],.18,'sawtooth',.1);
+  later(()=>{
+    Y.gone[i]=true;const x=YB[i][0],y=YB[i][1]+Y.dy[i];
+    g.animate([{transform:'scale(1)',opacity:1},{transform:'scale(1.25)',opacity:0}],{duration:250,fill:'forwards'});
+    for(let k=0;k<8;k++){const p=document.createElementNS(NS,'polygon'),a=k*Math.PI/4;
+      p.setAttribute('points',`${x-10},${y-6} ${x+8},${y-10} ${x+12},${y+6} ${x-6},${y+10}`);p.setAttribute('fill','#a3a9b0');p.setAttribute('stroke','#2b2b2b');p.setAttribute('stroke-width','3');
+      $('#fx7').appendChild(p);
+      p.animate([{transform:'translate(0,0) rotate(0)'},{transform:`translate(${Math.cos(a)*90}px,${Math.sin(a)*70+60}px) rotate(${rand(-200,200)}deg)`,opacity:0}],{duration:800,easing:'ease-out',fill:'forwards'}).onfinish=()=>p.remove()}
+    puff(x,y+10,'#e8dccb',6,50,'#fx7');sfx.yay();
+    $('#cscene').animate([{transform:'translate(0,0)'},{transform:'translate(-6px,3px)'},{transform:'translate(6px,-3px)'},{transform:'translate(0,0)'}],{duration:260});
+    updateEq7();if(!yLeft())speak('Smash! All the boulders are gone!');
+  },300);
+  later(()=>{crabLeap(YHOME,600)},1200);
+  later(()=>{
+    // boulders resting on a smashed one tumble down a little
+    Object.entries(YON).forEach(([up,below])=>{up=+up;if(!Y.gone[up]&&below.every(b=>Y.gone[b])){const el=$(`#ybould .yb[data-i="${up}"]`);if(!Y.dy[up]){Y.dy[up]=40;el.animate([{transform:'translateY(0)'},{transform:'translateY(40px)'}],{duration:400,easing:'ease-in',fill:'forwards'})}}});
+    if(!yLeft()){openCrabChest();return}
+    Y.busy=false;newYPrompt(false,-1,`Smash! ${yLeft()} boulder${yLeft()===1?'':'s'} left.`);
+  },2300);
+}
+function hurtClaw(i,g){
+  const c=$('#yclawR'),f=c.querySelector('.yclawf');
+  tone([1200,1500],.05,'square',.04);later(()=>tone([1300],.08,'square',.06),80);
+  g.animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:250});
+  later(()=>{
+    sfx.oops();f.setAttribute('fill','#c0392b');
+    c.animate([{transform:'scale(1)'},{transform:'scale(1.35)'},{transform:'scale(1.2)'}],{duration:400,fill:'forwards'});
+    $('#ymouth').setAttribute('d','M-14 -32 Q0 -46 14 -32');
+    const ys=$('#ysay');ys.style.opacity=1;$('#ysayt').textContent='Ouch!';
+    const x=YB[i][0],y=YB[i][1]+Y.dy[i];for(let k=0;k<5;k++){const p=document.createElementNS(NS,'polygon');p.setAttribute('points',star(x-50+k*8,y-40,10,4));p.setAttribute('fill','#ffd23f');p.setAttribute('stroke','#2b2b2b');p.setAttribute('stroke-width','2');
+      $('#fx7').appendChild(p);p.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${rand(-50,30)}px,${rand(-60,-20)}px)`,opacity:0}],{duration:900,easing:'ease-out',fill:'forwards'}).onfinish=()=>p.remove()}
+    const want=Y.lets[Y.target],got=Y.lets[i];
+    speak(`Ouch! The crab hurt his claw! That's ${got}. We need ${want}.`);
+  },250);
+  later(()=>crabLeap(YHOME,600),1100);
+  later(()=>{$('#ycrab').animate([{transform:`translate(${YHOME[0]}px,${YHOME[1]}px) rotate(0)`},{transform:`translate(${YHOME[0]}px,${YHOME[1]-16}px) rotate(-6deg)`},{transform:`translate(${YHOME[0]}px,${YHOME[1]}px) rotate(6deg)`},{transform:`translate(${YHOME[0]}px,${YHOME[1]}px) rotate(0)`}],{duration:500,iterations:2})},1750);
+  later(()=>{
+    f.setAttribute('fill','#ff6b4a');c.animate([{transform:'scale(1.2)'},{transform:'scale(1)'}],{duration:300,fill:'forwards'});
+    $('#ymouth').setAttribute('d','M-14 -40 Q0 -28 14 -40');$('#ysay').style.opacity=0;
+    Y.busy=false;newYPrompt(false,Y.target);
+  },4400);
+}
+function openCrabChest(){
+  Y.target=-1;updateEq7();
+  speak('You found the treasure chest! Crab, open it!');
+  later(()=>crabLeap([560,440],700),300);
+  later(()=>{claws().forEach((c,k)=>c.animate([{transform:'rotate(0)'},{transform:`rotate(${k?-30:30}deg)`},{transform:'rotate(0)'}],{duration:300}));tone([500,800,1200],.08,'square',.05)},1100);
+  later(()=>{
+    $('#ylid').animate([{transform:'rotate(0)'},{transform:'rotate(68deg)'}],{duration:700,easing:'cubic-bezier(.3,1.5,.6,1)',fill:'forwards'});
+    $('#ygem').animate([{transform:'translateY(40px) scale(.4)',opacity:0,transformOrigin:'620px 350px'},{transform:'translateY(-90px) scale(1.2)',opacity:1,transformOrigin:'620px 350px'}],{duration:1000,easing:'ease-out',fill:'forwards'});
+    sfx.yay();confetti(40);speak('A whole amethyst gem!');
+  },1500);
+  later(()=>{flyShell($('#yspot'),'#cprogress',1);$('#ygem').style.visibility='hidden'},3200);
+  later(()=>crabLeap(YHOME,600),3300);
+  later(winCrab,4600);
+}
+function winCrab(){
+  const opened=awardEgg('beach-2');state.pos='beach-2';save();
+  sfx.win();confetti(80);
+  const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
+  modal(`<div class="rays">${egg('big-egg','','amethyst')}</div>
+    <h2>You found an Amethyst Gem!</h2>
+    <p>The giant crab smashed every boulder! ${txt}</p>
+    <button class="btn go" id="m-ok">🗺️ To the map</button>`);
+  speak(`Hooray ${me().name}! You and the giant crab found an amethyst gem! `+(opened.length?'':gl.say));
+  $('#m-ok').onclick=()=>toMapAfterWin(opened);
+}
+$('#crab-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
+
 $('#letters-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
 
 /* confetti */
