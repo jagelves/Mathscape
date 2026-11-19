@@ -234,6 +234,18 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 @keyframes flapL{from{transform:rotate(-20deg)}to{transform:rotate(25deg)}}
 @keyframes flapR{from{transform:rotate(20deg)}to{transform:rotate(-25deg)}}
 .c-wheel{animation:spin .6s linear infinite;transform-box:view-box}
+/* HOME: game picker in the sky */
+.game-pick{display:flex;gap:clamp(8px,3vw,30px);flex-wrap:wrap;justify-content:center;align-items:center;margin:8px 0 0}
+.gp{background:none;border:none;padding:4px 8px;transition:transform .3s,opacity .3s,filter .3s;opacity:.45;filter:grayscale(.8);transform:scale(.72)}
+.gp .logo{margin:0;font-size:clamp(44px,9vw,86px)}
+.gp.on{opacity:1;filter:none;transform:scale(1)}
+.gp.on .logo span{animation:bob 2.4s ease-in-out infinite}
+.gp:not(.on) .logo span{animation:none}
+.floaters{position:fixed;inset:0;pointer-events:none;z-index:-1;overflow:hidden}
+.floaters span{position:absolute;bottom:-90px;font-weight:700;opacity:.55;-webkit-text-stroke:2px #2b2b2b;paint-order:stroke fill;animation:floatUp linear infinite}
+@keyframes floatUp{0%{transform:translate(0,0) rotate(-8deg)}50%{transform:translate(var(--sw),-60vh) rotate(8deg)}100%{transform:translate(0,-125vh) rotate(-8deg)}}
+.map-logo{font-size:clamp(32px,6vw,52px);margin:8px 0 0}
+.trades{row-gap:14px}
 /* MODAL */
 .modal{position:fixed;inset:0;background:rgba(30,30,50,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .modal.hidden{display:none}
@@ -253,11 +265,15 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 </head>
 <body>
 <div class="clouds" id="clouds"></div>
+<div class="floaters" id="floaters"></div>
 
 <!-- HOME -->
 <section id="s-home" class="screen active">
   <div style="width:100%;max-width:1000px;display:flex;justify-content:flex-end"><button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button></div>
-  <h1 class="logo" id="logo" aria-label="Mathscape"></h1>
+  <div class="game-pick">
+    <button class="gp" id="btn-math" data-g="math" aria-label="Choose Mathscape"><span class="logo" id="logo-math"></span></button>
+    <button class="gp" id="btn-letter" data-g="letter" aria-label="Choose Letterscape"><span class="logo" id="logo-letter"></span></button>
+  </div>
   <div class="tag">Pick your explorer!</div>
   <div class="avatars" id="home-avatars"></div>
   <div class="home-actions">
@@ -299,6 +315,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
     <div class="pill" id="map-eggs"></div>
     <button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button>
   </div>
+  <div class="logo map-logo" id="map-title"></div>
   <div class="board" id="board"></div>
   <div class="map-hint" id="map-hint">Tap a glowing space to play!</div>
 </section>
@@ -375,6 +392,22 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
   <div class="hint">Tap torches to light them with your wand. Light the answer, then tap Fire!</div>
 </section>
 
+<!-- LETTERSCAPE LEVEL 1: BEACH TREASURE CHESTS -->
+<section id="s-letters" class="screen">
+  <div class="topbar">
+    <button class="icon-btn" id="letters-back" aria-label="Back to map">🗺️</button>
+    <div class="shell-wrap" id="xprogress"></div>
+    <button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button>
+  </div>
+  <div class="game-title">Open the treasure chest!</div>
+  <div class="scene" id="bscene"></div>
+  <div class="play-row chest-row">
+    <div class="buddy" id="xbuddy"><div class="bubble" id="xbubble">Let's find letters!</div></div>
+    <div class="choices" id="xchoices"></div>
+  </div>
+  <div class="hint">Each lock shows a little letter. Tap the big letter that matches it. Tap a lock or the sign to hear the letter. Match all three to open the chest!</div>
+</section>
+
 <!-- STORE -->
 <section id="s-store" class="screen">
   <div class="topbar">
@@ -384,11 +417,11 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
   </div>
   <h2 class="screen-title">🛒 Store</h2>
   <div class="store-box">
-    <h3>Trade eggs</h3>
+    <h3>Trade eggs and gems</h3>
     <div class="trades" id="trades"></div>
   </div>
   <div class="store-box">
-    <h3>Unlock new things <span class="price-note">— each costs 1 red ruby egg</span></h3>
+    <h3>Unlock new things <span class="price-note">— each costs 1 red ruby egg or 1 diamond</span></h3>
     <div id="store-items"></div>
   </div>
 </section>
@@ -558,12 +591,19 @@ const EGG_TYPES={
   gold:{name:'golden',Name:'Golden',c:['#fff6c2','#ffd23f','#d99a00']},
   sapphire:{name:'sapphire',Name:'Sapphire',c:['#e3f0ff','#4fa8ff','#1d4fae']},
   emerald:{name:'emerald',Name:'Emerald',c:['#e3ffe9','#2ecc71','#117a42']},
-  ruby:{name:'ruby',Name:'Ruby',c:['#ffe3e6','#ff4757','#a3122a']}
+  ruby:{name:'ruby',Name:'Ruby',c:['#ffe3e6','#ff4757','#a3122a']},
+  topaz:{name:'topaz',Name:'Topaz',gem:true,c:['#fff2d6','#ff9f43','#b35400']},
+  amethyst:{name:'amethyst',Name:'Amethyst',gem:true,c:['#f1e3ff','#a66bd8','#5b2a86']},
+  aqua:{name:'aquamarine',Name:'Aquamarine',gem:true,c:['#e6fbff','#36c5d8','#117f94']},
+  diamond:{name:'diamond',Name:'Diamond',gem:true,c:['#ffffff','#c9f2ff','#5ab4d6']}
 };
-const EGG_ORDER=['gold','sapphire','emerald','ruby'];
-const LEVEL_EGG={'easy-1':'gold','easy-2':'sapphire','easy-3':'sapphire','easy-4':'emerald','easy-5':'ruby'};
+const GEM_PATH='M32 22 H88 L114 60 L60 140 L6 60 Z';
 function egg(cls,attrs,type){
-  const id='eg'+(eggN++),c=(EGG_TYPES[type]||EGG_TYPES.gold).c;
+  const id='eg'+(eggN++),T=EGG_TYPES[type]||EGG_TYPES.gold,c=T.c;
+  if(T.gem)return `<svg class="${cls||'egg'}" ${attrs||''} viewBox="0 0 120 150" aria-hidden="true"><defs><radialGradient id="${id}" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="${c[0]}"/><stop offset=".45" stop-color="${c[1]}"/><stop offset="1" stop-color="${c[2]}"/></radialGradient></defs>
+  <path d="${GEM_PATH}" fill="url(#${id})" stroke="#2b2b2b" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M6 60 H114 M32 22 L44 60 L60 140 L76 60 L88 22 M44 60 L60 22 L76 60" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round" opacity=".6"/>
+  <path d="M30 50 L40 30" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".8"/></svg>`;
   return `<svg class="${cls||'egg'}" ${attrs||''} viewBox="0 0 120 150" aria-hidden="true"><defs><radialGradient id="${id}" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="${c[0]}"/><stop offset=".45" stop-color="${c[1]}"/><stop offset="1" stop-color="${c[2]}"/></radialGradient></defs>
   <path d="M60 8 C96 8 112 70 110 96 C108 128 86 144 60 144 C34 144 12 128 10 96 C8 70 24 8 60 8Z" fill="url(#${id})" stroke="#2b2b2b" stroke-width="5"/>
   <path d="M20 92 L36 82 L50 94 L64 82 L78 94 L92 82 L102 90" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".75"/>
@@ -574,8 +614,8 @@ function egg(cls,attrs,type){
 const SHELL_Y=[160,118,92,66,40,-12];
 function zig(y){const p=[];for(let x=-6,k=0;x<=126;x+=12,k++)p.push(`${x},${y+(k%2?5:-5)}`);return p}
 function shellEgg(n,newIdx,type,total){
-  total=total||5;const Y=total===3?[160,104,56,-12]:SHELL_Y;
-  const c=(EGG_TYPES[type]||EGG_TYPES.gold).c,id='sh'+(eggN++),EGG='M60 8 C96 8 112 70 110 96 C108 128 86 144 60 144 C34 144 12 128 10 96 C8 70 24 8 60 8Z';
+  total=total||5;const Y=total===3?[160,104,56,-12]:SHELL_Y,T=EGG_TYPES[type]||EGG_TYPES.gold;
+  const c=T.c,id='sh'+(eggN++),EGG=T.gem?GEM_PATH:'M60 8 C96 8 112 70 110 96 C108 128 86 144 60 144 C34 144 12 128 10 96 C8 70 24 8 60 8Z';
   let bands='',cracks='';
   for(let i=0;i<total;i++){
     const on=i<n,pts=zig(Y[i]).concat(zig(Y[i+1]).reverse()).join(' ');
@@ -603,23 +643,57 @@ function flyShell(fromEl,sel,n){
 }
 
 /* ---------- state ---------- */
+/* ---------- two games: Mathscape (eggs) and Letterscape (gems) ---------- */
+const GAMES={
+  math:{id:'math',title:'Mathscape',noun:'egg',order:['gold','sapphire','emerald','ruby'],def:'gold',
+    worlds:[{id:'easy',tier:'Easy',name:'Easy · Dragon Meadow',color:'#9be07a',tile:'#5cc96b',y:500,xs:[120,300,480,660,840]},
+            {id:'medium',tier:'Medium',name:'Medium · Crystal Caves',color:'#b9a6f2',tile:'#8e6ee0',y:310,xs:[840,660,480,300,120]},
+            {id:'hard',tier:'Hard',name:'Hard · Volcano Peak',color:'#ffab8a',tile:'#ff6b4a',y:120,xs:[120,300,480,660,840]}],
+    levelEgg:{'easy-1':'gold','easy-2':'sapphire','easy-3':'sapphire','easy-4':'emerald','easy-5':'ruby'},
+    built:{'easy-1':true,'easy-2':true,'easy-3':true,'easy-4':true,'easy-5':true},
+    req:{'easy-2':{gold:3},'easy-3':{gold:3,sapphire:3},'easy-4':{gold:3,sapphire:6},'easy-5':{gold:3,sapphire:6,emerald:3}},
+    from:{gold:'Level 1',sapphire:'Levels 2 and 3',emerald:'Level 4',ruby:'Level 5'}},
+  letter:{id:'letter',title:'Letterscape',noun:'gem',order:['topaz','amethyst','aqua','diamond'],def:'topaz',
+    worlds:[{id:'beach',tier:'Easy',name:'Easy · Sunny Beach',color:'#ffe3a3',tile:'#f39c12',y:500,xs:[120,300,480,660,840]},
+            {id:'reef',tier:'Medium',name:'Medium · Coral Reef',color:'#8fd8ef',tile:'#1ea7c9',y:310,xs:[840,660,480,300,120]},
+            {id:'ship',tier:'Hard',name:'Hard · Pirate Ship',color:'#7fa6d9',tile:'#a0522d',y:120,xs:[120,300,480,660,840]}],
+    levelEgg:{'beach-1':'topaz','beach-2':'amethyst','beach-3':'amethyst','beach-4':'aqua','beach-5':'diamond'},
+    built:{'beach-1':true},
+    req:{'beach-2':{topaz:3},'beach-3':{topaz:3,amethyst:3},'beach-4':{topaz:3,amethyst:6},'beach-5':{topaz:3,amethyst:6,aqua:3}},
+    from:{topaz:'Level 1',amethyst:'Levels 2 and 3',aqua:'Level 4',diamond:'Level 5'}}
+};
+const ALL_ORDER=[...GAMES.math.order,...GAMES.letter.order];
+let GAME,EGG_ORDER,LEVEL_EGG,WORLDS,LEVELS,BUILT,REQ,EGG_FROM,NOUN;
+const PREREQ={}; // optional: level id -> the level that must be finished first
+function setGame(id){
+  const pb=state.progress.posBy=state.progress.posBy||{};
+  if(GAME)pb[GAME.id]=state.pos;
+  GAME=GAMES[id]||GAMES.math;state.game=GAME.id;
+  EGG_ORDER=GAME.order;LEVEL_EGG=GAME.levelEgg;WORLDS=GAME.worlds;BUILT=GAME.built;REQ=GAME.req;EGG_FROM=GAME.from;NOUN=GAME.noun;
+  LEVELS=[];WORLDS.forEach(w=>w.xs.forEach((x,i)=>LEVELS.push({id:w.id+'-'+(i+1),world:w,n:i+1,x,y:w.y})));
+  state.pos=pb[GAME.id]&&LEVELS.some(l=>l.id===pb[GAME.id])?pb[GAME.id]:LEVELS[0].id;
+}
+
 const state={
   chars:store.get('chars2',clone(PRESETS)),
   sel:store.get('sel',0),
   progress:store.get('progress',{gems:{gold:0,sapphire:0,emerald:0},done:{}}),
   muted:store.get('muted',false),
-  pos:store.get('pos','easy-1')
+  pos:store.get('pos','easy-1'),
+  game:store.get('game','math')
 };
 if(!Array.isArray(state.chars)||state.chars.length<3)state.chars=clone(PRESETS);
 state.chars=state.chars.slice(0,4).map((c,i)=>Object.assign({},i<3?PRESETS[i]:NEW_CHAR,c));
 if(state.sel>=state.chars.length)state.sel=0;
 if(state.progress.done&&state.progress.done['easy-5']&&!state.progress.done['easy-4']){state.progress.done['easy-4']=true;delete state.progress.done['easy-5'];if(state.pos==='easy-5')state.pos='easy-4'}
 if(!state.progress.gems){state.progress.gems={gold:state.progress.eggs||0,sapphire:0,emerald:0}}  // older saves counted only golden eggs
-EGG_ORDER.forEach(t=>{state.progress.gems[t]=state.progress.gems[t]||0});
+ALL_ORDER.forEach(t=>{state.progress.gems[t]=state.progress.gems[t]||0});
 state.progress.owned=state.progress.owned||{};state.progress.opened=state.progress.opened||{};
+state.progress.posBy=state.progress.posBy||{};if(!state.progress.posBy.math&&/^(easy|medium|hard)-/.test(state.pos))state.progress.posBy.math=state.pos;
+setGame(state.game);
 if(!state.progress.done)state.progress.done={};
 const me=()=>state.chars[state.sel];
-function save(){store.set('chars2',state.chars);store.set('sel',state.sel);store.set('progress',state.progress);store.set('muted',state.muted);store.set('pos',state.pos)}
+function save(){if(GAME){state.progress.posBy=state.progress.posBy||{};state.progress.posBy[GAME.id]=state.pos}store.set('game',state.game);store.set('chars2',state.chars);store.set('sel',state.sel);store.set('progress',state.progress);store.set('muted',state.muted);store.set('pos',state.pos)}
 
 /* ---------- sound & speech ---------- */
 let actx=null;
@@ -701,7 +775,7 @@ const SONGS={
   puzzle:{bpm:100,mel:PUZ_MEL,ch:PUZ_CH,lead:'triangle',oct:0,vol:.17,style:'puzzle'},
   golem:{bpm:138,mel:GOLEM_MEL,ch:GOLEM_CH,lead:'square',oct:0,vol:.15,style:'golem'}
 };
-const SCREEN_SONG={home:'title',custom:'title',store:'title',game:'meadow',bridge:'meadow',lava:'boss',puzzle:'puzzle',melt:'golem'};
+const SCREEN_SONG={home:'title',custom:'title',store:'title',game:'meadow',bridge:'meadow',lava:'boss',puzzle:'puzzle',melt:'golem',letters:'meadow'};
 function shiftOct(n,o){if(n==='R'||!o)return n;return n.replace(/\d$/,d=>+d+o)}
 function mtone(ctx,dest,f,t,d,type,vol){
   if(!f)return;const o=ctx.createOscillator(),g=ctx.createGain();
@@ -789,13 +863,14 @@ function renderMute(){$$('.mute-btn').forEach(b=>b.textContent=state.muted?'🔇
 $$('.mute-btn').forEach(b=>b.addEventListener('click',()=>{state.muted=!state.muted;if(state.muted){try{speechSynthesis.cancel()}catch(e){}stopMusic()}else syncMusic();save();renderMute();sfx.pop()}));
 
 /* ---------- screens ---------- */
-function show(name){$$('.screen').forEach(s=>s.classList.toggle('active',s.id==='s-'+name));window.scrollTo(0,0);if(actx)syncMusic();else stopMusic()}
+function show(name){$$('.screen').forEach(s=>s.classList.toggle('active',s.id==='s-'+name));$('#floaters').style.display=name==='home'?'':'none';window.scrollTo(0,0);if(actx)syncMusic();else stopMusic()}
 
 /* clouds */
 (function(){const c=$('#clouds');for(let i=0;i<5;i++){const d=document.createElement('div');d.className='cloud';const w=rand(90,170);d.style.cssText=`width:${w}px;height:${w*.35}px;top:${rand(4,40)}vh;animation-duration:${rand(40,80)}s;animation-delay:-${rand(0,60)}s`;c.appendChild(d)}})();
 
-/* logo */
-(function(){const cols=['#ff7eb6','#ffd23f','#5cc96b','#4fa8ff','#ff9f43','#a06cd5','#20c4b0','#ff7eb6','#ffd23f'];$('#logo').innerHTML=[...'Mathscape'].map((ch,i)=>`<span style="color:${cols[i]};--r:${(i%2?3:-3)}deg;animation-delay:${i*.12}s">${ch}</span>`).join('')})();
+/* logos */
+function logoHTML(word){const cols=['#ff7eb6','#ffd23f','#5cc96b','#4fa8ff','#ff9f43','#a06cd5','#20c4b0'];return [...word].map((ch,i)=>`<span style="color:${cols[i%cols.length]};--r:${(i%2?3:-3)}deg;animation-delay:${i*.12}s">${ch}</span>`).join('')}
+$('#logo-math').innerHTML=logoHTML('Mathscape');$('#logo-letter').innerHTML=logoHTML('Letterscape');
 
 /* ---------- HOME ---------- */
 function renderHome(){
@@ -805,7 +880,26 @@ function renderHome(){
   const nb=$('#btn-new-char');if(nb)nb.addEventListener('click',()=>{sfx.pop();openCreate()});
 }
 function esc(s){return String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
-$('#btn-play').addEventListener('click',()=>{sfx.yay();speak("Let's go, "+me().name+"!");openMap()});
+/* pick a game in the sky: the background fills with floating numbers or letters */
+function renderFloaters(){
+  const math=state.game!=='letter',f=$('#floaters');
+  const MATH=[...'0123456789','+','−','+','−','='],ABC='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const cols=['#ff7eb6','#ffd23f','#5cc96b','#4fa8ff','#ff9f43','#a06cd5','#20c4b0'];
+  let h='';for(let i=0;i<22;i++){
+    let ch;if(math)ch=MATH[rand(0,MATH.length-1)];else{const L=ABC[rand(0,25)];ch=Math.random()<.5?L:L+L.toLowerCase()}
+    h+=`<span style="left:${rand(0,95)}vw;font-size:${rand(30,72)}px;color:${cols[i%cols.length]};animation-duration:${rand(14,28)}s;animation-delay:-${rand(0,28)}s;--sw:${rand(-40,40)}px">${ch}</span>`}
+  f.innerHTML=h;
+}
+function pickGame(g,quiet){
+  setGame(g);save();
+  $$('.game-pick .gp').forEach(b=>b.classList.toggle('on',b.dataset.g===state.game));
+  renderFloaters();
+  if(!quiet){sfx.yay();speak(state.game==='letter'?'Letterscape! Letters!':'Mathscape! Numbers!')}
+}
+$('#btn-math').addEventListener('click',()=>pickGame('math'));
+$('#btn-letter').addEventListener('click',()=>pickGame('letter'));
+$('#btn-play').addEventListener('click',()=>{sfx.yay();speak(`${GAME.title}! Let's go, ${me().name}!`);openMap()});
+pickGame(state.game,true);
 $('#btn-custom').addEventListener('click',()=>{sfx.pop();openCustom()});
 
 /* ---------- CUSTOMIZE ---------- */
@@ -832,7 +926,7 @@ function renderCustom(){
     :o.vals.map(([v,l])=>`<button class="chip ${c[o.key]===v?'on':''} ${isLocked(o.key,v)?'locked':''}" data-k="${o.key}" data-v="${v}">${isLocked(o.key,v)?'🔒 ':''}${l}</button>`).join('')
   }</div></div>`).join('');
   $$('#cust-opts [data-k]').forEach(b=>b.addEventListener('click',()=>{
-    if(isLocked(b.dataset.k,b.dataset.v)){sfx.oops();speak('That one is locked. Get it in the store with a ruby egg!');return}
+    if(isLocked(b.dataset.k,b.dataset.v)){sfx.oops();speak('That one is locked. Get it in the store with a ruby egg or a diamond!');return}
     c[b.dataset.k]=b.dataset.v;if(!ED.create)save();sfx.pop();
     if(b.dataset.k==='wand'){tone([660,990,1320],.12,'triangle',.06);speak(WANDS[b.dataset.v].name+' wand!')}
     renderCustom()}));
@@ -857,25 +951,27 @@ $('#btn-done').addEventListener('click',()=>{
 
 
 /* ---------- STORE ---------- */
-const TRADES=[['gold','sapphire'],['sapphire','emerald'],['emerald','ruby']];
-function openStore(){markOpened();renderStore();show('store');speak('Welcome to the store! Trade your eggs, and unlock cool things with ruby eggs!')}
+const TRADES=[['gold','sapphire'],['sapphire','emerald'],['emerald','ruby'],['topaz','amethyst'],['amethyst','aqua'],['aqua','diamond']];
+const nounOf=t=>EGG_TYPES[t].gem?'gem':'egg';
+function openStore(){markOpenedAll();renderStore();show('store');speak('Welcome to the store! Trade your eggs and gems, and unlock cool things with a ruby egg or a diamond!')}
 function renderStore(){
   const g=state.progress.gems,c=me();
-  $('#store-eggs').innerHTML=EGG_ORDER.map(t=>egg('','',t)+`<span>×${g[t]}</span>`).join('<span style="width:6px"></span>');
-  $('#trades').innerHTML=TRADES.map(([a,b],i)=>`<button class="trade" data-i="${i}" ${g[a]<3?'disabled':''} aria-label="Trade 3 ${EGG_TYPES[a].name} for 1 ${EGG_TYPES[b].name}">3 ${egg('','',a)} → 1 ${egg('','',b)}</button>`).join('');
+  $('#store-eggs').innerHTML=ALL_ORDER.map(t=>egg('','',t)+`<span>×${g[t]}</span>`).join('<span style="width:6px"></span>');
+  const canBuy=g.ruby>=PRICE||g.diamond>=PRICE;
+  $('#trades').innerHTML=TRADES.map(([a,b],i)=>`<button class="trade" data-i="${i}" ${g[a]<3?'disabled':''} aria-label="Trade 3 ${EGG_TYPES[a].name} for 1 ${EGG_TYPES[b].name}">3 ${egg('','',a)} → 1 ${egg('','',b)}</button>${i===2?'<div style="flex-basis:100%;height:0"></div>':''}`).join('');
   $('#store-items').innerHTML=STORE.map(cat=>`<div class="store-cat"><h4>${cat.cat}</h4><div class="store-row">${cat.items.map(([k,v,label])=>{
     const owned=!!state.progress.owned[k+':'+v],wearing=c[k]===v,preview=Object.assign({},c,{[k]:v});
     return `<div class="item ${owned?'owned':''}">${avatarWithWand(preview)}<div class="nm">${label}</div>${
       owned?`<button class="btn" data-wear="${k}:${v}">${wearing?'✔ Wearing':'Wear it'}</button>`
-           :`<button class="btn go" data-buy="${k}:${v}" ${g.ruby<PRICE?'disabled':''}>🔓 ${PRICE} ${egg('','','ruby')}</button>`}</div>`}).join('')}</div></div>`).join('');
+           :`<button class="btn go" data-buy="${k}:${v}" ${canBuy?'':'disabled'}>🔓 ${PRICE} ${egg('','','ruby')} <span style="font-size:14px">or</span> ${egg('','','diamond')}</button>`}</div>`}).join('')}</div></div>`).join('');
   $$('#trades .trade').forEach(b=>b.addEventListener('click',()=>{
     const [a,bb]=TRADES[+b.dataset.i];if(g[a]<3)return;
-    markOpened();g[a]-=3;g[bb]++;save();markOpened();tone([523,659,784,1047],.14,'triangle',.07);confetti(15);
-    speak(`You traded 3 ${EGG_TYPES[a].name} eggs for 1 ${EGG_TYPES[bb].name} egg!`);renderStore()}));
+    markOpenedAll();g[a]-=3;g[bb]++;save();markOpenedAll();tone([523,659,784,1047],.14,'triangle',.07);confetti(15);
+    speak(`You traded 3 ${EGG_TYPES[a].name} ${nounOf(a)}s for 1 ${EGG_TYPES[bb].name} ${nounOf(bb)}!`);renderStore()}));
   $$('#store-items [data-buy]').forEach(b=>b.addEventListener('click',()=>{
-    if(g.ruby<PRICE){sfx.oops();speak('You need a ruby egg!');return}
+    if(!canBuy){sfx.oops();speak('You need a ruby egg or a diamond!');return}
     const key=b.dataset.buy,[k,v]=key.split(':');
-    markOpened();g.ruby-=PRICE;state.progress.owned[key]=true;c[k]=v;save();sfx.win();confetti(40);
+    markOpenedAll();if(g.ruby>=PRICE)g.ruby-=PRICE;else g.diamond-=PRICE;state.progress.owned[key]=true;c[k]=v;save();sfx.win();confetti(40);
     const label=STORE.flatMap(x=>x.items).find(x=>x[0]===k&&x[1]===v)[2];
     speak(`You unlocked the ${label}! You're wearing it now!`);renderStore()}));
   $$('#store-items [data-wear]').forEach(b=>b.addEventListener('click',()=>{
@@ -885,57 +981,46 @@ $('#btn-store').addEventListener('click',()=>{sfx.pop();openStore()});
 $('#store-home').addEventListener('click',()=>{sfx.pop();renderHome();show('home')});
 
 /* ---------- MAP ---------- */
-const WORLDS=[{id:'easy',name:'Easy · Dragon Meadow',color:'#9be07a',tile:'#5cc96b',y:500,xs:[120,300,480,660,840]},
-              {id:'medium',name:'Medium · Crystal Caves',color:'#b9a6f2',tile:'#8e6ee0',y:310,xs:[840,660,480,300,120]},
-              {id:'hard',name:'Hard · Volcano Peak',color:'#ffab8a',tile:'#ff6b4a',y:120,xs:[120,300,480,660,840]}];
-const LEVELS=[];WORLDS.forEach(w=>w.xs.forEach((x,i)=>LEVELS.push({id:w.id+'-'+(i+1),world:w,n:i+1,x,y:w.y})));
-const BUILT={'easy-1':true,'easy-2':true,'easy-3':true,'easy-4':true,'easy-5':true};
-const PREREQ={}; // optional: level id -> the level that must be finished first
-const REQ={ // eggs needed to open a level (the level before must be finished too)
-  'easy-2':{gold:3},
-  'easy-3':{gold:3,sapphire:3},
-  'easy-4':{gold:3,sapphire:6},
-  'easy-5':{gold:3,sapphire:6,emerald:3}
-};
 const prereqOf=id=>{const i=LEVELS.findIndex(l=>l.id===id);return PREREQ[id]||(i>0?LEVELS[i-1].id:null)};
 const gems=()=>state.progress.gems;
 const missingFor=id=>{const r=REQ[id]||{};return EGG_ORDER.filter(t=>r[t]&&gems()[t]<r[t]).map(t=>({t,need:r[t],have:gems()[t],more:r[t]-gems()[t]}))};
 const unlocked=id=>{if(state.progress.opened[id]||state.progress.done[id])return true;const i=LEVELS.findIndex(l=>l.id===id);if(i===0)return true;const prev=!!state.progress.done[prereqOf(id)];return prev&&missingFor(id).length===0};
 // once a level opens it stays open, even after eggs are traded in the store
 function markOpened(){let ch=false;LEVELS.forEach(l=>{if(!state.progress.opened[l.id]&&unlocked(l.id)){state.progress.opened[l.id]=true;ch=true}});if(ch)save()}
+function markOpenedAll(){const cur=GAME.id,pos=state.pos;Object.keys(GAMES).forEach(g=>{setGame(g);markOpened()});setGame(cur);state.pos=pos}
 const openSet=()=>LEVELS.filter(l=>unlocked(l.id)).map(l=>l.id);
 function awardEgg(id){const before=openSet();state.progress.done[id]=true;const t=LEVEL_EGG[id]||'gold';state.progress.gems[t]++;save();const now=openSet();markOpened();return now.filter(x=>!before.includes(x))}
-markOpened();
+markOpenedAll();
 function goal(){const g=LEVELS.find(l=>REQ[l.id]&&!unlocked(l.id));if(!g)return null;const miss=missingFor(g.id);return{id:g.id,n:g.n,miss,met:miss.length===0,prevDone:!!state.progress.done[prereqOf(g.id)]}}
-const EGG_FROM={gold:'Level 1',sapphire:'Levels 2 and 3',emerald:'Level 4',ruby:'Level 5'};
 function listJoin(a){return a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1]}
 function goalLine(){
   const g=goal();
   const have=EGG_ORDER.filter(t=>gems()[t]).map(t=>`${gems()[t]} ${EGG_TYPES[t].name}`);
-  if(!g)return{html:`You have ${have.length?listJoin(have.map(x=>'<b>'+x+'</b>'))+' eggs':'no eggs yet'}!`,say:have.length?`You have ${listJoin(have)} eggs!`:''};
+  if(!g)return{html:`You have ${have.length?listJoin(have.map(x=>'<b>'+x+'</b>'))+` ${NOUN}s`:`no ${NOUN}s yet`}!`,say:have.length?`You have ${listJoin(have)} ${NOUN}s!`:''};
   if(!g.met){
-    const parts=g.miss.map(m=>`${m.more} more ${EGG_TYPES[m.t].name}`),from=g.miss.map(m=>`${EGG_TYPES[m.t].name} eggs come from ${EGG_FROM[m.t]}`);
-    return{html:`To open <b>${levelName(g.id)}</b> you need ${listJoin(g.miss.map(m=>`<b>${m.more}</b> more ${EGG_TYPES[m.t].name}`))} egg${g.miss.length===1&&g.miss[0].more===1?'':'s'}! (${listJoin(from)}.)`,
-           say:`You need ${listJoin(parts)} egg${g.miss.length===1&&g.miss[0].more===1?'':'s'} for level ${g.n}!`};
+    const parts=g.miss.map(m=>`${m.more} more ${EGG_TYPES[m.t].name}`),from=g.miss.map(m=>`${EGG_TYPES[m.t].name} ${NOUN}s come from ${EGG_FROM[m.t]}`);
+    return{html:`To open <b>${levelName(g.id)}</b> you need ${listJoin(g.miss.map(m=>`<b>${m.more}</b> more ${EGG_TYPES[m.t].name}`))} ${NOUN}${g.miss.length===1&&g.miss[0].more===1?'':'s'}! (${listJoin(from)}.)`,
+           say:`You need ${listJoin(parts)} ${NOUN}${g.miss.length===1&&g.miss[0].more===1?'':'s'} for level ${g.n}!`};
   }
   return{html:`Finish <b>Level ${g.n-1}</b> to open <b>Level ${g.n}</b>!`,say:`Finish level ${g.n-1} to open level ${g.n}!`};
 }
-function levelName(id){const l=LEVELS.find(x=>x.id===id);return l.world.id==='easy'?`Level ${l.n}`:`${l.world.id[0].toUpperCase()+l.world.id.slice(1)} Level ${l.n}`}
+function levelName(id){const l=LEVELS.find(x=>x.id===id);return l.world.tier==='Easy'?`Level ${l.n}`:`${l.world.tier} Level ${l.n}`}
 function toMapAfterWin(opened){closeModal();openMap();if(opened.length)setTimeout(()=>{const l=LEVELS.find(x=>x.id===opened[0]);speak(`${levelName(l.id)} is open!`);state.pos=l.id;save();moveToken(l);sfx.step()},700)}
 
 function openMap(){renderMap();show('map')}
 function renderMap(){markOpened();
+  const mt=$('#map-title');mt.innerHTML=logoHTML(GAME.title);
   $('#map-player').innerHTML=avatar(me())+`<span>${esc(me().name)}</span>`;
   $('#map-eggs').innerHTML=EGG_ORDER.map(t=>egg('','',t)+`<span>×${gems()[t]}</span>`).join('<span style="width:6px"></span>');
   const pts=LEVELS.map(l=>[l.x,l.y]);
   let d='M'+pts[0].join(' ');for(let i=1;i<pts.length;i++)d+=' L'+pts[i].join(' ');
   const bands=WORLDS.map((w,i)=>{const top=[400,210,0][i],h=[200,190,210][i];return `<rect x="0" y="${top}" width="960" height="${h}" fill="${w.color}"/>
-    <text x="${w.id==='medium'?480:22}" y="${top+34}" text-anchor="${w.id==='medium'?'middle':'start'}" font-family="Fredoka, sans-serif" font-weight="700" font-size="26" fill="#2b2b2b" stroke="#fff" stroke-width="6" paint-order="stroke">${w.name}</text>`}).join('');
-  const deco=mapDeco();
+    <text x="${i===1?480:22}" y="${top+34}" text-anchor="${i===1?'middle':'start'}" font-family="Fredoka, sans-serif" font-weight="700" font-size="26" fill="#2b2b2b" stroke="#fff" stroke-width="6" paint-order="stroke">${w.name}</text>`}).join('');
+  const deco=GAME.id==='letter'?mapDecoLetter():mapDeco();
   const tiles=LEVELS.map(l=>{
     const un=unlocked(l.id),done=!!state.progress.done[l.id],gg=goal(),next=(un&&!done)||(un&&BUILT[l.id]&&gg&&!gg.met&&gg.miss.some(m=>LEVEL_EGG[l.id]===m.t));
     const fill=un?l.world.tile:'#cfcfcf';
-    return `<g class="tile ${un?'':'locked'}" data-id="${l.id}" role="button" aria-label="${l.world.id} level ${l.n}${un?'':' locked'}">
+    return `<g class="tile ${un?'':'locked'}" data-id="${l.id}" role="button" aria-label="${l.world.tier} level ${l.n}${un?'':' locked'}">
       ${next?`<circle class="pulse" cx="${l.x}" cy="${l.y}" r="58" fill="#fff" opacity=".55"/>`:''}
       <ellipse cx="${l.x}" cy="${l.y+10}" rx="48" ry="44" fill="#2b2b2b"/>
       <circle class="tile-face" cx="${l.x}" cy="${l.y}" r="46" fill="${fill}" stroke="#2b2b2b" stroke-width="5"/>
@@ -944,7 +1029,7 @@ function renderMap(){markOpened();
         :un?`<text x="${l.x}" y="${l.y+16}" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="46" fill="#fff" stroke="#2b2b2b" stroke-width="5" paint-order="stroke">${l.n}</text>`
           :`<g transform="translate(${l.x-16},${l.y-18})"><rect x="0" y="14" width="32" height="24" rx="5" fill="#8a8a8a" stroke="#2b2b2b" stroke-width="3"/><path d="M7 14 V8 a9 9 0 0 1 18 0 V14" fill="none" stroke="#2b2b2b" stroke-width="4"/></g>`}
       ${!un&&REQ[l.id]?reqBadge(l):''}
-      ${done?egg('',`x="${l.x+20}" y="${l.y-62}" width="34" height="42"`,LEVEL_EGG[l.id]):''}
+      ${done?egg('',`x="${l.x+20}" y="${l.y-62}" width="34" height="42"`,LEVEL_EGG[l.id]||GAME.def):''}
     </g>`;
   }).join('');
   const pos=LEVELS.find(l=>l.id===state.pos)||LEVELS[0];
@@ -1003,20 +1088,70 @@ function mapDeco(){
     <circle cx="240" cy="70" r="7" fill="#6b4a3a" ${o}/><circle cx="560" cy="60" r="9" fill="#6b4a3a" ${o}/><circle cx="700" cy="180" r="8" fill="#6b4a3a" ${o}/>
   </g>`;
 }
+/* ---------- Letterscape map decorations: beach, coral reef, pirate ship ---------- */
+function mapDecoLetter(){
+  const o='stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"';
+  const palm=(x,y,h,f)=>`<g transform="translate(${x} ${y})${f?' scale(-1 1)':''}"><path d="M0 0 Q-6 ${-h*.5} 8 ${-h}" fill="none" stroke="#2b2b2b" stroke-width="12" stroke-linecap="round"/><path d="M0 0 Q-6 ${-h*.5} 8 ${-h}" fill="none" stroke="#a0652f" stroke-width="7" stroke-linecap="round"/>
+    <path d="M8 ${-h} Q-20 ${-h-24} -42 ${-h-6} Q-18 ${-h-14} 8 ${-h}Z M8 ${-h} Q30 ${-h-30} 52 ${-h-14} Q28 ${-h-18} 8 ${-h}Z M8 ${-h} Q-14 ${-h+4} -30 ${-h+22} Q-10 ${-h+6} 8 ${-h}Z M8 ${-h} Q34 ${-h+2} 46 ${-h+22} Q26 ${-h+4} 8 ${-h}Z M8 ${-h} Q12 ${-h-28} 2 ${-h-40} Q18 ${-h-26} 8 ${-h}Z" fill="#3fae4f" ${o}/></g>`;
+  const umb=(x,y,c)=>`<g transform="translate(${x} ${y})"><line x1="0" y1="0" x2="4" y2="-54" stroke="#2b2b2b" stroke-width="4"/><path d="M-30 -44 Q4 -84 38 -60 Z" fill="${c}" ${o}/><path d="M-30 -44 Q-8 -66 4 -70 M4 -70 Q20 -66 38 -60" fill="none" stroke="#fff" stroke-width="6"/></g>`;
+  const castle=(x,y)=>`<g transform="translate(${x} ${y})" ${o}><rect x="-26" y="-26" width="52" height="26" fill="#f5c26b"/><rect x="-34" y="-46" width="18" height="46" fill="#f5c26b"/><rect x="16" y="-46" width="18" height="46" fill="#f5c26b"/><path d="M-34 -46 v-6 h6 v6 h6 v-6 h6 v6 M16 -46 v-6 h6 v6 h6 v-6 h6 v6" fill="#f5c26b"/><path d="M-6 0 v-12 a6 6 0 0 1 12 0 v12Z" fill="#a0652f"/><line x1="-25" y1="-52" x2="-25" y2="-70" stroke-width="2"/><path d="M-25 -70 L-12 -65 L-25 -60Z" fill="#ff7eb6"/></g>`;
+  const shell=(x,y,c,r)=>`<g transform="translate(${x} ${y}) rotate(${r})"><path d="M-10 4 Q-12 -10 0 -12 Q12 -10 10 4 Z" fill="${c}" ${o}/><path d="M0 4 V-10 M-5 4 L-4 -8 M5 4 L4 -8" stroke="#2b2b2b" stroke-width="1.2" opacity=".5"/></g>`;
+  const sstar=(x,y,c)=>`<polygon points="${star(x,y,12,5)}" fill="${c}" ${o}/>`;
+  const crab=(x,y,i)=>`<g transform="translate(${x} ${y})"><g class="map-dragon" style="animation-delay:${(i*.41).toFixed(2)}s"><ellipse cx="0" cy="-10" rx="16" ry="10" fill="#ff6b4a" ${o}/><path d="M-14 -14 Q-26 -28 -18 -32 M14 -14 Q26 -28 18 -32" fill="none" stroke="#2b2b2b" stroke-width="3"/><circle cx="-19" cy="-33" r="5" fill="#ff6b4a" ${o}/><circle cx="19" cy="-33" r="5" fill="#ff6b4a" ${o}/><circle cx="-5" cy="-22" r="3.5" fill="#fff" stroke="#2b2b2b" stroke-width="1.5"/><circle cx="5" cy="-22" r="3.5" fill="#fff" stroke="#2b2b2b" stroke-width="1.5"/><circle cx="-5" cy="-22" r="1.5" fill="#2b2b2b"/><circle cx="5" cy="-22" r="1.5" fill="#2b2b2b"/></g></g>`;
+  const weed=(x,y,h,c)=>`<path d="M${x} ${y} q-10 ${-h*.25} 0 ${-h*.5} q10 ${-h*.25} 0 ${-h*.5}" fill="none" stroke="#2b2b2b" stroke-width="9" stroke-linecap="round"/><path d="M${x} ${y} q-10 ${-h*.25} 0 ${-h*.5} q10 ${-h*.25} 0 ${-h*.5}" fill="none" stroke="${c||'#2ecc71'}" stroke-width="5" stroke-linecap="round"/>`;
+  const coral=(x,y,c)=>`<path d="M${x} ${y} V${y-24} M${x} ${y-14} L${x-14} ${y-30} M${x} ${y-18} L${x+14} ${y-34} M${x-14} ${y-30} L${x-18} ${y-40} M${x+14} ${y-34} L${x+20} ${y-42}" fill="none" stroke="#2b2b2b" stroke-width="10" stroke-linecap="round"/><path d="M${x} ${y} V${y-24} M${x} ${y-14} L${x-14} ${y-30} M${x} ${y-18} L${x+14} ${y-34} M${x-14} ${y-30} L${x-18} ${y-40} M${x+14} ${y-34} L${x+20} ${y-42}" fill="none" stroke="${c}" stroke-width="6" stroke-linecap="round"/>`;
+  const fish=(x,y,c,i,f)=>`<g transform="translate(${x} ${y})${f?' scale(-1 1)':''}"><g class="map-dragon" style="animation-delay:${(i*.53).toFixed(2)}s"><path d="M10 0 L24 -10 L24 10Z" fill="${c}" ${o}/><ellipse cx="0" cy="0" rx="14" ry="10" fill="${c}" ${o}/><circle cx="-6" cy="-2" r="3" fill="#fff" stroke="#2b2b2b" stroke-width="1.5"/><circle cx="-6" cy="-2" r="1.3" fill="#2b2b2b"/><path d="M0 -8 Q4 0 0 8" fill="none" stroke="#2b2b2b" stroke-width="1.5" opacity=".5"/></g></g>`;
+  const bub=(x,y,n)=>{let h='';for(let i=0;i<n;i++)h+=`<circle class="smoke" cx="${x+(i%2?5:-5)}" cy="${y}" r="7" fill="#e8fbff" stroke="#2b2b2b" stroke-width="2" style="animation-delay:${(i*.9).toFixed(1)}s"/>`;return h};
+  const wave=(y,c)=>{let d=`M0 ${y}`;for(let x=0;x<960;x+=40)d+=` q10 -8 20 0 t20 0`;return `<path d="${d}" fill="none" stroke="${c||'#fff'}" stroke-width="4" opacity=".7"/>`};
+  const barrel=(x,y)=>`<g transform="translate(${x} ${y})" ${o}><path d="M-12 0 Q-16 -16 -12 -32 H12 Q16 -16 12 0Z" fill="#a0652f"/><path d="M-14 -8 H14 M-14 -24 H14" stroke-width="3"/></g>`;
+  const chest=(x,y)=>`<g transform="translate(${x} ${y})" ${o}><rect x="-20" y="-18" width="40" height="18" fill="#8b5a2b"/><path d="M-20 -18 V-26 Q-20 -36 0 -36 Q20 -36 20 -26 V-18Z" fill="#a0652f"/><rect x="-4" y="-22" width="8" height="10" fill="#ffd23f"/><circle cx="-10" cy="-38" r="4" fill="#ffd23f"/><circle cx="6" cy="-40" r="4" fill="#ffd23f"/></g>`;
+  const gull=(x,y)=>`<path d="M${x-14} ${y} q7 -8 14 0 q7 -8 14 0" fill="none" stroke="#2b2b2b" stroke-width="3" stroke-linecap="round"/>`;
+  return `
+  <g>
+    <path d="M0 410 H960" stroke="#4fb3e8" stroke-width="16"/>${wave(410)}
+    ${palm(32,590,70)}${palm(210,580,62,true)}${palm(930,590,74,true)}
+    ${umb(400,575,'#ff7eb6')}${umb(760,590,'#4fa8ff')}${castle(585,598)}
+    ${shell(150,590,'#ffb3c7',-12)}${shell(470,598,'#fff1d6',20)}${shell(700,585,'#ffd0a8',-8)}
+    ${sstar(260,470,'#ff9f43')}${sstar(890,470,'#ff7eb6')}${sstar(560,455,'#ffd23f')}
+    ${crab(390,478,0)}${crab(735,470,2)}${crab(940,450,3)}
+  </g>
+  <g>
+    <path d="M0 400 Q120 384 240 398 T480 396 T720 398 T960 394 V400 H0Z" fill="#f1d38a"/>
+    ${weed(30,398,60)}${weed(48,398,44,'#27ae60')}${weed(390,398,52)}${weed(560,398,40,'#27ae60')}${weed(940,398,58)}
+    ${coral(220,398,'#ff7eb6')}${coral(740,398,'#ff9f43')}${coral(905,398,'#a06cd5')}
+    ${fish(220,300,'#ffd23f',0)}${fish(570,330,'#ff7eb6',1,true)}${fish(395,250,'#4fa8ff',2)}${fish(760,275,'#ff9f43',3,true)}${fish(60,265,'#a06cd5',4)}
+    ${bub(130,380,3)}${bub(615,380,2)}${bub(880,370,3)}
+  </g>
+  <g>
+    ${wave(196,'#e8fbff')}
+    <g transform="translate(860 196)" ${o}>
+      <path d="M-90 -40 H90 L70 0 H-74Z" fill="#8b5a2b"/><path d="M-86 -30 H86" stroke-width="2"/>
+      <circle cx="-50" cy="-20" r="5" fill="#2b2b2b"/><circle cx="-10" cy="-20" r="5" fill="#2b2b2b"/><circle cx="30" cy="-20" r="5" fill="#2b2b2b"/>
+      <line x1="0" y1="-40" x2="0" y2="-170" stroke-width="5"/>
+      <path d="M4 -160 Q50 -130 4 -100Z M4 -96 Q60 -70 4 -46Z" fill="#fffaf0"/>
+      <path d="M-4 -150 Q-46 -124 -4 -100Z" fill="#fffaf0"/>
+      <path d="M0 -170 H-34 V-150 H0Z" fill="#2b2b2b"/><circle cx="-17" cy="-162" r="4" fill="#fff" stroke="none"/><path d="M-24 -154 L-10 -154" stroke="#fff" stroke-width="2"/>
+    </g>
+    ${barrel(40,190)}${barrel(66,192)}${chest(560,190)}
+    <g transform="translate(220 190)" ${o}><circle cx="-14" cy="-6" r="7" fill="#7b4a26"/><circle cx="14" cy="-6" r="7" fill="#7b4a26"/><rect x="-24" y="-24" width="40" height="14" rx="7" fill="#3a3a44" transform="rotate(-18 0 -17)"/></g>
+    ${gull(380,70)}${gull(420,92)}${gull(660,58)}
+    <circle cx="70" cy="62" r="26" fill="#ffd23f" ${o}/>
+  </g>`;
+}
 function moveToken(l){$('#token').style.transform=`translate(${l.x-38}px,${l.y-122}px)`}
 function tileClick(t){
   const l=LEVELS.find(x=>x.id===t.dataset.id);
   if(!unlocked(l.id)){t.classList.remove('shake');void t.getBBox();t.classList.add('shake');sfx.oops();
     const pq=LEVELS.find(x=>x.id===prereqOf(l.id)),pd=!!state.progress.done[pq.id];
     if(!pd)speak(`Finish level ${pq.n} first!`);
-    else if(REQ[l.id]){const m=missingFor(l.id);speak(`You need ${listJoin(m.map(x=>x.more+' more '+EGG_TYPES[x.t].name))} egg${m.length===1&&m[0].more===1?'':'s'}. Play again to win more!`)}
+    else if(REQ[l.id]){const m=missingFor(l.id);speak(`You need ${listJoin(m.map(x=>x.more+' more '+EGG_TYPES[x.t].name))} ${NOUN}${m.length===1&&m[0].more===1?'':'s'}. Play again to win more!`)}
     else speak('That space is locked. Finish the space before it first!');return}
   sfx.step();state.pos=l.id;save();moveToken(l);
   setTimeout(()=>{
-    if(BUILT[l.id]){({'easy-1':startGame,'easy-2':startBridge,'easy-3':startLava,'easy-4':startPuzzle,'easy-5':startMelt})[l.id]()}
+    if(BUILT[l.id]){({'easy-1':startGame,'easy-2':startBridge,'easy-3':startLava,'easy-4':startPuzzle,'easy-5':startMelt,'beach-1':startLetters})[l.id]()}
     else{
       const golem=l.id==='easy-5';
-      modal(`<div class="rays">${egg('big-egg','',LEVEL_EGG[l.id])}</div><h2>${l.world.id[0].toUpperCase()+l.world.id.slice(1)} Level ${l.n}</h2>
+      modal(`<div class="rays">${egg('big-egg','',LEVEL_EGG[l.id]||GAME.def)}</div><h2>${l.world.tier} Level ${l.n}</h2>
         <p>${golem?'Coming soon: melt the chocolate golem into a chocolate puddle!':'This game is coming soon!'}</p>
         <button class="btn go" id="m-ok">OK!</button>`);
       speak(golem?'Coming soon! We will melt the chocolate golem into a chocolate puddle!':'Coming soon!');
@@ -1101,9 +1236,9 @@ function activateDial(){
   G.locked=false;
 }
 /* wand spark from the explorer card (HTML screens) to any element */
-function domZap(toEl){
+function domZap(toEl,bsel){
   try{
-    const sv=$('#buddy svg');if(!sv)return;
+    const sv=$((bsel||'#buddy')+' svg');if(!sv)return;
     const r=sv.getBoundingClientRect(),[tx,ty]=wandTip(99,117);
     const sx=r.left+(tx+6)/162*r.width,sy=r.top+ty/150*r.height;
     const t=toEl.getBoundingClientRect(),ex=t.left+t.width/2,ey=t.top+t.height/2;
@@ -2188,6 +2323,196 @@ function meltWin(){
 }
 $('#btn-fire').addEventListener('click',fireTorches);
 $('#melt-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
+
+/* ---------- LETTERSCAPE LEVEL 1: Beach Treasure Chests (match big letters to little letters) ---------- */
+const XCH=[{pool:'cosuvwxzkp',k:3},{pool:'abefhijlmnty',k:4},{pool:'abdeghnqrt',k:4}];
+// letters that are easy to mix up, used as tricky wrong choices
+const CONF={a:'EHR',b:'DPQ',d:'BPQ',e:'FAB',g:'QJC',h:'NKA',n:'MHU',q:'PGD',r:'PNK',t:'FIL',m:'NWH',f:'ETP',i:'JLT',j:'IGL',l:'IJT',y:'VXK',c:'GOQ',o:'QCD',s:'ZCG',u:'VNW',v:'UWY',w:'MVU',x:'KYZ',z:'SNX',k:'XRH',p:'BRQ'};
+const WORDS={a:['🍎','apple'],b:['🐻','bear'],c:['🐱','cat'],d:['🐶','dog'],e:['🥚','egg'],f:['🐟','fish'],g:['🍇','grapes'],h:['🎩','hat'],i:['🍦','ice cream'],j:['🧃','juice'],k:['🔑','key'],l:['🦁','lion'],m:['🐵','monkey'],n:['👃','nose'],o:['🐙','octopus'],p:['🐷','pig'],q:['👑','queen'],r:['🌈','rainbow'],s:['⭐','star'],t:['🐢','turtle'],u:['☂️','umbrella'],v:['🎻','violin'],w:['🐳','whale'],x:['📦','box'],y:['🧶','yarn'],z:['🦓','zebra']};
+const XC=['#ff7eb6','#4fa8ff','#5cc96b'],XCL=['#ffdcec','#d3e9ff','#d4f7bf'];
+const X={chest:0,lets:[],dial:0,locked:false};
+function startLetters(){
+  clearB();X.chest=0;show('letters');buildBeach();
+  $('#xbuddy').innerHTML=`<div class="bubble" id="xbubble">Let's find letters!</div>`+avatarWithWand(me());
+  renderShell('#xprogress',0,false,'topaz',3);newXChest(true);
+}
+function buildBeach(){
+  const o='stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"';
+  let waves='';for(let x=0;x<1000;x+=60)waves+=`<path d="M${x} 196 q15 -10 30 0 t30 0" fill="none" stroke="#fff" stroke-width="4" opacity=".7"/>`;
+  const shell=(x,y,c,r)=>`<g transform="translate(${x} ${y}) rotate(${r})"><path d="M-14 6 Q-16 -14 0 -16 Q16 -14 14 6 Z" fill="${c}" stroke="#2b2b2b" stroke-width="3"/><path d="M0 6 V-14 M-7 6 L-5 -12 M7 6 L5 -12" stroke="#2b2b2b" stroke-width="1.5" opacity=".5"/></g>`;
+  const sfish=(x,y,c)=>`<polygon points="${starPts(x,y,16,7)}" fill="${c}" ${o}/>`;
+  $('#bscene').innerHTML=`<svg viewBox="0 0 1000 420" xmlns="${NS}">
+  <rect width="1000" height="420" fill="#bfe9ff"/>
+  <circle cx="880" cy="60" r="38" fill="#ffd23f" ${o}/>
+  <rect y="140" width="1000" height="90" fill="#4fb3e8"/>${waves}
+  <path d="M0 222 Q120 206 250 222 T500 222 T750 222 T1000 222 V420 H0Z" fill="#ffe3a3" stroke="#2b2b2b" stroke-width="4"/>
+  <path d="M0 222 Q120 206 250 222 T500 222 T750 222 T1000 222" fill="none" stroke="#fff" stroke-width="6" opacity=".7"/>
+  <g ${o}>
+    <path d="M104 400 Q96 300 128 190" fill="none" stroke="#2b2b2b" stroke-width="22" stroke-linecap="round"/>
+    <path d="M104 400 Q96 300 128 190" fill="none" stroke="#a0652f" stroke-width="14" stroke-linecap="round"/>
+    <path d="M128 192 Q80 150 30 176 Q78 160 128 192Z M128 192 Q120 130 70 112 Q120 138 128 192Z M128 192 Q170 130 222 132 Q170 150 128 192Z M128 192 Q190 172 230 214 Q180 186 128 192Z M128 192 Q150 140 140 96 Q160 140 128 192Z" fill="#3fae4f"/>
+    <circle cx="122" cy="200" r="8" fill="#7b4a26"/><circle cx="136" cy="202" r="8" fill="#7b4a26"/>
+  </g>
+  ${shell(260,380,'#ffb3c7',-10)}${shell(700,392,'#fff1d6',14)}${sfish(920,370,'#ff9f43')}${sfish(230,300,'#ff7eb6')}
+  <g class="map-dragon" style="animation-delay:.3s"><g transform="translate(870 300)">
+    <ellipse cx="0" cy="0" rx="26" ry="16" fill="#ff6b4a" ${o}/><path d="M-22 -6 Q-40 -26 -30 -34 Q-24 -20 -14 -12 M22 -6 Q40 -26 30 -34 Q24 -20 14 -12" fill="#ff6b4a" ${o}/>
+    <path d="M-34 -34 l-6 -8 l10 2Z M34 -34 l6 -8 l-10 2Z" fill="#ff6b4a" ${o}/>
+    <line x1="-6" y1="-14" x2="-8" y2="-26" stroke="#2b2b2b" stroke-width="3"/><line x1="6" y1="-14" x2="8" y2="-26" stroke="#2b2b2b" stroke-width="3"/>
+    <circle cx="-8" cy="-28" r="5" fill="#fff" stroke="#2b2b2b" stroke-width="2"/><circle cx="8" cy="-28" r="5" fill="#fff" stroke="#2b2b2b" stroke-width="2"/><circle cx="-8" cy="-28" r="2" fill="#2b2b2b"/><circle cx="8" cy="-28" r="2" fill="#2b2b2b"/>
+    <path d="M-6 4 Q0 8 6 4" fill="none" stroke="#2b2b2b" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M-20 12 l-10 10 M-12 14 l-6 12 M20 12 l10 10 M12 14 l6 12" stroke="#2b2b2b" stroke-width="3" stroke-linecap="round"/></g></g>
+  <g id="xsign" transform="translate(728 196)">
+    <rect x="44" y="96" width="14" height="110" fill="#a0652f" ${o}/>
+    <rect x="0" y="0" width="200" height="104" rx="14" fill="#c58b4f" ${o}/>
+    <rect x="8" y="8" width="184" height="88" rx="10" fill="#fff6e8" stroke="#2b2b2b" stroke-width="2"/>
+    <text id="xemoji" x="54" y="70" text-anchor="middle" font-size="48">🐻</text>
+    <text id="xword" x="130" y="66" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="30" fill="#2b2b2b">bear</text>
+  </g>
+  <g id="xchest"></g>
+  </svg>`;
+  $('#xchest').addEventListener('click',e=>{const d=e.target.closest('.xdial');if(d)sayDial(+d.dataset.i)});
+  $('#xsign').addEventListener('click',()=>{const l=X.lets[X.dial];if(l)speak(sayWord(l))});
+}
+function starPts(cx,cy,R,r){return star(cx,cy,R,r)}
+function xChestSVG(){
+  const s='stroke="#2b2b2b" stroke-width="5" stroke-linejoin="round"';
+  const dials=[0,1,2].map(i=>{const x=46+i*72;
+    return `<g class="xdial" id="xdial${i}" data-i="${i}" style="cursor:pointer"><rect x="${x}" y="114" width="64" height="120" rx="12" fill="#fff" stroke="${XC[i]}" stroke-width="7"/>
+      <rect x="${x}" y="114" width="64" height="120" rx="12" fill="none" stroke="#2b2b2b" stroke-width="2.5"/>
+      <text class="lo" x="${x+32}" y="166" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="50" fill="#2b2b2b">${X.lets[i]}</text>
+      <line x1="${x+8}" y1="176" x2="${x+56}" y2="176" stroke="#2b2b2b" stroke-width="2" stroke-dasharray="5 4"/>
+      <rect class="upbox" x="${x+8}" y="182" width="48" height="46" rx="8" fill="#eef2f5"/>
+      <text class="up" x="${x+32}" y="221" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="40" fill="#9aa0a6">?</text></g>`}).join('');
+  return `<svg x="330" y="70" width="340" height="340" viewBox="0 -70 300 320" overflow="visible">
+    <ellipse cx="150" cy="248" rx="140" ry="12" fill="#2b2b2b" opacity=".18"/>
+    <g id="xglow" style="opacity:0;transition:opacity .5s"><ellipse cx="150" cy="98" rx="120" ry="18" fill="#fff6c2"/>
+      <path d="M50 98 L20 -40 M100 98 L86 -60 M150 98 V-66 M200 98 L214 -60 M250 98 L280 -40" stroke="#ffe680" stroke-width="13" stroke-linecap="round" opacity=".7"/></g>
+    <g id="xfrag" style="opacity:0">${gemFragSVG('topaz',150,96)}</g>
+    <rect x="20" y="96" width="260" height="148" rx="12" fill="#8b5a2b" ${s}/>
+    <rect x="34" y="96" width="14" height="148" fill="#ffd23f" ${s}/><rect x="252" y="96" width="14" height="148" fill="#ffd23f" ${s}/>
+    <rect x="36" y="106" width="228" height="136" rx="14" fill="#ffd23f" ${s}/>
+    ${dials}
+    <g id="xlid" style="transform-origin:280px 96px">
+      <path d="M20 96 V64 Q20 22 150 22 Q280 22 280 64 V96 Z" fill="#a0652f" ${s}/>
+      <path d="M41 96 V30 M259 96 V30" stroke="#ffd23f" stroke-width="14"/>
+      <path d="M20 96 V64 Q20 22 150 22 Q280 22 280 64 V96 Z" fill="none" ${s}/>
+      <path d="M20 88 H280" stroke="#2b2b2b" stroke-width="4"/>
+    </g>
+    <g id="xpad"><path d="M139 84 v-12 a11 11 0 0 1 22 0 v12" fill="none" stroke="#9aa0a6" stroke-width="7"/>
+      <rect x="130" y="80" width="40" height="30" rx="7" fill="#c9ced4" ${s}/><circle cx="150" cy="92" r="4" fill="#2b2b2b"/><rect x="148" y="92" width="4" height="10" fill="#2b2b2b"/></g>
+  </svg>`;
+}
+/* a small gem piece (for the chest) */
+function gemFragSVG(type,cx,cy){
+  const c=(EGG_TYPES[type]||EGG_TYPES.topaz).c;
+  return `<polygon points="${cx-22},${cy-14} ${cx+22},${cy-14} ${cx+32},${cy} ${cx},${cy+34} ${cx-32},${cy}" fill="${c[1]}" stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M${cx-32} ${cy} H${cx+32} M${cx-10} ${cy-14} L${cx-14} ${cy} L${cx} ${cy+34} L${cx+14} ${cy} L${cx+10} ${cy-14}" fill="none" stroke="#fff" stroke-width="2.5" opacity=".7"/>
+    <path d="M${cx-16} ${cy-8} L${cx-8} ${cy-8}" stroke="#fff" stroke-width="4" stroke-linecap="round"/>`;
+}
+function newXChest(first){
+  const pool=[...XCH[X.chest].pool];shuffle(pool);
+  X.lets=pool.slice(0,3);X.dial=0;X.locked=false;
+  $('#xchest').innerHTML=xChestSVG();
+  activateX();
+  const l=X.lets[0];
+  speak(first?`This treasure chest has a letter lock! Each lock has a little letter. Find the big letter that matches. Little ${l}. Find big ${l.toUpperCase()}!`
+             :`A new treasure chest! Little ${l}. Find big ${l.toUpperCase()}!`);
+}
+function sayDial(i){
+  const l=X.lets[i];if(!l)return;
+  tone([700,900],.07,'triangle',.05);
+  speak(i<X.dial?`Little ${l} and big ${l.toUpperCase()}!`:`Little ${l}. ${sayWord(l)}.`);
+}
+function activateX(){
+  $$('#xchest .xdial').forEach((d,i)=>d.classList.toggle('pulse',i===X.dial));
+  if(X.dial>2)return;
+  const l=X.lets[X.dial],U=l.toUpperCase();
+  $('#xemoji').textContent=WORDS[l][0];
+  const w=WORDS[l][1],wi=w.indexOf(l);
+  $('#xword').innerHTML=`${w.slice(0,wi)}<tspan fill="${XC[X.dial]}" font-size="38">${l}</tspan>${w.slice(wi+1)}`;
+  $('#xword').setAttribute('x',130);
+  setXBubble(`Find big ${U}!`);
+  const k=XCH[X.chest].k,set=new Set([U]);
+  const tricky=shuffle([...(CONF[l]||'')]);
+  while(set.size<k&&tricky.length)set.add(tricky.pop());
+  const ABC='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  while(set.size<k)set.add(ABC[rand(0,25)]);
+  const colors=['#ff7eb6','#4fa8ff','#ffd23f','#ff9f43','#a06cd5','#20c4b0'];shuffle(colors);
+  $('#xchoices').innerHTML=shuffle([...set]).map((v,i)=>`<button class="num" data-v="${v}" style="background:${colors[i]};animation-delay:${.2+i*.08}s">${v}</button>`).join('');
+  $$('#xchoices .num').forEach(b=>b.addEventListener('click',()=>xAnswer(b)));
+  X.locked=false;
+}
+const sayWord=l=>WORDS[l][1].startsWith(l)?`${l} is for ${WORDS[l][1]}`:`${l}, like in ${WORDS[l][1]}`;
+function setXBubble(t){const b=$('#xbubble');if(b)b.textContent=t}
+function xAnswer(b){
+  if(X.locked)return;
+  const v=b.dataset.v,i=X.dial,l=X.lets[i],U=l.toUpperCase();
+  if(v===U){
+    X.locked=true;domZap(b,'#xbuddy');b.classList.add('right');sfx.yay();
+    const bd=$('#xbuddy');bd.classList.remove('jump');void bd.offsetWidth;bd.classList.add('jump');
+    setXBubble(['Yay!','Awesome!','You did it!','Super!','Wow!'][rand(0,4)]);
+    setTimeout(()=>{const d=$(`#xdial${i}`),t=d.querySelector('.up');t.textContent=U;t.setAttribute('fill','#2b2b2b');
+      d.querySelector('.upbox').setAttribute('fill',XCL[i]);
+      t.animate([{transform:'translateY(-30px)',opacity:0},{transform:'translateY(6px)',opacity:1,offset:.7},{transform:'translateY(0)'}],{duration:450,easing:'ease-out'});
+      tone([600,900],.07,'square',.05)},350);
+    X.dial++;
+    if(X.dial<3){
+      const n=X.lets[X.dial];
+      speak(`Yes! Big ${U} and little ${l}! Now, little ${n}. Find big ${n.toUpperCase()}!`);
+      setTimeout(activateX,1500);
+    }else{
+      speak(`Yes! Big ${U} and little ${l}! You matched all three letters!`);
+      setTimeout(()=>{activateX();$('#xchoices').innerHTML='';openXChest()},1500);
+    }
+  }else{
+    X.locked=true;b.classList.add('wrong');sfx.oops();
+    const rb=document.querySelector(`#xchoices .num[data-v="${U}"]`);if(rb)rb.classList.add('reveal');
+    setXBubble('New letter!');
+    speak(`That's big ${v}. Little ${l} goes with big ${U}. Let's try a new letter!`);
+    setTimeout(()=>{$('#xchoices').classList.add('swap');$(`#xdial${i}`).style.opacity=.3},2700);
+    setTimeout(()=>{
+      $('#xchoices').classList.remove('swap');
+      const pool=[...XCH[X.chest].pool].filter(c=>!X.lets.includes(c));
+      const nl=pool[rand(0,pool.length-1)];X.lets[i]=nl;
+      const d=$(`#xdial${i}`);d.querySelector('.lo').textContent=nl;d.style.opacity=1;
+      d.animate([{transform:'scale(.6)'},{transform:'scale(1)'}],{duration:300,easing:'ease-out'});
+      activateX();speak(`Little ${nl}. Find big ${nl.toUpperCase()}!`);
+    },3100);
+  }
+}
+function openXChest(){
+  X.locked=true;
+  setTimeout(()=>{tone([500,800,1200],.08,'square',.05);
+    $('#xpad').animate([{transform:'translate(0,0)'},{transform:'translate(0,-10px)',offset:.2},{transform:'translate(14px,170px) rotate(40deg)',opacity:0}],{duration:900,easing:'ease-in',fill:'forwards'})},500);
+  setTimeout(()=>{
+    sfx.yay();speak('Click! The chest is open! A topaz gem piece!');
+    $('#xlid').animate([{transform:'rotate(0)'},{transform:'rotate(68deg)'}],{duration:700,easing:'cubic-bezier(.3,1.5,.6,1)',fill:'forwards'});
+    $('#xglow').style.opacity=1;
+    $('#xfrag').animate([{transform:'translateY(30px) scale(.4)',opacity:0},{transform:'translateY(-80px) scale(1.2)',opacity:1}],{duration:900,easing:'ease-out',fill:'forwards'});
+    confetti(30);
+  },1300);
+  setTimeout(()=>{
+    X.chest++;flyShell($('#xfrag'),'#xprogress',X.chest);$('#xfrag').style.visibility='hidden';
+    if(X.chest>=XCH.length)speak('The topaz gem is complete!');
+  },3000);
+  setTimeout(()=>{
+    if(X.chest>=XCH.length){winLetters();return}
+    const c=$('#xchest');c.style.transition='opacity .35s';c.style.opacity=0;
+    setTimeout(()=>{newXChest();c.style.opacity=1},400);
+  },4600);
+}
+function winLetters(){
+  const opened=awardEgg('beach-1');state.pos='beach-1';save();
+  sfx.win();confetti(80);
+  const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
+  modal(`<div class="rays">${egg('big-egg','','topaz')}</div>
+    <h2>You found a Topaz Gem!</h2>
+    <p>You opened all three treasure chests! ${txt}</p>
+    <button class="btn go" id="m-ok">🗺️ To the map</button>`);
+  speak(`Hooray ${me().name}! You matched all the letters and found a topaz gem! `+(opened.length?'':gl.say));
+  $('#m-ok').onclick=()=>toMapAfterWin(opened);
+}
+$('#letters-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
 
 /* confetti */
 function confetti(n){
