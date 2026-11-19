@@ -413,23 +413,24 @@ const PRESETS=[
   {name:'Mommy',skin:'#f6d3b3',hairStyle:'long', hair:'#f4d35e',eyes:'#2e86de',shirt:'#e84393',pants:'#5b4a8a',hat:'none',paint:'none',wand:'crystal'},
   {name:'Alex', skin:'#fde4d0',hairStyle:'bangs',hair:'#7b4a26',eyes:'#6b3e1f',shirt:'#27ae60',pants:'#2d4a7a',hat:'none',paint:'none',wand:'fire'}
 ];
+const CLOTH=['#2f6fd6','#e84393','#27ae60','#f39c12','#e74c3c','#8e44ad','#16a085','#f4d35e','#3b3b4f','#2d4a7a','#5b4a8a','#7b4a26','#6d6d6d','#1e8449','#1f1f24']; // jacket and pants share every color, black last
 const OPTS=[
   {key:'skin',label:'Skin',type:'color',vals:['#fde4d0','#f6d3b3','#e2b48c','#e0ac69','#c68642','#8d5524','#5a3519']},
   {key:'hairStyle',label:'Hair style',type:'chip',vals:[['slick','Slick'],['bangs','Bangs'],['short','Short'],['long','Long'],['messy','Spiky'],['bald','No hair']]},
   {key:'hair',label:'Hair color',type:'color',vals:['#1b1b1b','#7b4a26','#f4d35e','#e2662b','#b9b9b9','#8e44ad','#ff7eb6']},
   {key:'eyes',label:'Eyes',type:'color',vals:['#6b3e1f','#4a2c17','#2e86de','#27ae60','#8a6d3b','#7f8c8d']},
-  {key:'shirt',label:'Jacket',type:'color',vals:['#2f6fd6','#e84393','#27ae60','#f39c12','#e74c3c','#8e44ad','#16a085','#f4d35e']},
-  {key:'pants',label:'Pants',type:'color',vals:['#3b3b4f','#2d4a7a','#5b4a8a','#7b4a26','#6d6d6d','#1e8449']},
-  {key:'hat',label:'Hat',type:'chip',vals:[['none','No hat'],['beanie','Beanie'],['cap','Cap'],['crown','Crown'],['santa','Santa hat'],['reindeer','Reindeer antlers'],['catears','Cat ears']]},
-  {key:'paint',label:'Face paint',type:'chip',vals:[['none','No paint'],['warrior','Warrior'],['skeleton','Skeleton'],['cat','Cat']]},
-  {key:'wand',label:'Magic wand',type:'wand',vals:['wood','bone','crystal','fire','hotdog','churro','remote']}
+  {key:'shirt',label:'Jacket',type:'color',vals:CLOTH},
+  {key:'pants',label:'Pants',type:'color',vals:CLOTH},
+  {key:'hat',label:'Hat',type:'chip',vals:[['none','No hat'],['beanie','Beanie'],['cap','Cap'],['crown','Crown'],['santa','Santa hat'],['reindeer','Reindeer antlers'],['catears','Cat ears'],['candy','Candy basket']]},
+  {key:'paint',label:'Face paint',type:'chip',vals:[['none','No paint'],['warrior','Warrior'],['skeleton','Skeleton'],['cat','Cat'],['ninja','Ninja']]},
+  {key:'wand',label:'Magic wand',type:'wand',vals:['wood','bone','crystal','fire','hotdog','churro','remote','fishing']}
 ];
 const NEW_CHAR={name:'',skin:'#f6d3b3',hairStyle:'short',hair:'#7b4a26',eyes:'#6b3e1f',shirt:'#f39c12',pants:'#2d4a7a',hat:'none',paint:'none',wand:'wood'};
 /* store items: each costs 1 ruby (red) egg */
 const STORE=[
-  {cat:'Wands',items:[['wand','hotdog','Hot Dog wand'],['wand','churro','Churro wand'],['wand','remote','Remote control']]},
-  {cat:'Face paint',items:[['paint','warrior','Warrior paint'],['paint','skeleton','Skeleton paint'],['paint','cat','Cat paint']]},
-  {cat:'Hats',items:[['hat','santa','Santa hat'],['hat','reindeer','Reindeer antlers'],['hat','catears','Cat ears']]}
+  {cat:'Wands',items:[['wand','hotdog','Hot Dog wand'],['wand','churro','Churro wand'],['wand','remote','Remote control'],['wand','fishing','Fishing pole']]},
+  {cat:'Face paint',items:[['paint','warrior','Warrior paint'],['paint','skeleton','Skeleton paint'],['paint','cat','Cat paint'],['paint','ninja','Ninja mask']]},
+  {cat:'Hats',items:[['hat','santa','Santa hat'],['hat','reindeer','Reindeer antlers'],['hat','catears','Cat ears'],['hat','candy','Halloween candy basket']]}
 ];
 const STORE_KEYS=new Set(STORE.flatMap(c=>c.items.map(([k,v])=>k+':'+v)));
 const PRICE=1; // ruby eggs
@@ -442,12 +443,15 @@ function paintUnder(c){
     <path d="M20 70 L40 74 L20 78Z M22 82 L40 82 L26 88Z M100 70 L80 74 L100 78Z M98 82 L80 82 L94 88Z" fill="#e74c3c" stroke="#2b2b2b" stroke-width="1.5" stroke-linejoin="round"/>`;
   if(c.paint==='skeleton')return `<ellipse cx="60" cy="62" rx="44" ry="38" fill="#f4f4f4"/>
     <ellipse cx="47" cy="60" rx="18" ry="16" fill="#2b2b2b"/><ellipse cx="73" cy="60" rx="18" ry="16" fill="#2b2b2b"/>`;
+  if(c.paint==='ninja')return `<ellipse cx="60" cy="62" rx="44.5" ry="38.5" fill="#23232b"/><rect x="18" y="46" width="84" height="28" rx="13" fill="${c.skin}" stroke="#2b2b2b" stroke-width="2"/>`;
   if(c.paint==='cat')return `<ellipse cx="34" cy="78" rx="8" ry="5" fill="#ff9fc4" opacity=".8"/><ellipse cx="86" cy="78" rx="8" ry="5" fill="#ff9fc4" opacity=".8"/>`;
   return '';
 }
 function paintOver(c){
   if(c.paint==='skeleton')return `<path d="M60 70 L55 78 L65 78Z" fill="#2b2b2b"/>
     <rect x="46" y="84" width="28" height="9" rx="2" fill="#fff" stroke="#2b2b2b" stroke-width="2.5"/><path d="M53 84 V93 M60 84 V93 M67 84 V93" stroke="#2b2b2b" stroke-width="2"/>`;
+  if(c.paint==='ninja')return `<path d="M20 76 Q60 70 100 76 Q100 96 60 102 Q20 96 20 76Z" fill="#23232b"/><path d="M40 88 Q60 84 80 88 M46 95 Q60 92 74 95" fill="none" stroke="#4a4a58" stroke-width="2" stroke-linecap="round"/>
+    <path d="M17 40 Q60 26 103 40 L102 48 Q60 34 18 48Z" fill="#e74c3c" stroke="#2b2b2b" stroke-width="2"/><path d="M101 42 L116 34 L112 44 L118 52 L102 48Z" fill="#e74c3c" stroke="#2b2b2b" stroke-width="2" stroke-linejoin="round"/>`;
   if(c.paint==='cat')return `<path d="M55 72 L65 72 L60 78Z" fill="#ff7eb6" stroke="#2b2b2b" stroke-width="2" stroke-linejoin="round"/>
     <path d="M44 76 L18 70 M44 80 L16 80 M44 84 L18 90 M76 76 L102 70 M76 80 L104 80 M76 84 L102 90" stroke="#2b2b2b" stroke-width="2.5" stroke-linecap="round"/>`;
   return '';
@@ -478,6 +482,14 @@ function avatar(c){
     hat=ant(38,-1)+ant(82,1)+`<path d="M24 32 Q60 14 96 32" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linecap="round"/><path d="M24 32 Q60 14 96 32" fill="none" stroke="#e74c3c" stroke-width="4" stroke-linecap="round"/>`;
   }else if(c.hat==='catears'){
     hat=`<path d="M22 40 L24 4 L50 26 Z" fill="${c.hair==='#f4d35e'?'#7b4a26':'#2b2b2b'}" ${sw}/><path d="M29 32 L30 14 L43 26 Z" fill="#ff9fc4"/><path d="M98 40 L96 4 L70 26 Z" fill="${c.hair==='#f4d35e'?'#7b4a26':'#2b2b2b'}" ${sw}/><path d="M91 32 L90 14 L77 26 Z" fill="#ff9fc4"/><path d="M24 34 Q60 16 96 34" fill="none" stroke="#2b2b2b" stroke-width="5" stroke-linecap="round"/>`;
+  }else if(c.hat==='candy'){
+    hat=`<g transform="translate(12 12) scale(.8)"><path d="M34 16 Q60 -14 86 16" fill="none" stroke="#2b2b2b" stroke-width="6" stroke-linecap="round"/><path d="M34 16 Q60 -14 86 16" fill="none" stroke="#1f1f24" stroke-width="3" stroke-linecap="round"/>
+      <line x1="46" y1="12" x2="41" y2="-2" stroke="#2b2b2b" stroke-width="3"/><circle cx="40" cy="-4" r="7" fill="#ff7eb6" ${sw}/><path d="M35 -6 Q40 -2 45 -6" fill="none" stroke="#fff" stroke-width="2"/>
+      <path d="M58 8 L56 0 L64 -2 L66 6Z" fill="#a06cd5" ${sw}/><path d="M54 -2 L50 -8 L58 -4Z M66 -4 L72 -8 L66 0Z" fill="#a06cd5" ${sw}/>
+      <rect x="70" y="0" width="16" height="11" rx="3" fill="#7b4a26" ${sw} transform="rotate(14 78 5)"/><path d="M71 4 h14" stroke="#ffd23f" stroke-width="2" transform="rotate(14 78 5)"/>
+      <circle cx="52" cy="6" r="5" fill="#ffd23f" ${sw}/><circle cx="76" cy="10" r="5" fill="#5cc96b" ${sw}/>
+      <path d="M28 14 Q28 48 60 48 Q92 48 92 14 Z" fill="#ff8a1f" ${sw}/><ellipse cx="60" cy="14" rx="32" ry="6" fill="#d96a0f" ${sw}/>
+      <path d="M44 22 L50 30 L38 30Z M76 22 L82 30 L70 30Z" fill="#2b2b2b"/><path d="M42 36 Q60 46 78 36 L72 38 L68 35 L64 39 L60 36 L56 39 L52 35 L48 38Z" fill="#2b2b2b"/></g>`;
   }else if(c.hat==='crown'){
     hat=`<path d="M30 32 L32 4 L46 20 L60 0 L74 20 L88 4 L90 32 Z" fill="#ffd23f" ${sw}/><circle cx="60" cy="24" r="4" fill="#e74c3c"/><circle cx="42" cy="26" r="3" fill="#2e86de"/><circle cx="78" cy="26" r="3" fill="#27ae60"/>`;
   }
@@ -508,6 +520,7 @@ const WANDS={
   crystal:{name:'Crystal',spark:'#7cf2ff',svg:()=>`<rect x="-3" y="-46" width="6" height="52" rx="3" fill="#c9d6e3" stroke="#2b2b2b" stroke-width="3"/><path d="M-3 -6 L3 -12 M-3 -18 L3 -24 M-3 -30 L3 -36" stroke="#4fa8ff" stroke-width="2.5"/><polygon points="0,-80 12,-60 0,-44 -12,-60" fill="#7cf2ff" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/><path d="M-5 -62 L0 -72" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`},
   hotdog:{name:'Hot Dog',spark:'#ffd23f',svg:()=>`<rect x="-7.5" y="-56" width="15" height="62" rx="7" fill="#e8b56a" stroke="#2b2b2b" stroke-width="3"/><rect x="-4.5" y="-66" width="9" height="76" rx="4.5" fill="#d1453b" stroke="#2b2b2b" stroke-width="3"/><path d="M0 -60 l3 5 l-3 5 l3 5 l-3 5 l3 5 l-3 5 l3 5 l-3 5 l3 5 l-3 5" fill="none" stroke="#ffd23f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`},
   churro:{name:'Churro',spark:'#e0a050',svg:()=>`<rect x="-5.5" y="-66" width="11" height="72" rx="5" fill="#d9963f" stroke="#2b2b2b" stroke-width="3"/><path d="M-2.5 -62 V2 M2.5 -62 V2" stroke="#a8682a" stroke-width="2"/><circle cx="-3" cy="-50" r="1.2" fill="#fff"/><circle cx="2" cy="-40" r="1.2" fill="#fff"/><circle cx="-2" cy="-28" r="1.2" fill="#fff"/><circle cx="3" cy="-16" r="1.2" fill="#fff"/><circle cx="-1" cy="-58" r="1.2" fill="#fff"/><path d="M-6 -6 h12" stroke="#2b2b2b" stroke-width="2"/>`},
+  fishing:{name:'Fishing pole',spark:'#4fc3f7',svg:()=>`<path d="M0 -72 Q20 -70 22 -40" fill="none" stroke="#2b2b2b" stroke-width="1.5"/><path d="M-3 6 L-1.2 -72 L1.2 -72 L3 6Z" fill="#7b4a26" stroke="#2b2b2b" stroke-width="2.5" stroke-linejoin="round"/><rect x="-4.5" y="-12" width="9" height="20" rx="4" fill="#d9a66b" stroke="#2b2b2b" stroke-width="2.5"/><circle cx="7" cy="-18" r="6" fill="#b9b9b9" stroke="#2b2b2b" stroke-width="2.5"/><circle cx="7" cy="-18" r="2" fill="#2b2b2b"/><circle cx="0" cy="-72" r="2.5" fill="#d1d1d1" stroke="#2b2b2b" stroke-width="1.5"/><path d="M22 -40 v3" stroke="#2b2b2b" stroke-width="1.5"/><path d="M15 -30 Q22 -40 29 -30 Q22 -22 15 -30Z M29 -30 L34 -35 L34 -25Z" fill="#ff9f43" stroke="#2b2b2b" stroke-width="2" stroke-linejoin="round"/><circle cx="19" cy="-31" r="1.2" fill="#2b2b2b"/>`},
   remote:{name:'Remote',spark:'#ff4757',svg:()=>`<rect x="-9" y="-58" width="18" height="64" rx="6" fill="#3a3a44" stroke="#2b2b2b" stroke-width="3"/><circle cx="0" cy="-62" r="4.5" fill="#ff4757" stroke="#2b2b2b" stroke-width="2"/><circle cx="0" cy="-62" r="9" fill="#ff4757" opacity=".25"/><circle cx="0" cy="-44" r="4" fill="#ff4757"/><circle cx="-4" cy="-32" r="2.5" fill="#4fa8ff"/><circle cx="4" cy="-32" r="2.5" fill="#5cc96b"/><circle cx="-4" cy="-24" r="2.5" fill="#ffd23f"/><circle cx="4" cy="-24" r="2.5" fill="#a06cd5"/><rect x="-5" y="-14" width="10" height="4" rx="2" fill="#9a9a9a"/>`},
   fire:{name:'Fire',spark:'#ff7b29',svg:()=>`<rect x="-3.5" y="-46" width="7" height="52" rx="3" fill="#ffd23f" stroke="#2b2b2b" stroke-width="3"/><path d="M-3.5 -4 L3.5 -12 M-3.5 -18 L3.5 -26 M-3.5 -32 L3.5 -40" stroke="#e74c3c" stroke-width="3"/><path class="flame" d="M0 -84 Q15 -66 10 -54 Q0 -44 -10 -54 Q-15 -66 0 -84Z" fill="#ff7b29" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/><path class="flame" d="M0 -70 Q7 -60 4 -54 Q0 -50 -4 -54 Q-7 -60 0 -70Z" fill="#ffd23f"/>`}
 };
@@ -845,7 +858,7 @@ $('#btn-done').addEventListener('click',()=>{
 
 /* ---------- STORE ---------- */
 const TRADES=[['gold','sapphire'],['sapphire','emerald'],['emerald','ruby']];
-function openStore(){renderStore();show('store');speak('Welcome to the store! Trade your eggs, and unlock cool things with ruby eggs!')}
+function openStore(){markOpened();renderStore();show('store');speak('Welcome to the store! Trade your eggs, and unlock cool things with ruby eggs!')}
 function renderStore(){
   const g=state.progress.gems,c=me();
   $('#store-eggs').innerHTML=EGG_ORDER.map(t=>egg('','',t)+`<span>×${g[t]}</span>`).join('<span style="width:6px"></span>');
@@ -857,12 +870,12 @@ function renderStore(){
            :`<button class="btn go" data-buy="${k}:${v}" ${g.ruby<PRICE?'disabled':''}>🔓 ${PRICE} ${egg('','','ruby')}</button>`}</div>`}).join('')}</div></div>`).join('');
   $$('#trades .trade').forEach(b=>b.addEventListener('click',()=>{
     const [a,bb]=TRADES[+b.dataset.i];if(g[a]<3)return;
-    g[a]-=3;g[bb]++;save();tone([523,659,784,1047],.14,'triangle',.07);confetti(15);
+    markOpened();g[a]-=3;g[bb]++;save();markOpened();tone([523,659,784,1047],.14,'triangle',.07);confetti(15);
     speak(`You traded 3 ${EGG_TYPES[a].name} eggs for 1 ${EGG_TYPES[bb].name} egg!`);renderStore()}));
   $$('#store-items [data-buy]').forEach(b=>b.addEventListener('click',()=>{
     if(g.ruby<PRICE){sfx.oops();speak('You need a ruby egg!');return}
     const key=b.dataset.buy,[k,v]=key.split(':');
-    g.ruby-=PRICE;state.progress.owned[key]=true;c[k]=v;save();sfx.win();confetti(40);
+    markOpened();g.ruby-=PRICE;state.progress.owned[key]=true;c[k]=v;save();sfx.win();confetti(40);
     const label=STORE.flatMap(x=>x.items).find(x=>x[0]===k&&x[1]===v)[2];
     speak(`You unlocked the ${label}! You're wearing it now!`);renderStore()}));
   $$('#store-items [data-wear]').forEach(b=>b.addEventListener('click',()=>{
@@ -887,7 +900,7 @@ const REQ={ // eggs needed to open a level (the level before must be finished to
 const prereqOf=id=>{const i=LEVELS.findIndex(l=>l.id===id);return PREREQ[id]||(i>0?LEVELS[i-1].id:null)};
 const gems=()=>state.progress.gems;
 const missingFor=id=>{const r=REQ[id]||{};return EGG_ORDER.filter(t=>r[t]&&gems()[t]<r[t]).map(t=>({t,need:r[t],have:gems()[t],more:r[t]-gems()[t]}))};
-const unlocked=id=>{if(state.progress.opened[id])return true;const i=LEVELS.findIndex(l=>l.id===id);if(i===0)return true;const prev=!!state.progress.done[prereqOf(id)];return prev&&missingFor(id).length===0};
+const unlocked=id=>{if(state.progress.opened[id]||state.progress.done[id])return true;const i=LEVELS.findIndex(l=>l.id===id);if(i===0)return true;const prev=!!state.progress.done[prereqOf(id)];return prev&&missingFor(id).length===0};
 // once a level opens it stays open, even after eggs are traded in the store
 function markOpened(){let ch=false;LEVELS.forEach(l=>{if(!state.progress.opened[l.id]&&unlocked(l.id)){state.progress.opened[l.id]=true;ch=true}});if(ch)save()}
 const openSet=()=>LEVELS.filter(l=>unlocked(l.id)).map(l=>l.id);
@@ -911,7 +924,7 @@ function levelName(id){const l=LEVELS.find(x=>x.id===id);return l.world.id==='ea
 function toMapAfterWin(opened){closeModal();openMap();if(opened.length)setTimeout(()=>{const l=LEVELS.find(x=>x.id===opened[0]);speak(`${levelName(l.id)} is open!`);state.pos=l.id;save();moveToken(l);sfx.step()},700)}
 
 function openMap(){renderMap();show('map')}
-function renderMap(){
+function renderMap(){markOpened();
   $('#map-player').innerHTML=avatar(me())+`<span>${esc(me().name)}</span>`;
   $('#map-eggs').innerHTML=EGG_ORDER.map(t=>egg('','',t)+`<span>×${gems()[t]}</span>`).join('<span style="width:6px"></span>');
   const pts=LEVELS.map(l=>[l.x,l.y]);
@@ -1187,7 +1200,7 @@ function winGame(){
 $('#game-back').addEventListener('click',()=>{sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
 
 /* ---------- LEVEL 2: Balance Bridge (addition) ---------- */
-const BR=[[3,4],[4,6],[5,7],[6,9],[7,10]];
+const BR=[[3,5],[5,7],[7,10]];
 const B={round:0,total:0,pre:0,dr:[],angle:0,busy:false,seq:0,timers:[]};
 const later=(f,ms)=>B.timers.push(setTimeout(f,ms));
 const clearB=()=>{B.timers.forEach(clearTimeout);B.timers=[]};
@@ -1199,7 +1212,7 @@ function star(cx,cy,R,r){let p=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Mat
 function startBridge(){
   clearB();B.round=0;B.total=0;show('bridge');buildScene();renderBProgress();newBridgeRound(true);
 }
-function renderBProgress(){renderShell('#bprogress',B.round,false,'sapphire')}
+function renderBProgress(){renderShell('#bprogress',B.round,false,'sapphire',3)}
 /* ---------- LEVEL 2: Ice Cream Catapult (addition up to 10) ---------- */
 const PIV=[545,300],SWING=130,LAUNCH=[604,150],WL2=[870,400],SK=1.45;
 const FLAV={pre:['#ff8fc0','#ffd0e4'],add:['#7fe0b8','#d2f7e6']};
@@ -1445,7 +1458,7 @@ $('#btn-drop').addEventListener('click',dropDragons);
 $('#bridge-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
 
 /* ---------- LEVEL 3: Warlock's Gargoyles (subtraction) ---------- */
-const LR=[[4,5,1,2],[5,6,1,3],[6,8,2,4],[7,9,2,5],[8,10,3,6]];
+const LR=[[4,6,1,3],[6,8,2,4],[8,10,3,6]];
 const L={round:0,T:0,k:0,R:0,m:0,busy:true,anims:[]};
 const WL=[905,400],WLS=.85,GG=[510,252];
 const track=a=>{L.anims.push(a);return a};
@@ -1497,7 +1510,7 @@ function gargoyleSVG(){
     <path d="M-15 -80 Q0 -70 15 -80" fill="#5a2232" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"/>
     <path d="M-10 -79 l3 6 l3 -5Z M10 -79 l-3 6 l-3 -5Z" fill="#fff" stroke="#2b2b2b" stroke-width="1.5"/>`;
 }
-function startLava(){clearB();L.round=0;L.T=0;show('lava');buildLava();renderShell('#lprogress',0,false,'sapphire');newLavaRound(true)}
+function startLava(){clearB();L.round=0;L.T=0;show('lava');buildLava();renderShell('#lprogress',0,false,'sapphire',3);newLavaRound(true)}
 function buildLava(){
   const a=avatar(me()).replace(/^<svg[^>]*>|<\/svg>$/g,'');
   let bricks='';for(let y=20;y<430;y+=36)for(let x=(y/36%2?-30:0);x<1000;x+=60)bricks+=`<rect x="${x}" y="${y}" width="60" height="36" fill="none" stroke="#2f2747" stroke-width="3"/>`;
@@ -1986,7 +1999,8 @@ function makeMQ(r,prev){
   }while(prev&&ans===prev.ans&&++tries<20);
   return{t,a,b,ans,txt:t==='add'?`${a} + ${b}`:`${a} − ${b}`,say:t==='add'?`${a} plus ${b}`:`${a} take away ${b}`};
 }
-const TX=i=>175+i*46;
+const TX=i=>175+i*46,WL6=[515,196];
+const CHEERS=['Go, golem, go!','Get them, golem!','Stomp stomp!','Go go golem!'];
 function torchMarkup(i){
   const x=TX(i),o='stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"';
   return `<g class="torch" data-i="${i}">
@@ -2026,8 +2040,15 @@ function buildMelt(){
     </g>
     <g id="gm-body" style="transform-box:fill-box;transform-origin:50% 100%;transition:transform 1.1s cubic-bezier(.4,0,.2,1), opacity .9s .4s">${golemArt(true)}<g id="gm-drips"></g></g>
   </svg>
+  <g stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round">
+    <rect x="430" y="196" width="170" height="20" rx="4" fill="#8a8298"/>
+    <path d="M440 216 L470 246 H560 L590 216Z" fill="#6b6178"/>
+    <path d="M446 196 v-26 M476 196 v-26 M506 196 v-26 M536 196 v-26 M566 196 v-26 M592 196 v-26" stroke-width="5"/>
+    <rect x="436" y="164" width="162" height="10" rx="4" fill="#8a8298"/>
+  </g>
+  <g id="wl6" style="transform:translate(${WL6[0]}px,${WL6[1]}px) scale(.7)">${warlockSVG('m')}</g>
   <g id="torches">${torches}</g>
-  <svg x="0" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg>
+  <g id="pl6"><svg x="0" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg></g>
   ${wandG(me().wand,91,369,'wand6')}
   <g id="fx6"></g>
   </svg>`;
@@ -2056,7 +2077,8 @@ function newMeltRound(first){
   M.q=makeMQ(M.round,M.q);M.busy=false;M.m=0;
   litTorches().forEach(g=>setLit(g,false));
   updateEq6();$('#btn-fire').disabled=false;
-  const intro=first?'The chocolate golem is in the castle! Light torches with your wand, then tap fire to melt him! ':'';
+  wlAngry('m',false);wlLaugh(false,'m');wlSay(CHEERS[rand(0,CHEERS.length-1)],true,'m');later(()=>wlSay('',true,'m'),2600);
+  const intro=first?'The chocolate golem is in the castle, and the warlock is cheering for him! Light torches with your wand, then tap fire to melt him! ':'';
   speak(`${intro}${M.q.say}. How many torches?`);
 }
 function onTorchTap(e){
@@ -2108,6 +2130,7 @@ function evaluateMelt(ok,tooMany){
     M.stage++;setMelt(M.stage);M.round++;
     const done=M.round>=MR.length;
     speak(`${q.say} is ${q.ans}! Sizzle! `+(done?'The golem melted into a chocolate puddle!':'The golem is melting!'));
+    if(!done){wlSay('Oh no! My golem!',true,'m');later(()=>wlSay('',true,'m'),1800)}
     later(()=>{flyShell($('#gm-puddle'),'#mprogress',M.round)},1300);
     later(()=>{if(done)meltWin();else newMeltRound()},done?3600:3000);
   }else{
@@ -2116,23 +2139,52 @@ function evaluateMelt(ok,tooMany){
     if(tooMany)speak(`Too much fire! ${said} It bounced right off him!`);
     else{puff(GC[0],GC[1],'#9a9a9a',5,40);speak(`Not hot enough! ${said} The fire fizzled!`)}
     later(stomp,900);
-    later(()=>speak('Roar! Let\'s try again!'),2600);
-    later(()=>newMeltRound(),4200);
+    later(()=>throwChoc(),2000);
+    later(()=>{wlSay('Ha ha ha!',true,'m');wlLaugh(true,'m');speak('Splat! The golem threw chocolate in our face! Let\'s try again!')},2900);
+    later(()=>{wlLaugh(false,'m');wlSay('',true,'m')},5200);
+    later(()=>newMeltRound(),5800);
   }
+}
+/* the golem throws a chocolate blob at the player's face */
+function throwChoc(){
+  const from=[GX+60,GY+150],to=[56,312],g=document.createElementNS(NS,'g');
+  g.innerHTML='<path d="M-14 -4 Q-12 -16 0 -15 Q14 -16 14 -2 Q16 12 0 13 Q-16 12 -14 -4Z" fill="#6b3d1e" stroke="#2b2b2b" stroke-width="3"/><ellipse cx="-4" cy="-7" rx="4" ry="2.5" fill="#a0652f"/>';
+  $('#fx6').appendChild(g);tone([300,200],.1,'triangle',.06);
+  g.animate(arcFrames(from[0],from[1],to[0],to[1],130,0,-540,18),{duration:850,easing:'linear',fill:'forwards'}).onfinish=()=>{g.remove();chocSplat(to[0],to[1])};
+}
+function chocSplat(x,y){
+  tone([160,90],.18,'sine',.1);
+  $('#pl6').animate([{transform:'translate(0,0)'},{transform:'translate(-10px,0) rotate(-4deg)'},{transform:'translate(0,0)'}],{duration:300,easing:'ease-out'});
+  const g=document.createElementNS(NS,'g'),c='#6b3d1e',st='stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round"';
+  g.innerHTML=`<path d="M${x-30} ${y-6} q-6 -20 14 -24 q8 -16 26 -6 q22 -4 20 16 q14 10 0 22 q4 18 -16 14 q-10 14 -24 2 q-22 6 -20 -12 q-12 -4 0 -12Z" fill="${c}" ${st}/>
+    <path d="M${x-14} ${y+22} q-4 18 2 26 q6 -6 2 -26Z M${x+12} ${y+24} q-3 12 2 18 q5 -5 1 -18Z M${x+26} ${y+12} q-2 10 2 14 q4 -4 1 -14Z" fill="${c}" ${st}/>
+    <ellipse cx="${x-8}" cy="${y-14}" rx="8" ry="4" fill="#a0652f"/>
+    <circle cx="${x-10}" cy="${y-2}" r="6" fill="#fff" stroke="#2b2b2b" stroke-width="2"/><circle cx="${x+10}" cy="${y-2}" r="6" fill="#fff" stroke="#2b2b2b" stroke-width="2"/>
+    <circle cx="${x-9}" cy="${y-1}" r="2.6" fill="#2b2b2b"/><circle cx="${x+9}" cy="${y-1}" r="2.6" fill="#2b2b2b"/>`;
+  $('#fx6').appendChild(g);
+  for(let i=0;i<6;i++){const d=document.createElementNS(NS,'circle'),a=i*Math.PI/3;d.setAttribute('cx',x);d.setAttribute('cy',y);d.setAttribute('r',5);d.setAttribute('fill',c);d.setAttribute('stroke','#2b2b2b');d.setAttribute('stroke-width','2');
+    $('#fx6').appendChild(d);d.animate([{transform:'translate(0,0)'},{transform:`translate(${Math.cos(a)*50}px,${Math.sin(a)*50+20}px)`,opacity:0}],{duration:600,easing:'ease-out',fill:'forwards'}).onfinish=()=>d.remove()}
+  g.animate([{transform:'scale(1)',transformOrigin:`${x}px ${y}px`,opacity:1},{transform:'scale(1)',transformOrigin:`${x}px ${y}px`,opacity:1,offset:.75},{transform:`translateY(14px)`,opacity:0}],{duration:3200,fill:'forwards'}).onfinish=()=>g.remove();
 }
 function meltWin(){
   confetti(60);sfx.win();
+  const wl=$('#wl6'),W=WL6;
+  later(()=>{wlAngry('m',true);wlSay('Grrr! My golem!',true,'m');steam('#fx6',W[0],W[1]-140);tone([150,110],.2,'sawtooth',.1);
+    wl.animate([{transform:`translate(${W[0]}px,${W[1]}px) scale(.7)`},{transform:`translate(${W[0]}px,${W[1]-18}px) scale(.7)`},{transform:`translate(${W[0]}px,${W[1]}px) scale(.7)`}],{duration:340,iterations:3});
+    speak('The warlock is so angry! He is running away!')},900);
+  later(()=>{wlSay('',true,'m');const f=[];for(let i=0;i<=8;i++){const t=i/8;f.push({transform:`translate(${W[0]+t*560}px,${W[1]-(i%2?16:0)}px) scale(-.7,.7)`})}
+    wl.animate(f,{duration:1500,easing:'ease-in',fill:'forwards'});tone([500,400,300,200],.08,'square',.05)},2600);
   later(()=>{
     const opened=awardEgg('easy-5');state.pos='easy-5';save();
     sfx.win();confetti(80);
     const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
     modal(`<div class="rays">${egg('big-egg','','ruby')}</div>
       <h2>You melted the Chocolate Golem!</h2>
-      <p>He's a yummy chocolate puddle now! You finished <b>Dragon Meadow</b> and built a <b>Ruby Egg</b>! ${txt}</p>
+      <p>He's a yummy chocolate puddle now, and the warlock ran away! You finished <b>Dragon Meadow</b> and built a <b>Ruby Egg</b>! ${txt}</p>
       <button class="btn go" id="m-ok">🗺️ To the map</button>`);
-    speak(`Hooray ${me().name}! You melted the chocolate golem! You finished Dragon Meadow and got a ruby egg!`);
+    speak(`Hooray ${me().name}! You melted the chocolate golem and the warlock ran away! You finished Dragon Meadow and got a ruby egg!`);
     $('#m-ok').onclick=()=>toMapAfterWin(opened);
-  },1400);
+  },4400);
 }
 $('#btn-fire').addEventListener('click',fireTorches);
 $('#melt-back').addEventListener('click',()=>{clearB();sfx.pop();try{speechSynthesis.cancel()}catch(e){}openMap()});
