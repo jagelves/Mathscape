@@ -286,6 +286,8 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 .flapping .bat-wr{animation:batR .18s ease-in-out infinite alternate}
 @keyframes batL{from{transform:rotate(-25deg)}to{transform:rotate(20deg)}}
 @keyframes batR{from{transform:rotate(25deg)}to{transform:rotate(-20deg)}}
+.vlist{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-height:46vh;overflow:auto}
+.vchip{font-size:16px}
 /* MODAL */
 .modal{position:fixed;inset:0;background:rgba(30,30,50,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .modal.hidden{display:none}
@@ -310,7 +312,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulatio
 
 <!-- HOME -->
 <section id="s-home" class="screen active">
-  <div style="width:100%;max-width:1000px;display:flex;justify-content:flex-end"><button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button></div>
+  <div style="width:100%;max-width:1000px;display:flex;justify-content:flex-end;gap:10px"><button class="icon-btn" id="btn-voice" aria-label="Choose the voice">🗣️</button><button class="icon-btn mute-btn" aria-label="Sound on or off">🔊</button></div>
   <div class="game-pick">
     <button class="gp" id="btn-math" data-g="math" aria-label="Choose Mathscape"><span class="logo" id="logo-math"></span></button>
     <button class="gp" id="btn-letter" data-g="letter" aria-label="Choose Letterscape"><span class="logo" id="logo-letter"></span></button>
@@ -717,6 +719,19 @@ function wandFX(fx,x0,y0,x1,y1,dur,sc){
     g.animate([{transform:`translate(${x1}px,${y1}px) scale(${.6*sc})`,opacity:1},{transform:`translate(${x1+Math.cos(a)*dd}px,${y1+Math.sin(a)*dd+(w==='hotdog'?14*sc:0)}px) rotate(${spin?rand(-180,180):0}deg) scale(${.9*sc})`,opacity:0}],{duration:520,easing:'ease-out'}).onfinish=()=>g.remove()}},dur);
 }
 
+/* ---------- victory dance: the explorer hops side to side and the wand shoots fireworks ---------- */
+const DANCE=[{transform:'translate(0,0)'},{transform:'translate(-6px,-26px)',offset:.14},{transform:'translate(0,0)',offset:.28},{transform:'translate(6px,-26px)',offset:.42},{transform:'translate(0,0)',offset:.56},{transform:'translate(-6px,-26px)',offset:.7},{transform:'translate(0,-34px)',offset:.85},{transform:'translate(0,0)'}];
+function celebrate(c,done){
+  try{
+    sfx.yay();confetti(40);
+    (c.els||[]).forEach(sel=>{const e=typeof sel==='string'?$(sel):sel;if(e)e.animate(DANCE,{duration:1900,easing:'ease-in-out',composite:'add'})});
+    let tip=c.tip;
+    if(c.dom){const sv=$(c.dom+' svg');if(sv){const r=sv.getBoundingClientRect(),[tx,ty]=wandTip(99,117);tip=[r.left+(tx+6)/162*r.width,r.top+ty/150*r.height]}}
+    if(tip)[0,550,1100].forEach((t,i)=>setTimeout(()=>{const sc=c.dom?1.5:1;wandFX(c.fx||'#fxlayer',tip[0],tip[1],tip[0]+(i-1)*70*sc,tip[1]-rand(110,160)*sc,500,sc);tone([660,880,1100].map(f=>f*(1+i*.12)),.08,'triangle',.05)},t));
+  }catch(e){}
+  setTimeout(()=>done&&done(),2200);
+}
+
 /* ---------- dragons & eggs ---------- */
 const DCOL=[['#5cc96b','#d4f7bf'],['#a06cd5','#ead9fc'],['#ff7eb6','#ffdcec'],['#4fa8ff','#d3e9ff'],['#ff9f43','#ffe4c2'],['#20c4b0','#c9f6ef']];
 function dragon(i){
@@ -865,11 +880,38 @@ function tone(freqs,dur=.12,type='sine',gap=.09){
 }
 const sfx={pop:()=>tone([660+Math.random()*200],.1,'triangle'),yay:()=>tone([523,659,784,1047],.2,'triangle',.1),oops:()=>tone([300,220],.18,'sine',.14),win:()=>tone([523,659,784,1047,784,1047,1319],.25,'triangle',.12),step:()=>tone([440,550],.1,'square',.08)};
 let voice=null;
-function pickVoice(){try{const v=speechSynthesis.getVoices();voice=v.find(x=>/en[-_]US/i.test(x.lang)&&/female|samantha|google us/i.test(x.name))||v.find(x=>/^en/i.test(x.lang))||null}catch(e){}}
+/* pick the most natural-sounding voice on this device (neural / premium / enhanced voices first) */
+const VOICE_GOOD=[/natural/i,/neural/i,/premium/i,/enhanced/i,/siri/i,/google us english/i,/\b(ava|aria|jenny|samantha|allison|zoe|evan|nicky|serena|emma|libby|sonia|michelle)\b/i];
+function voiceScore(v){let sc=0;if(/en[-_]US/i.test(v.lang))sc+=4;else if(/^en/i.test(v.lang))sc+=2;else return -99;
+  VOICE_GOOD.forEach((r,i)=>{if(r.test(v.name))sc+=i<4?10:i<6?6:3});if(/compact|espeak|robot|whisper|zarvox|bells|bad news|trinoids|albert|bubbles|cellos|organ|jester|wobble|superstar|boing/i.test(v.name))sc-=20;if(v.localService===false)sc+=1;return sc}
+function englishVoices(){try{return speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)).sort((a,b)=>voiceScore(b)-voiceScore(a))}catch(e){return[]}}
+function pickVoice(){try{const all=englishVoices(),want=store.get('voice','');voice=all.find(v=>v.name===want)||all[0]||null}catch(e){}}
 try{pickVoice();speechSynthesis.onvoiceschanged=pickVoice}catch(e){}
-function speak(t){
+/* speak one sentence at a time with a short pause after each sentence */
+let speakTok=0;const SENT_PAUSE=550;
+let speakQ=null;
+function speak(t,queue){
   if(state.muted)return;
-  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=.9;u.pitch=1.25;if(voice)u.voice=voice;speechSynthesis.speak(u)}catch(e){}
+  const parts=String(t).match(/[^.!?]+[.!?]+["')]*|[^.!?]+$/g)||[String(t)];
+  // queue=true: say it after the current line finishes instead of cutting it off
+  if(queue&&speakQ&&speakQ.tok===speakTok&&speakQ.i<speakQ.parts.length){speakQ.parts.push(...parts);return}
+  const tok=++speakTok;speakQ={tok,parts,i:0};
+  try{speechSynthesis.cancel()}catch(e){}
+  const say=i=>{
+    speakQ.i=i;if(tok!==speakTok||i>=parts.length)return;
+    const p=parts[i].trim();if(!p){say(i+1);return}
+    try{const u=new SpeechSynthesisUtterance(p);const nat=voice&&voiceScore(voice)>=10;u.rate=nat?.95:.9;u.pitch=nat?1.08:1.15;if(voice){u.voice=voice;u.lang=voice.lang}
+      let done=false;const next=()=>{if(done)return;done=true;setTimeout(()=>say(i+1),/[.!?]$/.test(p)?SENT_PAUSE:120)};
+      u.onend=next;u.onerror=next;setTimeout(next,Math.max(2500,p.length*110));speechSynthesis.speak(u)}catch(e){}
+  };
+  say(0);
+}
+function openVoices(){
+  const vs=englishVoices();
+  const list=vs.length?vs.slice(0,12).map((v,i)=>`<button class="chip vchip ${voice&&v.name===voice.name?'on':''}" data-i="${i}">${voiceScore(v)>=10?'⭐ ':''}${esc(v.name.replace(/Microsoft |Google |\(.*?\)/g,'').trim()||v.name)}</button>`).join(''):'<p>No voices found on this device.</p>';
+  modal(`<h2>🗣️ Pick a voice</h2><p style="font-size:17px">Tap a voice to hear it. ⭐ = most natural.</p><div class="vlist">${list}</div><button class="btn go" id="m-ok" style="margin-top:14px">✔ Done</button>`);
+  $$('#modal-card .vchip').forEach(b=>b.onclick=()=>{voice=vs[+b.dataset.i];store.set('voice',voice.name);$$('#modal-card .vchip').forEach(x=>x.classList.toggle('on',x===b));speak(`Hi ${me().name}! Let's count baby dragons and find letters!`)});
+  $('#m-ok').onclick=closeModal;
 }
 /* ---------- music: original chiptune songs (title, meadow variation, warlock boss) ---------- */
 const MUSIC={on:false,song:null,gain:null,timer:null,next:0};
@@ -929,7 +971,8 @@ const SONGS={
   puzzle:{bpm:100,mel:PUZ_MEL,ch:PUZ_CH,lead:'triangle',oct:0,vol:.17,style:'puzzle'},
   golem:{bpm:138,mel:GOLEM_MEL,ch:GOLEM_CH,lead:'square',oct:0,vol:.15,style:'golem'}
 };
-const SCREEN_SONG={home:'title',custom:'title',store:'title',game:'meadow',bridge:'meadow',lava:'boss',puzzle:'puzzle',melt:'golem',letters:'meadow',crab:'meadow',pbridge:'meadow',rescue:'meadow',dolphin:'meadow'};
+// title theme on the landing page and the maps; boss songs whenever a boss (warlock, golem, pirate) is in the level
+const SCREEN_SONG={home:'title',custom:'title',store:'title',map:'title',game:'meadow',bridge:'boss',lava:'boss',puzzle:'puzzle',melt:'golem',letters:'meadow',crab:'meadow',pbridge:'boss',rescue:'boss',dolphin:'golem'};
 function shiftOct(n,o){if(n==='R'||!o)return n;return n.replace(/\d$/,d=>+d+o)}
 function mtone(ctx,dest,f,t,d,type,vol){
   if(!f)return;const o=ctx.createOscillator(),g=ctx.createGain();
@@ -1132,6 +1175,7 @@ function renderStore(){
     const [k,v]=b.dataset.wear.split(':');c[k]=c[k]===v?(k==='wand'?(PRESETS[state.sel]||NEW_CHAR).wand:'none'):v;save();sfx.pop();renderStore()}));
 }
 $('#btn-store').addEventListener('click',()=>{sfx.pop();openStore()});
+$('#btn-voice').addEventListener('click',()=>{sfx.pop();openVoices()});
 $('#store-home').addEventListener('click',()=>{sfx.pop();renderHome();show('home')});
 
 /* ---------- MAP ---------- */
@@ -1385,7 +1429,8 @@ function activateDial(){
   const k=G.chest===0?3:4,set=new Set([n]);
   while(set.size<k){const v=n+rand(1,4)*(Math.random()<.5?-1:1);if(v>=1&&v<=10)set.add(v)}
   const colors=['#ff7eb6','#4fa8ff','#ffd23f','#ff9f43','#a06cd5','#20c4b0'];shuffle(colors);
-  $('#choices').innerHTML=shuffle([...set]).map((v,i)=>`<button class="num" data-v="${v}" style="background:${colors[i]};animation-delay:${.2+i*.08}s">${v}</button>`).join('');
+  // all number cards are the same color, so the pen and dial colors never hint at the answer
+  $('#choices').innerHTML=shuffle([...set]).map((v,i)=>`<button class="num" data-v="${v}" style="background:#fffaf0;animation-delay:${.2+i*.08}s">${v}</button>`).join('');
   $$('#choices .num').forEach(b=>b.addEventListener('click',()=>answer(b)));
   G.locked=false;
 }
@@ -1471,7 +1516,8 @@ function openChest(){
     setTimeout(()=>{sw.forEach(e=>e.classList.remove('swap'));newChest()},400);
   },4600);
 }
-function winGame(){
+function winGame(){celebrate({dom:'#buddy',els:['#buddy']},winGameModal)}
+function winGameModal(){
   const opened=awardEgg('easy-1');state.pos='easy-1';save();
   sfx.win();confetti(80);
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
@@ -1528,7 +1574,8 @@ function buildScene(){
     <rect x="930" y="250" width="60" height="150" fill="#d9d0f0"/><path d="M924 252 L960 186 L996 252Z" fill="#4fa8ff"/><line x1="960" y1="186" x2="960" y2="160"/><path d="M960 160 L984 168 L960 176Z" fill="#ffd23f"/>
     <rect x="806" y="296" width="148" height="104" fill="#ebe5fa"/>
     <path d="M806 296 v-14 h16 v14 h14 v-14 h16 v14 h14 v-14 h16 v14 h14 v-14 h16 v14 h14 v-14 h16 v14" fill="#ebe5fa"/>
-    <path d="M850 400 V352 Q880 318 910 352 V400 Z" fill="#8b5a2b"/>
+    <path d="M850 400 V352 Q880 318 910 352 V400 Z" fill="#2b1a10"/>
+    <path id="wgate" d="M850 400 V352 Q880 318 910 352 V400 Z" fill="#8b5a2b" style="transform-box:fill-box;transform-origin:0% 50%"/>
   </g>
   <g id="wl2" style="transform:translate(${WL2[0]}px,${WL2[1]}px) scale(.9)">${warlockSVG('b')}<g id="wl2splat"></g></g>
   <!-- catapult -->
@@ -1707,7 +1754,7 @@ function evaluateBridge(ok,over,total){
     later(()=>{wlSay('Ha ha ha!',true,'b');wlLaugh(true,'b')},700);
     later(()=>{wlLaugh(false,'b');wlSay('Zap!',true,'b');
       const o=[WL2[0]+51*.9,WL2[1]-136*.9];lightning('#fx',o[0],o[1],60,320);zapped('#fx','#pl2',60,330);
-      speak('Zap! The warlock zapped us with lightning! Let\'s try again.')},4300);
+      speak('Zap! The warlock zapped us with lightning! Let\'s try again.',true)},4300);
     later(()=>{wlSay('',true,'b');$('#scene svg').style.opacity=0},7200);
     later(()=>newBridgeRound(),7700);
   }
@@ -1725,6 +1772,17 @@ function splash(x){
   }
 }
 function winBridge(){
+  const wl=$('#wl2'),g=$('#wgate'),X0=WL2[0],Y0=WL2[1];
+  wlAngry('b',true);wlSay('Hmph! I\'m going inside!',true,'b');
+  speak('The warlock is running inside the castle!');
+  later(()=>{wlSay('',true,'b');g.animate([{transform:'scaleX(1)'},{transform:'scaleX(.08)'}],{duration:500,fill:'forwards'});sfx.step()},1200);
+  later(()=>{const f=[];for(let i=0;i<=10;i++){const t=i/10;f.push({transform:`translate(${X0+10*t}px,${Y0-6*t-(i%2?10:0)}px) scale(${.9-.55*t})`,opacity:t<.7?1:1-(t-.7)/.3})}
+    wl.animate(f,{duration:1300,easing:'ease-in',fill:'forwards'});tone([500,420,340,260],.07,'square',.05)},1500);
+  later(()=>{g.animate([{transform:'scaleX(.08)'},{transform:'scaleX(1)'}],{duration:400,fill:'forwards'});tone([140,100],.2,'sawtooth',.08);
+    $('#scene').animate([{transform:'translate(0,0)'},{transform:'translate(-4px,2px)'},{transform:'translate(4px,-2px)'},{transform:'translate(0,0)'}],{duration:240})},2900);
+  later(()=>celebrate({els:['#pl2','#wand'],fx:'#fx',tip:wandTip(91,369)},winBridgeModal),3500);
+}
+function winBridgeModal(){
   const opened=awardEgg('easy-2');state.pos='easy-2';save();
   sfx.win();confetti(80);
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
@@ -1977,13 +2035,14 @@ function evaluateLava(sunk){
         tone([220,160,110],.3,'sawtooth',.1)},600);
     }
     later(()=>{wlLaugh(true);wlSay('Ha ha ha!',true)},800);
-    later(()=>throwFire('#fx3',from[0]-30,from[1],95,320,few?110:60,()=>{burnPlayer('#fx3','#pl3',95,330);speak('Ouch! Hot hot hot! Let\'s try again.')}),2600);
+    later(()=>throwFire('#fx3',from[0]-30,from[1],95,320,few?110:60,()=>{burnPlayer('#fx3','#pl3',95,330);speak('Ouch! Hot hot hot! Let\'s try again.',true)}),2600);
     later(()=>{if(few)sunk.forEach(a=>a.reverse())},4600);
     later(()=>{wlLaugh(false);wlSay('',true);$('#lscene svg').style.opacity=0},6400);
     later(()=>newLavaRound(),6900);
   }
 }
-function winLava(){
+function winLava(){celebrate({els:['#pl3','#wand3'],fx:'#fx3',tip:wandTip(131,369)},winLavaModal)}
+function winLavaModal(){
   const opened=awardEgg('easy-3');state.pos='easy-3';save();
   sfx.win();confetti(80);
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
@@ -2105,7 +2164,7 @@ function buildPuzzle(){
   <g id="slots"></g>
   <g id="alive" style="opacity:0;transition:opacity .6s"></g>
   <g id="wl5" style="opacity:0;transform:translate(850px,400px) scale(.85)">${warlockSVG('p')}</g>
-  <svg x="0" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg>
+  <g id="pl5"><svg x="0" y="262" width="110" height="138" viewBox="0 0 120 150">${a}</svg></g>
   ${wandG(me().wand,91,369,'wand5')}
   <g id="pieces"></g>
   <g id="fx5"></g>
@@ -2250,7 +2309,8 @@ function golemAlive(){
   later(()=>{P.stage++;flyShell($('#pbrd'),'#pprogress',P.stage)},8200);
   later(winPuzzle,9800);
 }
-function winPuzzle(){
+function winPuzzle(){celebrate({els:['#pl5','#wand5'],fx:'#fx5',tip:wandTip(91,369)},winPuzzleModal)}
+function winPuzzleModal(){
   const opened=awardEgg('easy-4');state.pos='easy-4';save();
   sfx.win();confetti(80);
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open — go stop the golem!`:gl.html;
@@ -2416,7 +2476,7 @@ function evaluateMelt(ok,tooMany){
     else{puff(GC[0],GC[1],'#9a9a9a',5,40);speak(`Not hot enough! ${said} The fire fizzled!`)}
     later(stomp,900);
     later(()=>throwChoc(),2000);
-    later(()=>{wlSay('Ha ha ha!',true,'m');wlLaugh(true,'m');speak('Splat! The golem threw chocolate in our face! Let\'s try again!')},2900);
+    later(()=>{wlSay('Ha ha ha!',true,'m');wlLaugh(true,'m');speak('Splat! The golem threw chocolate in our face! Let\'s try again!',true)},2900);
     later(()=>{wlLaugh(false,'m');wlSay('',true,'m')},5200);
     later(()=>newMeltRound(),5800);
   }
@@ -2443,7 +2503,7 @@ function chocSplat(x,y){
   g.animate([{transform:'scale(1)',transformOrigin:`${x}px ${y}px`,opacity:1},{transform:'scale(1)',transformOrigin:`${x}px ${y}px`,opacity:1,offset:.75},{transform:`translateY(14px)`,opacity:0}],{duration:3200,fill:'forwards'}).onfinish=()=>g.remove();
 }
 function meltWin(){
-  confetti(60);sfx.win();
+  celebrate({els:['#pl6'],fx:'#fx6',tip:wandTip(91,369)});
   const wl=$('#wl6'),W=WL6;
   later(()=>{wlAngry('m',true);wlSay('Grrr! My golem!',true,'m');steam('#fx6',W[0],W[1]-140);tone([150,110],.2,'sawtooth',.1);
     wl.animate([{transform:`translate(${W[0]}px,${W[1]}px) scale(.7)`},{transform:`translate(${W[0]}px,${W[1]-18}px) scale(.7)`},{transform:`translate(${W[0]}px,${W[1]}px) scale(.7)`}],{duration:340,iterations:3});
@@ -2678,7 +2738,8 @@ function openXChest(){
     setTimeout(()=>{newXChest();c.style.opacity=1},400);
   },4600);
 }
-function winLetters(){
+function winLetters(){celebrate({dom:'#xbuddy',els:['#xbuddy']},winLettersModal)}
+function winLettersModal(){
   const opened=awardEgg('beach-1');state.pos='beach-1';save();
   sfx.win();confetti(80);
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
@@ -2848,7 +2909,8 @@ function openCrabChest(){
   later(()=>crabLeap(YHOME,600),3300);
   later(winCrab,4600);
 }
-function winCrab(){
+function winCrab(){celebrate({els:['#pl7','#wand7'],fx:'#fx7',tip:wandTip(101,409)},winCrabModal)}
+function winCrabModal(){
   const opened=awardEgg('beach-2');state.pos='beach-2';save();
   sfx.win();confetti(80);
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
@@ -3014,7 +3076,8 @@ function crossBridge(){
   later(()=>{flyShell($('#zspot'),'#zprogress',1);$('#zgem').style.visibility='hidden'},8000);
   later(winPirate,9400);
 }
-function winPirate(){
+function winPirate(){celebrate({els:['#zwalk'],fx:'#fx8',tip:[wandTip(121,219)[0]+(Z.wx||0),wandTip(121,219)[1]]},winPirateModal)}
+function winPirateModal(){
   const opened=awardEgg('beach-3');state.pos='beach-3';save();
   sfx.win();confetti(80);
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
@@ -3170,7 +3233,8 @@ function freeCrab(){
     speak('Hooray! Our crab friend is back!')},5600);
   later(winRescue,7600);
 }
-function winRescue(){
+function winRescue(){celebrate({els:['#pl9','#wand9'],fx:'#fx9',tip:wandTip(131,259)},winRescueModal)}
+function winRescueModal(){
   const opened=awardEgg('beach-4');state.pos='beach-4';save();
   sfx.win();confetti(80);
   const gl=goalLine(),txt=opened.length?`<b>${levelName(opened[0])}</b> is open!`:gl.html;
@@ -3196,7 +3260,7 @@ function startDolphin(){
   later(()=>{zSay('Arr! Me dolphin now!','s');zLaugh(true,'s')},1600);
   later(()=>{zSay('','s');dSay('Help me, please!')},3600);
   later(()=>{dSay('');speak('Your magic wand can break the knots! Spell each word with the letters, and the wand will zap a knot!')},5600);
-  later(()=>{V.busy=false;$('#vspell').classList.remove('off');vNext()},10600);
+  later(()=>{V.busy=false;$('#vspell').classList.remove('off');vNext()},12500);
 }
 function dolphinSVG(){
   const o='stroke="#2b2b2b" stroke-width="4" stroke-linejoin="round"';
@@ -3305,6 +3369,7 @@ function vWordDone(){
 function sparkleV(x,y){for(let k=0;k<8;k++){const p=document.createElementNS(NS,'polygon');p.setAttribute('points',star(x,y,9,4));p.setAttribute('fill','#ffd23f');p.setAttribute('stroke','#2b2b2b');p.setAttribute('stroke-width','2');
   $('#fx10').appendChild(p);const a=k*Math.PI/4;p.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*50}px,${Math.sin(a)*50}px)`,opacity:0}],{duration:600,easing:'ease-out'}).onfinish=()=>p.remove()}}
 function freeDolphin(){
+  celebrate({els:['#vwalk'],fx:'#fx10',tip:wandTip(121,225)});
   $('#vspell').classList.add('off');$('#vtiles').innerHTML='';
   speak('You broke all the knots! The dolphin is free!');
   $('#vnet').animate([{transform:'translateY(0)',opacity:.3},{transform:'translateY(120px)',opacity:0}],{duration:900,fill:'forwards'});
